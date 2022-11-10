@@ -1777,7 +1777,7 @@ extends AbstractForm {
                 'duedate'  =>  new DatetimeField(array(
                     'id' => 3,
                     'label' => __('Due Date'),
-                    'required' => false,
+                    'required' => true,
                     'configuration' => array(
                         'min' => Misc::gmtime(),
                         'time' => true,

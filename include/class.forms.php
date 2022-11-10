@@ -6093,23 +6093,23 @@ class TransferForm extends Form {
                     'label' => __('Department'),
                     'flags' => hexdec(0X450F3),
                     'required' => true,
-                    'validator-error' => __('Department selection is required'),
+                    'validator-error' => __('Este dato es requerido'),
                     )
                 ),
             'refer' => new BooleanField(array(
-                'id'=>2, 'label'=>'', 'required'=>false, 'default'=>false,
+                'id'=>2, 'label'=>'', 'required'=>true, 'default'=>true,
                 'configuration'=>array(
-                    'desc' => 'Maintain referral access to current department')
+                    'desc' => 'Mantener acceso al historial')
             )),
             'comments' => new TextareaField(array(
                     'id' => 3,
                     'label'=> '',
-                    'required'=>false,
+                    'required'=>true,
                     'default'=>'',
                     'configuration' => array(
                         'html' => true,
                         'size' => 'small',
-                        'placeholder' => __('Optional reason for the transfer'),
+                        'placeholder' => 'Razón para la transferencia',
                         ),
                     )
                 ),
