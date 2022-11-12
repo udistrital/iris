@@ -7,11 +7,11 @@ if (!isset($info['lookup']) || $info['lookup'] !== false) { ?>
 <div><p id="msg_info"><i class="icon-info-sign"></i>&nbsp; <?php echo
     $thisstaff->hasPerm(User::PERM_CREATE)
     ? __('Search existing users or add a new user.')
-    : __('Search existing users.');
+    : 'Buscar mi usuario.';
 ?></p></div>
 <div style="margin-bottom:10px;">
     <input type="text" class="search-input" style="width:100%;"
-    placeholder="<?php echo __('Search by email, phone or name'); ?>" id="user-search"
+    placeholder="<?php echo 'Buscar por mi correo, nombre o teléfono'; ?>" id="user-search"
     autofocus autocorrect="off" autocomplete="off"/>
 </div>
 <?php

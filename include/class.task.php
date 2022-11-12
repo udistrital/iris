@@ -1764,16 +1764,16 @@ extends AbstractForm {
         $fields = array(
                 'dept_id' => new DepartmentField(array(
                     'id'=>1,
-                    'label' => __('Department'),
+                    'label' => 'Dependencia',
                     'required' => true,
                     'layout' => new GridFluidCell(6),
                     )),
-                'assignee' => new AssigneeField(array(
+                /*'assignee' => new AssigneeField(array(
                     'id'=>2,
                     'label' => __('Assignee'),
                     'required' => false,
                     'layout' => new GridFluidCell(6),
-                    )),
+                    )),*/
                 'duedate'  =>  new DatetimeField(array(
                     'id' => 3,
                     'label' => __('Due Date'),

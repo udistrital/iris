@@ -154,10 +154,14 @@ if (!$task) {
 }
 
 //Navigation
-$nav->setTabActive('tasks');
 $open_name = _P('queue-name',
     /* This is the name of the open tasks queue */
-    'Open');
+    'Generales'); // cambio de nombre a la cola
+ 
+$nav->addSubMenu(array('desc'=>__('Mi dependencia'), //se creo un modelo de cola en donde se visualiza solo las tareas de mi departamento
+     'title'=>__('Mi dependencia'),
+     'href'=>'tasks.php?status=assigned_dept',
+     'iconclass'=>'assignedTickets'));
 
 $nav->addSubMenu(array('desc'=>$open_name.' ('.number_format($stats['open']).')',
                        'title'=>__('Open Tasks'),

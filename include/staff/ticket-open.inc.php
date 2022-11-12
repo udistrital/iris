@@ -197,7 +197,7 @@ if ($_POST)
             <td>
                 <select name="source">
                     <?php
-                    $source = $info['source'] ?: 'Phone';
+                    $source = $info['source'] ?: 'Email'; //Se cambia phone por email
                     $sources = Ticket::getSources();
                     unset($sources['Web'], $sources['API']);
                     foreach ($sources as $k => $v)
@@ -212,7 +212,7 @@ if ($_POST)
         </tr>
         <tr>
             <td width="160" class="required">
-                <?php echo __('Help Topic'); ?>:
+                <?php echo 'Dependencia'; ?>:
             </td>
             <td>
                 <select name="topicId" onchange="javascript:
@@ -232,7 +232,7 @@ if ($_POST)
                         if (count($topics) == 1)
                             $selected = 'selected="selected"';
                         else { ?>
-                        <option value="" selected >&mdash; <?php echo __('Select Help Topic'); ?> &mdash;</option>
+                        <option value="" selected >&mdash; <?php echo 'Seleccione la dependencia';?> &mdash;</option>
 <?php                   }
                         foreach($topics as $id =>$name) {
                             echo sprintf('<option value="%d" %s %s>%s</option>',
@@ -247,15 +247,19 @@ if ($_POST)
                     ?>
                 </select>
                 &nbsp;<font class="error"><b>*</b>&nbsp;<?php echo $errors['topicId']; ?></font>
+                <em><?php echo 'Recuerda poner su dependencia';?>&nbsp;(<?php echo $thisstaff->getDept() ?>)</em>
             </td>
         </tr>
-        <tr>
+        <tr style="display:none;"> 
             <td width="160">
                 <?php echo __('Department'); ?>:
             </td>
             <td>
                 <select name="deptId">
-                    <option value="" selected >&mdash; <?php echo __('Select Department'); ?>&mdash;</option>
+                    <!-- <option value="" selected >&mdash; <?php #echo __('Select Department'); ?>&mdash;</option> -->
+                    <?php
+                      echo('<option value='.$thisstaff->getDept()->getId().' selected="selected">'.$thisstaff->getDept().'</option>');
+                    ?>
                     <?php
                     if($depts=$thisstaff->getDepartmentNames(true)) {
                         foreach($depts as $id =>$name) {
@@ -305,18 +309,20 @@ if ($_POST)
                 $duedateField->render();
                 ?>
                 &nbsp;<font class="error">&nbsp;<?php echo $errors['duedate']; ?> &nbsp; <?php echo $errors['time']; ?></font>
-                <em><?php echo __('Time is based on your time
-                        zone');?>&nbsp;(<?php echo $cfg->getTimezone($thisstaff); ?>)</em>
+                <em><?php echo 'Hora basada en su zona horaria';?>&nbsp;(<?php echo $cfg->getTimezone($thisstaff); ?>)</em>
             </td>
         </tr>
 
         <?php
         if($thisstaff->hasPerm(Ticket::PERM_ASSIGN, false)) { ?>
-        <tr>
+        <tr style="display:none;" >
             <td width="160"><?php echo __('Assign To');?>:</td>
             <td>
                 <select id="assignId" name="assignId">
-                    <option value="0" selected="selected">&mdash; <?php echo __('Select an Agent OR a Team');?> &mdash;</option>
+                    <?php
+                      echo('<option value="s'.$thisstaff->getId().'" selected="selected">'.$thisstaff.'</option>'); // asignación automatica de agente
+                    ?>
+                    <!-- <option value="0" selected="selected">&mdash; <?php #echo __('Select an Agent OR a Team');?> &mdash;</option> --><!-- ocultar el option para seleccion -->
                     <?php
                     $users = Staff::getStaffMembers(array(
                                 'available' => true,

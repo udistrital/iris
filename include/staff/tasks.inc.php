@@ -87,6 +87,12 @@ case 'assigned':
     $tasks->filter(array('staff_id'=>$thisstaff->getId()));
     $queue_sort_options = array('updated', 'created', 'hot', 'number');
     break;
+case 'assigned_dept':
+    $status='open';
+    $results_type='Asignadas a mi dependencia';
+    $tasks->filter(array('dept_id'=>$thisstaff->getDept()->getID()));
+    $queue_sort_options = array('updated', 'created', 'hot', 'number');
+    break;
 default:
 case 'search':
     $queue_sort_options = array('closed', 'updated', 'created', 'number', 'hot');

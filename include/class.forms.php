@@ -5671,29 +5671,28 @@ class AssignmentForm extends Form {
 
         $fields = array(
             'assignee' => new AssigneeField(array(
-                    'id'=>1, 'label' => __('Assignee'),
-                    'flags' => hexdec(0X450F3), 'required' => true,
-                    'validator-error' => __('Assignee selection required'),
-                    'configuration' => array(
-                        'criteria' => array(
-                            'available' => true,
-                            ),
-                       ),
-                    )
-                ),
+                'id'=>1, 'label' => 'Asignar a', //cambio de nombre
+                'flags' => hexdec(0X450F3), 'required' => true,
+                'validator-error' => __('Assignee selection required'),
+                'configuration' => array(
+                    'criteria' => array(
+                        'available' => true,
+                        ),
+                   ),
+                )
+            ),
             'refer' => new BooleanField(array(
-                    'id'=>2, 'label'=>'', 'required'=>false,
-                    'default'=>false,
+                    'id'=>2, 'label'=>'', 'required'=>true, 'default'=>true, 'visibility' => new VisibilityConstraint(new Q(array()), VisibilityConstraint::HIDDEN), //Se cambia el required default de false a true y se oculta la visualización
                     'configuration'=>array(
-                        'desc' => __('Maintain referral access to current assignees'))
+                        'desc' => 'Mantener acceso al historial al asignar')
                     )
                 ),
             'comments' => new TextareaField(array(
-                    'id' => 3, 'label'=> '', 'required'=>false, 'default'=>'',
+                    'id' => 3, 'label'=> '', 'required'=>true, 'default'=>'', // se cambio requerido a true
                     'configuration' => array(
                         'html' => true,
                         'size' => 'small',
-                        'placeholder' => __('Optional reason for the assignment'),
+                        'placeholder' => 'Razones para la asignación (Obligatorio)',
                         ),
                     )
                 ),
@@ -5806,8 +5805,8 @@ class ClaimForm extends AssignmentForm {
         // Change coments placeholder to reflect claim
         if (isset($fields['comments'])) {
             $fields['comments']->configure('placeholder',
-                    __('Optional reason for the claim'));
-        }
+                    'Razones para la reclamación (Obligatorio)'); // se cambia el comentario de opcional a requerido
+        }  
 
 
         $this->setFields($fields);
@@ -6090,16 +6089,16 @@ class TransferForm extends Form {
         $fields = array(
             'dept' => new DepartmentField(array(
                     'id'=>1,
-                    'label' => __('Department'),
+                    'label' => 'Dependencia',
                     'flags' => hexdec(0X450F3),
                     'required' => true,
-                    'validator-error' => __('Este dato es requerido'),
+                    'validator-error' => __('Department selection is required'),
                     )
                 ),
             'refer' => new BooleanField(array(
-                'id'=>2, 'label'=>'', 'required'=>true, 'default'=>true,
+                'id'=>2, 'label'=>'', 'required'=>true, 'default'=>true, 'visibility' => new VisibilityConstraint(new Q(array()), VisibilityConstraint::HIDDEN), //Se cambia el required default de false a true y se oculta la visualización
                 'configuration'=>array(
-                    'desc' => 'Mantener acceso al historial')
+                    'desc' => 'Mantener acceso al historial al transferir')
             )),
             'comments' => new TextareaField(array(
                     'id' => 3,
@@ -6109,7 +6108,7 @@ class TransferForm extends Form {
                     'configuration' => array(
                         'html' => true,
                         'size' => 'small',
-                        'placeholder' => 'Razón para la transferencia',
+                        'placeholder' => 'Razones para la transferencia (Obligatorio)',
                         ),
                     )
                 ),

@@ -519,7 +519,7 @@ if($ticket->isOverdue())
             <table cellspacing="0" cellpadding="4" width="100%" border="0">
                 <?php
                 if($ticket->isOpen()) { ?>
-                <tr>
+                <tr style="display:none;">
                     <th width="100"><?php echo __('Assigned To');?>:</th>
                     <?php
                     if ($role->hasPerm(Ticket::PERM_ASSIGN)) {?>
@@ -612,7 +612,7 @@ if($ticket->isOverdue())
         </td>
         <td width="50%">
             <table cellspacing="0" cellpadding="4" width="100%" border="0">
-                <tr>
+                <tr style="display:none;">
                     <th width="100"><?php echo __('Help Topic');?>:</th>
                       <?php
                            if ($role->hasPerm(Ticket::PERM_EDIT)) {
