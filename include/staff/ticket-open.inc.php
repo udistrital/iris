@@ -232,7 +232,7 @@ if ($_POST)
                         if (count($topics) == 1)
                             $selected = 'selected="selected"';
                         else { ?>
-                        <option value="" selected >&mdash; <?php echo 'Seleccione la dependencia';?> &mdash;</option>
+                        <option value="" selected >&mdash; <?php echo 'Seleccione la dependencia'; ?> &mdash;</option>
 <?php                   }
                         foreach($topics as $id =>$name) {
                             echo sprintf('<option value="%d" %s %s>%s</option>',
@@ -247,7 +247,7 @@ if ($_POST)
                     ?>
                 </select>
                 &nbsp;<font class="error"><b>*</b>&nbsp;<?php echo $errors['topicId']; ?></font>
-                <em><?php echo 'Recuerda poner su dependencia';?>&nbsp;(<?php echo $thisstaff->getDept() ?>)</em>
+                <em><?php echo 'Recuerde poner su dependencia'; ?>&nbsp;(<?php echo $thisstaff->getDept(); ?>)</em>
             </td>
         </tr>
         <tr style="display:none;"> 
@@ -309,18 +309,18 @@ if ($_POST)
                 $duedateField->render();
                 ?>
                 &nbsp;<font class="error">&nbsp;<?php echo $errors['duedate']; ?> &nbsp; <?php echo $errors['time']; ?></font>
-                <em><?php echo 'Hora basada en su zona horaria';?>&nbsp;(<?php echo $cfg->getTimezone($thisstaff); ?>)</em>
+                <em><?php echo 'Hora basada en su zona horaria'; ?>&nbsp;(<?php echo $cfg->getTimezone($thisstaff); ?>)</em>
             </td>
         </tr>
 
         <?php
         if($thisstaff->hasPerm(Ticket::PERM_ASSIGN, false)) { ?>
-        <tr style="display:none;" >
-            <td width="160"><?php echo __('Assign To');?>:</td>
+        <tr style="display:none;">
+            <td width="160"><?php echo __('Assign To'); ?>:</td>
             <td>
                 <select id="assignId" name="assignId">
                     <?php
-                      echo('<option value="s'.$thisstaff->getId().'" selected="selected">'.$thisstaff.'</option>'); // asignación automatica de agente
+                      echo '<option value="s'.$thisstaff->getId().'" selected="selected">'.$thisstaff.'</option>'; // asignación automatica de agente
                     ?>
                     <!-- <option value="0" selected="selected">&mdash; <?php #echo __('Select an Agent OR a Team');?> &mdash;</option> --><!-- ocultar el option para seleccion -->
                     <?php

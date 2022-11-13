@@ -154,6 +154,7 @@ if (!$task) {
 }
 
 //Navigation
+$nav->setTabActive('tasks');
 $open_name = _P('queue-name',
     /* This is the name of the open tasks queue */
     'Generales'); // cambio de nombre a la cola

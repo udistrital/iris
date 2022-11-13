@@ -5671,16 +5671,16 @@ class AssignmentForm extends Form {
 
         $fields = array(
             'assignee' => new AssigneeField(array(
-                'id'=>1, 'label' => 'Asignar a', //cambio de nombre
-                'flags' => hexdec(0X450F3), 'required' => true,
-                'validator-error' => __('Assignee selection required'),
-                'configuration' => array(
-                    'criteria' => array(
-                        'available' => true,
-                        ),
-                   ),
-                )
-            ),
+                    'id'=>1, 'label' => 'Asignar a', //cambio de nombre
+                    'flags' => hexdec(0X450F3), 'required' => true,
+                    'validator-error' => __('Assignee selection required'),
+                    'configuration' => array(
+                        'criteria' => array(
+                            'available' => true,
+                            ),
+                       ),
+                    )
+                ),
             'refer' => new BooleanField(array(
                     'id'=>2, 'label'=>'', 'required'=>true, 'default'=>true, 'visibility' => new VisibilityConstraint(new Q(array()), VisibilityConstraint::HIDDEN), //Se cambia el required default de false a true y se oculta la visualización
                     'configuration'=>array(
