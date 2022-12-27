@@ -108,8 +108,8 @@ if ($total) { ?>
             <th width="30%"><?php echo __('Subject'); ?></th>
             <?php
             if ($user) { ?>
-            <th width="15%"><?php echo __('Department'); ?></th>
-            <th width="15%"><?php echo __('Assignee'); ?></th>
+            <th width="15%"><?php echo 'Dependencia'; //Cambio de nombre ?></th>
+            <th width="15%"><?php echo 'Asignado'; //Cambio de nombre ?></th>
             <?php
             } else { ?>
             <th width="30%"><?php echo __('User'); ?></th>

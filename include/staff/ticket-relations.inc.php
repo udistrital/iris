@@ -14,8 +14,8 @@ if (count($children ?: array()) != 0 || $ticket->isChild()) { ?>
                  <th width="8px">&nbsp;</th>
                  <th width="70"><?php echo __('Number'); ?></th>
                  <th width="100"><?php echo __('Subject'); ?></th>
-                 <th width="100"><?php echo __('Department'); ?></th>
-                 <th width="300"><?php echo __('Assignee'); ?></th>
+                 <th width="100"><?php echo 'Dependencia'; //Cambio de nombre ?></th>
+                 <th width="300"><?php echo 'Asignado'; //Cambio de nombre ?></th>
                  <th width="200"><?php echo __('Create Date'); ?></th>
              </tr>
          </thead>

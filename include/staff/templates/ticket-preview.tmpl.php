@@ -94,7 +94,7 @@ echo '<hr>
 if($ticket->isOpen()) {
     echo sprintf('
             <tr>
-                <th width="100">'.__('Assigned To').':</th>
+                <th width="100">'.'Asignado'.':</th>
                 <td>%s</td>
             </tr>',$ticket->isAssigned()?implode('/', $ticket->getAssignees()):' <span class="faded">&mdash; '.__('Unassigned').' &mdash;</span>');
 }

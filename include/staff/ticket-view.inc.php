@@ -352,7 +352,7 @@ if($ticket->isOverdue())
                       <?php } ?>
                 </tr>
                 <tr>
-                    <th><?php echo __('Department');?>:</th>
+                    <th><?php echo 'Dependencia'; //Cambio de nombre ?>:</th>
                     <?php
                     if ($role->hasPerm(Ticket::PERM_TRANSFER)) {?>
                       <td>
@@ -520,7 +520,7 @@ if($ticket->isOverdue())
                 <?php
                 if($ticket->isOpen()) { ?>
                 <tr style="display:none;">
-                    <th width="100"><?php echo __('Assigned To');?>:</th>
+                    <th width="100"><?php echo 'Asignado'; //Cambio de nombre ?>:</th>
                     <?php
                     if ($role->hasPerm(Ticket::PERM_ASSIGN)) {?>
                     <td>
