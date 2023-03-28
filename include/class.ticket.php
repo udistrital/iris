@@ -1023,7 +1023,7 @@ implements RestrictedAccess, Threadable, Searchable {
         $form = AssignmentForm::instantiate($source, $options);
 
         if (($refer = $form->getField('refer'))) {
-            if (!$) {
+            if (!$assignee) {
                 $visibility = new VisibilityConstraint(
                         new Q(array()), VisibilityConstraint::HIDDEN);
                 $refer->set('visibility', $visibility);
