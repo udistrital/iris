@@ -31,8 +31,8 @@ $info = ($_POST && $errors)?Format::htmlchars($_POST):array();
         </div>
     </div>
 </div>
-<div id="poweredBy"><?php echo __('Powered by'); ?>
-    <a href="http://www.osticket.com" target="_blank">
+<div id="poweredBy"><?php echo __('Powered by Dazlian and '); ?>
+    <a href="http://www.dazlian.tech" target="_blank">
         <img alt="osTicket" src="images/osticket-grey.png" class="osticket-logo">
     </a>
 </div>
