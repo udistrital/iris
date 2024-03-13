@@ -115,7 +115,16 @@ switch ($queue_name) {
             }
         }
         //look up internal form id  
-        $entryIdsql = "SELECT T.id FROM ost_thread_event HE, ost_thread H, ost_task T WHERE T.id=H.object_id AND H.id=HE.thread_id AND H.object_type='A' AND HE.event_id=1 AND HE.username='$tareas_usuario'";
+        $entryIdsql = "SELECT T.id
+            FROM ost_ud_thread_event HE,
+                ost_ud_thread H,
+                ost_ud_task T
+            WHERE T.id=H.object_id
+                AND H.id=HE.thread_id
+                AND H.object_type='A'
+                AND HE.event_id=1
+                AND HE.username='$tareas_usuario'";
+
         $entryIdresult = db_query($entryIdsql);
         // // Fetch all rows and store the IDs in an array
         $idArray = array();
