@@ -154,11 +154,11 @@ switch ($queue_name) {
             break;
         }
         // Fall-through and show open tickets
-    case 'open':
-        $status = 'open';
-        $results_type = __('Open Tasks');
-        $queue_sort_options = array('created', 'updated', 'due', 'number', 'hot');
-        break;
+    // case 'open':
+    //     $status = 'open';
+    //     $results_type = __('Open Tasks');
+    //     $queue_sort_options = array('created', 'updated', 'due', 'number', 'hot');
+    //     break;
 }
 
 // Apply filters
