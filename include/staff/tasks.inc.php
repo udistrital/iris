@@ -92,6 +92,7 @@ switch ($queue_name) {
         $tasks->filter(array('isoverdue' => 1));
         $queue_sort_options = array('updated', 'created', 'number', 'hot');
         break;
+    default:
     case 'assigned':
         $status = 'open';
         $staffId = $thisstaff->getId();
@@ -140,7 +141,6 @@ switch ($queue_name) {
         $tasks->filter(array('id__in' => $tareasUnion));
         $queue_sort_options = array('updated', 'created', 'hot', 'number');
         break;
-    default:
     case 'search':
         $queue_sort_options = array('closed', 'updated', 'created', 'number', 'hot');
         // Consider basic search
