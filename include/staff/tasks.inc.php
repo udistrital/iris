@@ -59,7 +59,7 @@ $queue_columns = array(
     ),
     'assignee' => array(
         'width' => '16%',
-        'heading' => __('Agent'),
+        'heading' => __('Assignee'),
     ),
 );
 
@@ -80,7 +80,7 @@ switch ($queue_name) {
         break;
     case 'closed_dept':
         $status = 'closed';
-        $results_type = __('Cerrados dependencia');
+        $results_type = __('Casos cerrados asignados a Mi Dependencia');
         $showassigned = true; //closed by.
         // cerrados dependencia
         $tasks->filter(array('dept_id' => $thisstaff->getDept()->getID()));
@@ -102,44 +102,46 @@ switch ($queue_name) {
         break;
     case 'assigned_dept':
         $status = 'open';
-        $results_type = __('Asignadas a mi dependencia');
+        $results_type = __('Casos asignados a Mi Dependencia');
         $tasks->filter(array('dept_id' => $thisstaff->getDept()->getID()));
         $queue_sort_options = array('updated', 'created', 'hot', 'number');
         break;
     case 'open_me':
         $results_type = __('Creados por mí (abiertos y cerrados)');
-        foreach ($thisstaff as $usuario) {
-            foreach ($usuario as $clave => $task_username) {
-                if ($clave == 'username') {
-                    $tareas_usuario = $task_username;
-                }
-            }
-        }
-        //look up internal form id  
-        $entryIdsql = "SELECT T.id
-            FROM ost_ud_thread_event HE,
-                ost_ud_thread H,
-                ost_ud_task T
-            WHERE T.id=H.object_id
-                AND H.id=HE.thread_id
-                AND H.object_type='A'
-                AND HE.event_id=1
-                AND HE.username='$tareas_usuario'";
+        $staffId = $thisstaff->getId();
+        $sql = 'SELECT T.id '
+            . 'FROM ' . TASK_TABLE . ' t, '
+            . THREAD_TABLE . ' th, '
+            . THREAD_EVENT_TABLE . ' te, '
+            . EVENT_TABLE . ' e '
+            . 'WHERE e.name = \'created\' '
+            . 'AND t.id = th.object_id '
+            . 'AND th.id = te.thread_id '
+            . 'AND th.object_type = \'A\' '
+            . 'AND te.event_id = e.id '
+            . 'AND te.uid = ' . $staffId;
 
-        $entryIdresult = db_query($entryIdsql);
-        // // Fetch all rows and store the IDs in an array
-        $idArray = array();
-        foreach ($entryIdresult as $i => $row) {
-            $filtertask = $tasks->copy();
-            $taskFilter = $filtertask->values_flat('id')->filter(array('id' => (int)$row['id']));
-            array_push($idArray, $taskFilter);
+        $ids = array();
+        if (($res = db_query($sql)) && db_num_rows($res)) {
+            while (list($id) = db_fetch_row($res))
+                $ids[] = (int) $id;
         }
-        $tareasUnion = $idArray[0];
-        for ($i = 1; $i < sizeof($idArray); $i++) {
-            $tareasUnion->union($idArray[$i]);
-        }
-        $tasks->filter(array('id__in' => $tareasUnion));
+
+        $tasks->filter(array('id__in' => $ids));
         $queue_sort_options = array('updated', 'created', 'hot', 'number');
+        break;
+    case 'assigned_mteams':
+        $status = 'open';
+        $results_type = __('Casos asignados a mis equipos');
+        $tasks->filter(array('team_id__in' => $thisstaff->teams->values_flat('team_id')));
+        $queue_sort_options = array('updated', 'created', 'hot', 'number');
+        break;
+    case 'closed_mteams':
+        $status = 'closed';
+        $results_type = __('Casos cerrados asignados a mis equipos');
+        $showassigned = true; //closed by.
+        $tasks->filter(array('team_id__in' => $thisstaff->teams->values_flat('team_id')));
+        $queue_sort_options = array('closed', 'updated', 'created', 'number', 'hot');
         break;
     case 'search':
         $queue_sort_options = array('closed', 'updated', 'created', 'number', 'hot');
@@ -285,8 +287,8 @@ switch ($sort_cols) {
         ));
         break;
     case 'assignee':
-        $tasks->order_by('staff__lastname', $orm_dir);
         $tasks->order_by('staff__firstname', $orm_dir);
+        $tasks->order_by('staff__lastname', $orm_dir);
         $tasks->order_by('team__name', $orm_dir);
         $queue_columns['assignee']['sort_dir'] = $sort_dir;
         break;
