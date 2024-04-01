@@ -205,6 +205,15 @@ $nav->addSubMenu(
     )
 );
 
+$nav->addSubMenu(
+    array(
+        'desc' => __('Gestionados por mí'),
+        'title' => __('Gestionados por mí (Abiertos y Cerrados)'),
+        'href' => 'tasks.php?status=thread_me',
+        'iconclass' => 'closedTickets'
+    )
+);
+
 if ($stats['closed']) {
     $nav->addSubMenu(
         array(

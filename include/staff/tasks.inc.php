@@ -96,7 +96,7 @@ switch ($queue_name) {
     case 'assigned':
         $status = 'open';
         $staffId = $thisstaff->getId();
-        $results_type = __('Mis casos');
+        $results_type = __('Asignados a mí');
         $tasks->filter(array('staff_id' => $thisstaff->getId()));
         $queue_sort_options = array('updated', 'created', 'hot', 'number');
         break;
@@ -109,7 +109,7 @@ switch ($queue_name) {
     case 'open_me':
         $results_type = __('Creados por mí (abiertos y cerrados)');
         $staffId = $thisstaff->getId();
-        $sql = 'SELECT T.id '
+        $sql = 'SELECT t.id '
             . 'FROM ' . TASK_TABLE . ' t, '
             . THREAD_TABLE . ' th, '
             . THREAD_EVENT_TABLE . ' te, '
@@ -125,9 +125,37 @@ switch ($queue_name) {
         if (($res = db_query($sql)) && db_num_rows($res)) {
             while (list($id) = db_fetch_row($res))
                 $ids[] = (int) $id;
+                $tasks->filter(array('id__in' => $ids));
+        } else {
+                $tasks->filter(array('id' => 0));
         }
 
-        $tasks->filter(array('id__in' => $ids));
+        $queue_sort_options = array('updated', 'created', 'hot', 'number');
+        break;
+    case 'thread_me':
+        $results_type = __('Asignados por mí a otro agente');
+        $staffId = $thisstaff->getId();        
+        $sql = 'SELECT DISTINCT t.id '
+            . 'FROM ' . TASK_TABLE . ' t, '
+            . THREAD_TABLE . ' th, '
+            . THREAD_EVENT_TABLE . ' te, '
+            . EVENT_TABLE . ' e '
+            . 'WHERE e.name = \'assigned\' '
+            . 'AND t.id = th.object_id '
+            . 'AND th.id = te.thread_id '
+            . 'AND th.object_type = \'A\' '
+            . 'AND te.event_id = e.id '
+            . 'AND te.uid = ' . $staffId;
+
+        $ids = array();
+        if (($res = db_query($sql)) && db_num_rows($res)) {
+            while (list($id) = db_fetch_row($res))
+                $ids[] = (int) $id;
+                $tasks->filter(array('id__in' => $ids));
+        } else {
+                $tasks->filter(array('id' => 0));
+        }
+
         $queue_sort_options = array('updated', 'created', 'hot', 'number');
         break;
     case 'assigned_mteams':
