@@ -323,6 +323,9 @@ a time {
     background:#f7f7f7;
     border-bottom:1px solid #bebebe;
     padding: 2px 20px;
+    display: flex;
+    flex-wrap: wrap;
+    height: auto;
 }
 #customQ_nav {
     clear:both;

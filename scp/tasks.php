@@ -205,7 +205,14 @@ $nav->addSubMenu(
     )
 );
 
-
+$nav->addSubMenu(
+    array(
+        'desc' => __('Gestionados por mí'),
+        'title' => __('Gestionados por mí (Abiertos y Cerrados)'),
+        'href' => 'tasks.php?status=thread_me',
+        'iconclass' => 'closedTickets'
+    )
+);
 
 if ($stats['closed']) {
     $nav->addSubMenu(
@@ -222,7 +229,7 @@ if ($stats['closed']) {
 if (count($thisstaff->getManagedDepartments()) >= 1) {
     $nav->addSubMenu(array(
         'desc' => __('Mi dependencia'), //se creo un modelo de cola en donde se visualiza solo las tareas de mi departamento
-        'title' => __('Mi dependencia'),
+        'title' => __('Casos asignados a Mi Dependencia'),
         'href' => 'tasks.php?status=assigned_dept',
         'iconclass' => 'assignedTickets'
     ));
@@ -231,7 +238,7 @@ if (count($thisstaff->getManagedDepartments()) >= 1) {
         $nav->addSubMenu(
             array(
                 'desc' => __('Cerrados dependencia'),
-                'title' => __('Casos cerrados en la dependencia'),
+                'title' => __('Casos cerrados asignados a Mi dependencia'),
                 'href' => 'tasks.php?status=closed_dept',
                 'iconclass' => 'closedTickets'
             ),
@@ -240,6 +247,27 @@ if (count($thisstaff->getManagedDepartments()) >= 1) {
     }
 }
 
+// Queue for team members
+if (count($thisstaff->getTeams()) >= 1) {
+    $nav->addSubMenu(array(
+        'desc' => __('Mis equipos'),
+        'title' => __('Casos asignados a mis equipos'),
+        'href' => 'tasks.php?status=assigned_mteams',
+        'iconclass' => 'assignedTickets'
+    ));
+
+    if ($stats['closed']) {
+        $nav->addSubMenu(
+            array(
+                'desc' => __('Cerrados en Mis equipos'),
+                'title' => __('Casos cerrados asignados a mis equipos'),
+                'href' => 'tasks.php?status=closed_mteams',
+                'iconclass' => 'closedTickets'
+            ),
+            ($_REQUEST['status'] == 'closed')
+        );
+    }
+}
 
 if ($stats['overdue']) {
     $nav->addSubMenu(
