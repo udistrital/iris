@@ -524,6 +524,12 @@ implements AuthenticatedUser, EmailContact, TemplateVariable, Searchable {
                     ))?array_keys($depts):array();
     }
 
+    function getLeadedTeams() {
+        return ($teams=Team::getTeams(
+                    array('lead' => $this->getId())
+                    ))?array_keys($teams):array();
+    }
+
     function getDeptId() {
         return $this->dept_id;
     }
