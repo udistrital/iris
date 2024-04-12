@@ -72,7 +72,7 @@ $queue_name = $_SESSION[$queue_key] ?: '';
 switch ($queue_name) {
     case 'closed':
         $status = 'closed';
-        $results_type = __('Casos cerrados');
+        $results_type = __('Casos cerrados asignados a mí');
         $showassigned = true; //closed by.
         // mis casos cerrados
         $tasks->filter(array('staff_id' => $thisstaff->getId()));
@@ -96,7 +96,7 @@ switch ($queue_name) {
     case 'assigned':
         $status = 'open';
         $staffId = $thisstaff->getId();
-        $results_type = __('Mis casos');
+        $results_type = __('Casos asignados a mí');
         $tasks->filter(array('staff_id' => $thisstaff->getId()));
         $queue_sort_options = array('updated', 'created', 'hot', 'number');
         break;
