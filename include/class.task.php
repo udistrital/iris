@@ -1474,8 +1474,13 @@ class Task extends TaskModel implements RestrictedAccess, Threadable {
             'updated' => new SqlFunction('NOW'),
         ));
 
-        if ($vars['internal_formdata']['dept_id'])
-            $task->dept_id = $vars['internal_formdata']['dept_id'];
+        $deptId = $vars['internal_formdata']['dept_id'];
+        if ($deptId && ($thisstaff->getRole($deptId)->hasPerm(Task::PERM_CREATE) || $thisstaff->hasPerm(Task::PERM_TRANSFER, false))) {
+            $task->dept_id = $deptId;
+        } else {
+            return null;
+        }
+
         if ($vars['internal_formdata']['duedate'])
 	    $task->duedate = date('Y-m-d G:i', Misc::dbtime($vars['internal_formdata']['duedate']));
 
