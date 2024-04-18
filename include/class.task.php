@@ -488,6 +488,7 @@ class Task extends TaskModel implements RestrictedAccess, Threadable {
         $prompt = $assignee = '';
         // Possible assignees
         $dept = $this->getDept();
+        $deptid = $this->getDeptId();
         switch (strtolower($options['target'])) {
             case 'agents':
                 if (!$source && $this->isOpen() && $this->staff)
@@ -510,6 +511,7 @@ class Task extends TaskModel implements RestrictedAccess, Threadable {
         // Field configurations
         if ($f=$form->getField('assignee')) {
             $f->configure('dept', $dept);
+            $f->configure('deptid', $deptid);
             $f->configure('staff', $thisstaff);
             if ($prompt)
                 $f->configure('prompt', $prompt);
