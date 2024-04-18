@@ -205,14 +205,14 @@ $nav->addSubMenu(
     )
 );
 
-// $nav->addSubMenu(
-//     array(
-//         'desc' => __('Gestionados por mí'),
-//         'title' => __('Gestionados por mí (Abiertos y Cerrados)'),
-//         'href' => 'tasks.php?status=thread_me',
-//         'iconclass' => 'closedTickets'
-//     )
-// );
+$nav->addSubMenu(
+    array(
+        'desc' => __('Gestionados por mí'),
+        'title' => __('Gestionados por mí (Abiertos y Cerrados)'),
+        'href' => 'tasks.php?status=thread_me',
+        'iconclass' => 'closedTickets'
+    )
+);
 
 if ($stats['closed']) {
     $nav->addSubMenu(
@@ -267,6 +267,17 @@ if (count($thisstaff->getTeams()) >= 1) {
             ($_REQUEST['status'] == 'closed')
         );
     }
+}
+
+if ($thisstaff->getLeadedTeams()) {
+    $nav->addSubMenu(
+        array(
+            'desc' => __('Sin asignar'),
+            'title' => __('Casos sin asignar en mis equipos'),
+            'href' => 'tasks.php?status=unassigned_mteams',
+            'iconclass' => 'closedTickets'
+        )
+    );
 }
 
 if ($stats['overdue']) {

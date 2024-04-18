@@ -526,7 +526,7 @@ implements AuthenticatedUser, EmailContact, TemplateVariable, Searchable {
 
     function getLeadedTeams() {
         return ($teams=Team::getTeams(
-                    array('lead' => $this->getId())
+                    array('lead_id' => $this->getId())
                     ))?array_keys($teams):array();
     }
 

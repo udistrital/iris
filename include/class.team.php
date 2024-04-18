@@ -322,6 +322,10 @@ implements TemplateVariable {
                 $query->filter(array('members__staff__dept_id'=>$criteria['dept_id']));
             }
 
+            if (isset($criteria['lead_id']) && $criteria['lead_id']) {
+                $query->filter(array('lead_id'=>$criteria['lead_id']));
+            }
+
             if (isset($criteria['active']) && $criteria['active']) {
                 $query->annotate(array('members_count'=>SqlAggregate::COUNT('members')))
                 ->filter(array(
