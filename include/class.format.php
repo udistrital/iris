@@ -335,7 +335,7 @@ class Format {
                   ':<(a|span) (name|style)="(mso-bookmark\:)?_MailEndCompose">(.+)?<\/(a|span)>:', # Drop _MailEndCompose
                   ':<div dir=(3D)?"ltr">(.*?)<\/div>(.*):is', # drop Gmail "ltr" attributes
                   ':data-cid="[^"]*":',         # drop image cid attributes
-                  '(position:[^!";]+;?)',
+                  '(position: ?(-webkit-)?(static|relative|fixed|absolute|sticky|initial|inherit);?)',
             ),
             array('', '', '', '', '<html', '$4', '$2 $3', '', ''),
             $html);
