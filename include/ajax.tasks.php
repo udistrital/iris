@@ -400,10 +400,22 @@ class TasksAjaxAPI extends AjaxController {
                     $info['warn'] =  __('No agents available for assignment');
                 break;
             case 'teams':
+                $depts = array();
+                $tids = $_POST['tids'] ?: array_filter(
+                        explode(',', @$_REQUEST['tids'] ?: ''));
+                if ($tids) {
+                    $depts = Task::objects()
+                        ->distinct('dept_id')
+                        ->filter(array('id__in' => $tids))
+                        ->values('dept_id');
+                }
+
                 $assignees = array();
                 $prompt = __('Select a Team');
-                foreach (Team::getActiveTeams() as $id => $name)
-                    $assignees['t'.$id] = $name;
+                if (count($depts) == 1) {
+                    foreach (Team::getActiveTeams($depts[0]['dept_id']) as $id => $name)
+                        $assignees['t'.$id] = $name;
+                }
 
                 if (!$assignees)
                     $info['warn'] =  __('No teams available for assignment');

@@ -153,8 +153,8 @@ switch ($queue_name) {
             . '       AND te_inner.event_id = e.id '
             . ' ) '
             . ' AND te.dept_id != ' . $deptId
-            . ' AND t.id IN ( '
-            . '     SELECT t.id '
+            . ' AND 1 = ( '
+            . '     SELECT 1'
             . '     FROM ' . THREAD_EVENT_TABLE . ' te_inner, '
             .           EVENT_TABLE . ' e_inner '
             . '     WHERE e_inner.name = \'created\' '
