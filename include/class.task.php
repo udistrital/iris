@@ -482,6 +482,43 @@ class Task extends TaskModel implements RestrictedAccess, Threadable {
         return $this->form;
     }
 
+    // Unassign primary assignee
+    function unassign() {
+        // We can't release what is not assigned buddy!
+        if (!$this->isAssigned())
+            return true;
+
+        // We can only unassign OPEN tickets.
+        if ($this->isClosed())
+            return false;
+
+        // Unassign staff (if any)
+        if ($this->getStaffId() && !$this->setStaffId(0))
+            return false;
+
+        // Unassign team (if any)
+        if ($this->getTeamId() && !$this->setTeamId(0))
+            return false;
+
+        return true;
+    }
+
+    function setTeamId($teamId) {
+        if (!is_numeric($teamId))
+            return false;
+
+        $this->team = Team::lookup($teamId);
+        return $this->save();
+    }
+
+    function setStaffId($staffId) {
+        if (!is_numeric($staffId))
+            return false;
+
+        $this->staff = Staff::lookup($staffId);
+        return $this->save();
+    }
+
     function getAssignmentForm($source=null, $options=array()) {
         global $thisstaff;
 
@@ -897,6 +934,7 @@ class Task extends TaskModel implements RestrictedAccess, Threadable {
         else
             $this->dept_id = $dept->getId();
 
+        $this->unassign();
         if ($errors || !$this->save(true))
             return false;
 
