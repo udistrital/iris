@@ -3456,7 +3456,8 @@ class AssigneeField extends ChoiceField {
                     $assignees['s'.$id] = $name;
             break;
         case 'teams':
-            foreach (Team::getActiveTeams() ?: array() as $id => $name)
+            $deptid = $config['deptid'] ?: 0;
+            foreach (Team::getActiveTeams($deptid) ?: array() as $id => $name)
                 $assignees['t'.$id] = $name;
             break;
         default:

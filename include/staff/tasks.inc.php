@@ -133,9 +133,50 @@ switch ($queue_name) {
 
         $queue_sort_options = array('updated', 'created', 'hot', 'number');
         break;
+    case 'requested_us':
+        $results_type = __('Transferidos a otra dependencia');
+        $deptId = $thisstaff->getDept()->getID();
+        $sql = 'SELECT t.id '
+            . 'FROM ' . TASK_TABLE . ' t, '
+            .   THREAD_TABLE . ' th, '
+            .   THREAD_EVENT_TABLE . ' te, '
+            .   EVENT_TABLE . ' e '
+            . 'WHERE e.name = \'transferred\' '
+            . ' AND t.id = th.object_id '
+            . ' AND th.id = te.thread_id '
+            . ' AND th.object_type = \'A\' '
+            . ' AND te.event_id = e.id '
+            . ' AND te.id = ( '
+            . '   SELECT MAX(te_inner.id)'
+            . '   FROM ' . THREAD_EVENT_TABLE . ' te_inner '
+            . '   WHERE te_inner.thread_id = th.id '
+            . '       AND te_inner.event_id = e.id '
+            . ' ) '
+            . ' AND te.dept_id != ' . $deptId
+            . ' AND t.id IN ( '
+            . '     SELECT t.id '
+            . '     FROM ' . THREAD_EVENT_TABLE . ' te_inner, '
+            .           EVENT_TABLE . ' e_inner '
+            . '     WHERE e_inner.name = \'created\' '
+            . '         AND te_inner.thread_id = th.id '
+            . '         AND te_inner.event_id = e_inner.id '
+            . '         AND te_inner.dept_id = ' . $deptId
+            . ')';
+
+        $ids = array();
+        if (($res = db_query($sql)) && db_num_rows($res)) {
+            while (list($id) = db_fetch_row($res))
+                $ids[] = (int) $id;
+                $tasks->filter(array('id__in' => $ids));
+        } else {
+                $tasks->filter(array('id' => 0));
+        }
+
+        $queue_sort_options = array('updated', 'created', 'hot', 'number');
+        break;
     case 'thread_me':
         $results_type = __('Asignados por mí a otro agente');
-        $staffId = $thisstaff->getId();        
+        $staffId = $thisstaff->getId();
         $sql = 'SELECT DISTINCT t.id '
             . 'FROM ' . TASK_TABLE . ' t, '
             . THREAD_TABLE . ' th, '
@@ -163,6 +204,13 @@ switch ($queue_name) {
         $status = 'open';
         $results_type = __('Casos asignados a mis equipos');
         $tasks->filter(array('team_id__in' => $thisstaff->teams->values_flat('team_id')));
+        $queue_sort_options = array('updated', 'created', 'hot', 'number');
+        break;
+    case 'unassigned_mteams':
+        $status = 'open';
+        $results_type = __('Casos sin asignar en mis equipos');
+        $tasks->filter(array('team_id__in' => $thisstaff->teams->values_flat('team_id')));
+        $tasks->filter(array('staff_id' => 0));
         $queue_sort_options = array('updated', 'created', 'hot', 'number');
         break;
     case 'closed_mteams':

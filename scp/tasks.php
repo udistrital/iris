@@ -205,14 +205,14 @@ $nav->addSubMenu(
     )
 );
 
-// $nav->addSubMenu(
-//     array(
-//         'desc' => __('Gestionados por mí'),
-//         'title' => __('Gestionados por mí (Abiertos y Cerrados)'),
-//         'href' => 'tasks.php?status=thread_me',
-//         'iconclass' => 'closedTickets'
-//     )
-// );
+$nav->addSubMenu(
+    array(
+        'desc' => __('Gestionados por mí'),
+        'title' => __('Gestionados por mí (Abiertos y Cerrados)'),
+        'href' => 'tasks.php?status=thread_me',
+        'iconclass' => 'closedTickets'
+    )
+);
 
 if ($stats['closed']) {
     $nav->addSubMenu(
@@ -231,8 +231,17 @@ if (count($thisstaff->getManagedDepartments()) >= 1) {
         'desc' => __('Mi dependencia'), //se creo un modelo de cola en donde se visualiza solo las tareas de mi departamento
         'title' => __('Casos asignados a Mi Dependencia'),
         'href' => 'tasks.php?status=assigned_dept',
-        'iconclass' => 'assignedTickets'
+        'iconclass' => 'departments'
     ));
+
+    $nav->addSubMenu(
+        array(
+            'desc' => __('Solicitados por mi dependencia'),
+            'title' => __('Transferidos a otra dependencia'),
+            'href' => 'tasks.php?status=requested_us',
+            'iconclass' => 'departments'
+        )
+    );
 
     if ($stats['closed']) {
         $nav->addSubMenu(
@@ -253,7 +262,7 @@ if (count($thisstaff->getTeams()) >= 1) {
         'desc' => __('Mis equipos'),
         'title' => __('Casos asignados a mis equipos'),
         'href' => 'tasks.php?status=assigned_mteams',
-        'iconclass' => 'assignedTickets'
+        'iconclass' => 'teams'
     ));
 
     if ($stats['closed']) {
@@ -267,6 +276,17 @@ if (count($thisstaff->getTeams()) >= 1) {
             ($_REQUEST['status'] == 'closed')
         );
     }
+}
+
+if ($thisstaff->getLeadedTeams()) {
+    $nav->addSubMenu(
+        array(
+            'desc' => __('Sin asignar'),
+            'title' => __('Casos sin asignar en mis equipos'),
+            'href' => 'tasks.php?status=unassigned_mteams',
+            'iconclass' => 'overdueTickets'
+        )
+    );
 }
 
 if ($stats['overdue']) {
