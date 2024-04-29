@@ -359,36 +359,39 @@ class TasksAjaxAPI extends AjaxController {
                     $depts = $tasks->values_flat('dept_id');
                 }
 
-                $members = Staff::objects()
-                    ->distinct('staff_id')
-                    ->filter(array(
+                $members = array();
+                if (count($depts) == 1 && $thisstaff->getDeptId() == $depts[0][0]) {
+                    $members = Staff::objects()
+                        ->distinct('staff_id')
+                        ->filter(
+                            array(
                                 'onvacation' => 0,
                                 'isactive' => 1,
-                                )
-                            );
-
-                if ($depts) {
-                    $members->filter(Q::any( array(
-                                    'dept_id__in' => $depts,
-                                    Q::all(array(
-                                        'dept_access__dept__id__in' => $depts,
-                                        Q::not(array('dept_access__dept__flags__hasbit'
-                                            => Dept::FLAG_ASSIGN_MEMBERS_ONLY,
-                                            'dept_access__dept__flags__hasbit'
-                                                => Dept::FLAG_ASSIGN_PRIMARY_ONLY))
-                                        ))
-                                    )));
-                }
-
-                switch ($cfg->getAgentNameFormat()) {
-                case 'last':
-                case 'lastfirst':
-                case 'legal':
-                    $members->order_by('lastname', 'firstname');
-                    break;
-
-                default:
-                    $members->order_by('firstname', 'lastname');
+                            )
+                        )
+                        ->filter(Q::any(array(
+                            'dept_id__in' => $depts,
+                            Q::all(array(
+                                'dept_access__dept__id__in' => $depts,
+                                Q::not(array(
+                                    'dept_access__dept__flags__hasbit'
+                                    => Dept::FLAG_ASSIGN_MEMBERS_ONLY,
+                                    'dept_access__dept__flags__hasbit'
+                                    => Dept::FLAG_ASSIGN_PRIMARY_ONLY
+                                ))
+                            ))
+                    )));
+                    switch ($cfg->getAgentNameFormat()) {
+                        case 'last':
+                        case 'lastfirst':
+                        case 'legal':
+                            $members->order_by('lastname', 'firstname');
+                            break;
+                        default:
+                            $members->order_by('firstname', 'lastname');
+                    }
+                } else {
+                    $errors['err'] = __('Debe seleccionar únicamente tareas de su dependencia');
                 }
 
                 $prompt  = __('Select an Agent');
@@ -400,10 +403,29 @@ class TasksAjaxAPI extends AjaxController {
                     $info['warn'] =  __('No agents available for assignment');
                 break;
             case 'teams':
+                $depts = array();
+                $tids = $_POST['tids'] ?: array_filter(
+                        explode(',', @$_REQUEST['tids'] ?: ''));
+                if ($tids) {
+                    $depts = Task::objects()
+                        ->distinct('dept_id')
+                        ->filter(array('id__in' => $tids))
+                        ->values('dept_id');
+                }
+
                 $assignees = array();
                 $prompt = __('Select a Team');
-                foreach (Team::getActiveTeams() as $id => $name)
-                    $assignees['t'.$id] = $name;
+                if (count($depts) == 1 && $thisstaff->getDeptId() == $depts[0]['dept_id']) {
+                    $teams = Team::getActiveTeams($depts[0]['dept_id']);
+                    if (count($teams) > 0) {
+                        foreach ($teams as $id => $name)
+                            $assignees['t'.$id] = $name;
+                    } else {
+                        $errors['err'] = __('No hay equipos en su dependencia');
+                    }
+                } else {
+                    $errors['err'] = __('Debe seleccionar únicamente tareas de su dependencia');
+                }
 
                 if (!$assignees)
                     $info['warn'] =  __('No teams available for assignment');
