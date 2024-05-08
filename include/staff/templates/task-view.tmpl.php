@@ -383,7 +383,7 @@ if (!$ticket) { ?>
                     <?php
                     if ($task->isOpen()) { ?>
                     <tr>
-                        <th width="100"><?php 'Asignado'; //Cambio de nombre ?>:</th>
+                        <th width="100"><?php echo __('Assigned To');?>:</th>
                         <?php
                         if ($role->hasPerm(Task::PERM_ASSIGN)) {?>
                         <td>

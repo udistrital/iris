@@ -3477,7 +3477,7 @@ class AssigneeField extends ChoiceField {
 
             next($assignees);
             $T = current($assignees);
-            if (($teams = Team::getActiveTeams()))
+            if (($teams = Team::getActiveTeams($config['deptid'] ?: 0)))
                 foreach ($teams as $id => $name)
                     $T['t'.$id] = $name;
             break;
