@@ -107,6 +107,16 @@ switch ($queue_name) {
         $tasks->filter(array('dept_id' => $thisstaff->getDept()->getID()));
         $queue_sort_options = array('updated', 'created', 'hot', 'number');
         break;
+    case 'unassigned_dept':
+        $status = 'open';
+        $results_type = __('Casos sin asignar en Mi Dependencia');
+        $tasks->filter(array(
+            'dept_id' => $thisstaff->getDept()->getID(),
+            'staff_id' => 0,
+            'team_id' => 0
+        ));
+        $queue_sort_options = array('updated', 'created', 'hot', 'number');
+        break;
     case 'open_me':
         $results_type = __('Creados por mí (abiertos y cerrados)');
         $staffId = $thisstaff->getId();
