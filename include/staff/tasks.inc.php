@@ -133,35 +133,21 @@ switch ($queue_name) {
 
         $queue_sort_options = array('updated', 'created', 'hot', 'number');
         break;
-    case 'requested_us':
+    case 'transferred':
         $results_type = __('Transferidos a otra dependencia');
         $deptId = $thisstaff->getDept()->getID();
-        $sql = 'SELECT t.id '
+        $sql = 'SELECT DISTINCT t.id '
             . 'FROM ' . TASK_TABLE . ' t, '
             .   THREAD_TABLE . ' th, '
             .   THREAD_EVENT_TABLE . ' te, '
             .   EVENT_TABLE . ' e '
-            . 'WHERE e.name = \'transferred\' '
+            . 'WHERE e.name IN (\'transferred\', \'created\') ' // creados en mi dep o transferidos a mi dep
             . ' AND t.id = th.object_id '
             . ' AND th.id = te.thread_id '
             . ' AND th.object_type = \'A\' '
             . ' AND te.event_id = e.id '
-            . ' AND te.id = ( '
-            . '   SELECT MAX(te_inner.id)'
-            . '   FROM ' . THREAD_EVENT_TABLE . ' te_inner '
-            . '   WHERE te_inner.thread_id = th.id '
-            . '       AND te_inner.event_id = e.id '
-            . ' ) '
-            . ' AND te.dept_id != ' . $deptId
-            . ' AND 1 = ( '
-            . '     SELECT 1'
-            . '     FROM ' . THREAD_EVENT_TABLE . ' te_inner, '
-            .           EVENT_TABLE . ' e_inner '
-            . '     WHERE e_inner.name = \'created\' '
-            . '         AND te_inner.thread_id = th.id '
-            . '         AND te_inner.event_id = e_inner.id '
-            . '         AND te_inner.dept_id = ' . $deptId
-            . ')';
+            . ' AND t.dept_id != ' . $deptId // ya no están en mi dep
+                . ' AND te.dept_id = ' . $deptId; // estuvieron en mi dep
 
         $ids = array();
         if (($res = db_query($sql)) && db_num_rows($res)) {

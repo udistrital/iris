@@ -236,9 +236,9 @@ if (count($thisstaff->getManagedDepartments()) >= 1) {
 
     $nav->addSubMenu(
         array(
-            'desc' => __('Solicitados por mi dependencia'),
+            'desc' => __('Transferidos'),
             'title' => __('Transferidos a otra dependencia'),
-            'href' => 'tasks.php?status=requested_us',
+            'href' => 'tasks.php?status=transferred',
             'iconclass' => 'departments'
         )
     );
