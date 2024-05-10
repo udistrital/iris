@@ -226,9 +226,9 @@ if ($stats['closed']) {
     );
 }
 
-if (count($thisstaff->getManagedDepartments()) >= 1) {
+if ($thisstaff->getManagedDepartments()) {
     $nav->addSubMenu(array(
-        'desc' => __('Mi dependencia'), //se creo un modelo de cola en donde se visualiza solo las tareas de mi departamento
+        'desc' => __('Mi dependencia'),
         'title' => __('Casos asignados a Mi Dependencia'),
         'href' => 'tasks.php?status=assigned_dept',
         'iconclass' => 'departments'
@@ -236,28 +236,26 @@ if (count($thisstaff->getManagedDepartments()) >= 1) {
 
     $nav->addSubMenu(
         array(
-            'desc' => __('Solicitados por mi dependencia'),
+            'desc' => __('Transferidos'),
             'title' => __('Transferidos a otra dependencia'),
-            'href' => 'tasks.php?status=requested_us',
+            'href' => 'tasks.php?status=transferred',
             'iconclass' => 'departments'
         )
     );
 
-    if ($stats['closed']) {
-        $nav->addSubMenu(
-            array(
-                'desc' => __('Cerrados dependencia'),
-                'title' => __('Casos cerrados asignados a Mi dependencia'),
-                'href' => 'tasks.php?status=closed_dept',
-                'iconclass' => 'closedTickets'
-            ),
-            ($_REQUEST['status'] == 'closed')
-        );
-    }
+    $nav->addSubMenu(
+        array(
+            'desc' => __('Cerrados dependencia'),
+            'title' => __('Casos cerrados asignados a Mi dependencia'),
+            'href' => 'tasks.php?status=closed_dept',
+            'iconclass' => 'closedTickets'
+        ),
+        ($_REQUEST['status'] == 'closed')
+    );
 }
 
 // Queue for team members
-if (count($thisstaff->getTeams()) >= 1) {
+if ($thisstaff->getTeams()) {
     $nav->addSubMenu(array(
         'desc' => __('Mis equipos'),
         'title' => __('Casos asignados a mis equipos'),
@@ -276,6 +274,17 @@ if (count($thisstaff->getTeams()) >= 1) {
             ($_REQUEST['status'] == 'closed')
         );
     }
+}
+
+if ($thisstaff->getManagedDepartments() || $thisstaff->getLeadedTeams()) {
+    $nav->addSubMenu(
+        array(
+            'desc' => __('Sin Revisar'),
+            'title' => __('Casos sin asignar en mi dependencia'),
+            'href' => 'tasks.php?status=unassigned_dept',
+            'iconclass' => 'overdueTickets'
+        )
+    );
 }
 
 if ($thisstaff->getLeadedTeams()) {
