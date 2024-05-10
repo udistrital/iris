@@ -82,8 +82,11 @@ switch ($queue_name) {
         $status = 'closed';
         $results_type = __('Casos cerrados asignados a Mi Dependencia');
         $showassigned = true; //closed by.
-        // cerrados dependencia
-        $tasks->filter(array('dept_id' => $thisstaff->getDept()->getID()));
+        if ($thisstaff->getManagedDepartments()) {
+            $tasks->filter(array('dept_id' => $thisstaff->getDept()->getID()));
+        } else {
+            $tasks->filter(array('id' => 0));
+        }
         $queue_sort_options = array('closed', 'updated', 'created', 'number', 'hot');
         break;
     case 'overdue':
@@ -95,26 +98,32 @@ switch ($queue_name) {
     default:
     case 'assigned':
         $status = 'open';
-        $staffId = $thisstaff->getId();
         $results_type = __('Casos asignados a mí');
-
         $tasks->filter(array('staff_id' => $thisstaff->getId()));
         $queue_sort_options = array('updated', 'created', 'hot', 'number');
         break;
     case 'assigned_dept':
         $status = 'open';
         $results_type = __('Casos asignados a Mi Dependencia');
-        $tasks->filter(array('dept_id' => $thisstaff->getDept()->getID()));
+        if ($thisstaff->getManagedDepartments()) {
+            $tasks->filter(array('dept_id' => $thisstaff->getDept()->getID()));
+        } else {
+            $tasks->filter(array('id' => 0));
+        }
         $queue_sort_options = array('updated', 'created', 'hot', 'number');
         break;
     case 'unassigned_dept':
         $status = 'open';
         $results_type = __('Casos sin asignar en Mi Dependencia');
-        $tasks->filter(array(
-            'dept_id' => $thisstaff->getDept()->getID(),
-            'staff_id' => 0,
-            'team_id' => 0
-        ));
+        if ($thisstaff->getManagedDepartments() || $thisstaff->getLeadedTeams()) {
+            $tasks->filter(array(
+                'dept_id' => $thisstaff->getDept()->getID(),
+                'staff_id' => 0,
+                'team_id' => 0
+            ));
+        } else {
+            $tasks->filter(array('id' => 0));
+        }
         $queue_sort_options = array('updated', 'created', 'hot', 'number');
         break;
     case 'open_me':
@@ -160,12 +169,12 @@ switch ($queue_name) {
                 . ' AND te.dept_id = ' . $deptId; // estuvieron en mi dep
 
         $ids = array();
-        if (($res = db_query($sql)) && db_num_rows($res)) {
+        if ($thisstaff->getManagedDepartments() && ($res = db_query($sql)) && db_num_rows($res)) {
             while (list($id) = db_fetch_row($res))
                 $ids[] = (int) $id;
-                $tasks->filter(array('id__in' => $ids));
+            $tasks->filter(array('id__in' => $ids));
         } else {
-                $tasks->filter(array('id' => 0));
+            $tasks->filter(array('id' => 0));
         }
 
         $queue_sort_options = array('updated', 'created', 'hot', 'number');
@@ -205,8 +214,14 @@ switch ($queue_name) {
     case 'unassigned_mteams':
         $status = 'open';
         $results_type = __('Casos sin asignar en mis equipos');
-        $tasks->filter(array('team_id__in' => $thisstaff->teams->values_flat('team_id')));
-        $tasks->filter(array('staff_id' => 0));
+        if ($thisstaff->getLeadedTeams()) {
+            $tasks->filter(array(
+                'team_id__in' => $thisstaff->teams->values_flat('team_id'),
+                'staff_id' => 0
+            ));
+        } else {
+            $tasks->filter(array('id' => 0));
+        }
         $queue_sort_options = array('updated', 'created', 'hot', 'number');
         break;
     case 'closed_mteams':

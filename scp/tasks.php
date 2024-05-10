@@ -226,7 +226,7 @@ if ($stats['closed']) {
     );
 }
 
-if (count($thisstaff->getManagedDepartments()) >= 1) {
+if ($thisstaff->getManagedDepartments()) {
     $nav->addSubMenu(array(
         'desc' => __('Mi dependencia'),
         'title' => __('Casos asignados a Mi Dependencia'),
@@ -243,21 +243,19 @@ if (count($thisstaff->getManagedDepartments()) >= 1) {
         )
     );
 
-    if ($stats['closed']) {
-        $nav->addSubMenu(
-            array(
-                'desc' => __('Cerrados dependencia'),
-                'title' => __('Casos cerrados asignados a Mi dependencia'),
-                'href' => 'tasks.php?status=closed_dept',
-                'iconclass' => 'closedTickets'
-            ),
-            ($_REQUEST['status'] == 'closed')
-        );
-    }
+    $nav->addSubMenu(
+        array(
+            'desc' => __('Cerrados dependencia'),
+            'title' => __('Casos cerrados asignados a Mi dependencia'),
+            'href' => 'tasks.php?status=closed_dept',
+            'iconclass' => 'closedTickets'
+        ),
+        ($_REQUEST['status'] == 'closed')
+    );
 }
 
 // Queue for team members
-if (count($thisstaff->getTeams()) >= 1) {
+if ($thisstaff->getTeams()) {
     $nav->addSubMenu(array(
         'desc' => __('Mis equipos'),
         'title' => __('Casos asignados a mis equipos'),
@@ -278,7 +276,7 @@ if (count($thisstaff->getTeams()) >= 1) {
     }
 }
 
-if ($thisstaff->getLeadedTeams()) {
+if ($thisstaff->getManagedDepartments() || $thisstaff->getLeadedTeams()) {
     $nav->addSubMenu(
         array(
             'desc' => __('Sin Revisar'),
@@ -287,7 +285,9 @@ if ($thisstaff->getLeadedTeams()) {
             'iconclass' => 'overdueTickets'
         )
     );
+}
 
+if ($thisstaff->getLeadedTeams()) {
     $nav->addSubMenu(
         array(
             'desc' => __('Sin asignar'),
