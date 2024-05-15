@@ -541,7 +541,7 @@ if ($thisstaff->hasPerm(Task::PERM_DELETE, false)) {
                         $staff =  new AgentsName($T['staff__firstname'] . ' ' . $T['staff__lastname']);
                         $team = Team::getLocalById($T['team_id'], 'name', $T['team__name']);
                         $assignee = sprintf(
-                            '<span class="Icon staffssigned">%s</span><span class="Icon teamAssigned">%s</span>',
+                            '<span class="Icon staffAssigned">%s</span><span class="Icon teamAssigned">%s</span>',
                             Format::truncate((string) $staff, 40),
                             Format::truncate((string) $team, 40)
                         );

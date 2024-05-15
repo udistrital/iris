@@ -1136,7 +1136,7 @@ class TicketsAjaxAPI extends AjaxController {
                     }
                     $members = $thisstaff->getDeptAgents(array('available' => true));
 
-                    if ($depts) {
+                    if (count($depts) == 1 && $thisstaff->getDeptId() == $depts[0][0]) {
                         $all_agent_depts = Dept::objects()->filter(
                             Q::all( array('id__in' => $depts,
                             Q::not(array('flags__hasbit'
@@ -1156,6 +1156,10 @@ class TicketsAjaxAPI extends AjaxController {
                                             ))
                                         )));
                         }
+                    } else {
+                        $assignees = Staff::objects()->filter(array('staff_id' => 0));
+                        $info['error'] = __('Debe seleccionar únicamente tickets de su dependencia');
+                        break;
                     }
 
                     switch ($cfg->getAgentNameFormat()) {
@@ -1178,10 +1182,33 @@ class TicketsAjaxAPI extends AjaxController {
                         $info['warn'] =  __('No agents available for assignment');
                     break;
                 case 'teams':
+                    $depts = array();
+                    $tids = $_POST['tids'] ?: array_filter(
+                            explode(',', @$_REQUEST['tids'] ?: ''));
+                    if ($tids) {
+                        $depts = Ticket::objects()
+                            ->distinct('dept_id')
+                            ->filter(array('ticket_id__in' => $tids))
+                            ->values('dept_id');
+                    }
+
                     $assignees = array();
                     $prompt = __('Select a Team');
-                    foreach (Team::getActiveTeams() as $id => $name)
-                        $assignees['t'.$id] = $name;
+                    if (count($depts) == 1 && $thisstaff->getDeptId() == $depts[0]['dept_id']) {
+                        $teams = Team::getActiveTeams($depts[0]['dept_id']);
+                        if (count($teams) > 0) {
+                            foreach ($teams as $id => $name)
+                                $assignees['t'.$id] = $name;
+                        } else {
+                            $assignees = Team::objects()->filter(array('team_id' => 0));
+                            $info['error'] = __('No hay equipos en su dependencia');
+                            break;
+                        }
+                    } else {
+                        $assignees = Team::objects()->filter(array('team_id' => 0));
+                        $info['error'] = __('Debe seleccionar únicamente tickets de su dependencia');
+                        break;
+                    }
 
                     if (!$assignees)
                         $info['warn'] =  __('No teams available for assignment');
