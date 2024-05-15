@@ -155,7 +155,7 @@ class TasksAjaxAPI extends AjaxController {
 
                   Http::response(201, $task->getId());
                 } else {
-                    $permError = sprintf(__('You do not have permission to create a task in %s'), __('this department'));
+                    $permError = __('No tiene permiso para crear una tarea en esta dependencia');
                 }
               }
               $info['error'] = $permError ? $permError : sprintf('%s - %s', __('Error adding task'), __('Please try again!'));
@@ -391,7 +391,9 @@ class TasksAjaxAPI extends AjaxController {
                             $members->order_by('firstname', 'lastname');
                     }
                 } else {
-                    $errors['err'] = __('Debe seleccionar únicamente tareas de su dependencia');
+                    $assignees = Team::objects()->filter(array('team_id' => 0));
+                    $info['error'] = __('Debe seleccionar únicamente tareas de su dependencia');
+                    break;
                 }
 
                 $prompt  = __('Select an Agent');
@@ -400,7 +402,7 @@ class TasksAjaxAPI extends AjaxController {
                      $assignees['s'.$member->getId()] = $member->getName();
 
                 if (!$assignees)
-                    $info['warn'] =  __('No agents available for assignment');
+                    $info['warn'] = __('No agents available for assignment');
                 break;
             case 'teams':
                 $depts = array();
@@ -421,10 +423,12 @@ class TasksAjaxAPI extends AjaxController {
                         foreach ($teams as $id => $name)
                             $assignees['t'.$id] = $name;
                     } else {
-                        $errors['err'] = __('No hay equipos en su dependencia');
+                        $assignees = Team::objects()->filter(array('team_id' => 0));
+                        $info['error'] = __('No hay equipos en su dependencia');
                     }
                 } else {
-                    $errors['err'] = __('Debe seleccionar únicamente tareas de su dependencia');
+                    $assignees = Team::objects()->filter(array('team_id' => 0));
+                    $info['error'] = __('Debe seleccionar únicamente tareas de su dependencia');
                 }
 
                 if (!$assignees)
