@@ -82,8 +82,11 @@ switch ($queue_name) {
         $status = 'closed';
         $results_type = __('Casos cerrados asignados a Mi Dependencia');
         $showassigned = true; //closed by.
-        // cerrados dependencia
-        $tasks->filter(array('dept_id' => $thisstaff->getDept()->getID()));
+        if ($thisstaff->getManagedDepartments()) {
+            $tasks->filter(array('dept_id' => $thisstaff->getDept()->getID()));
+        } else {
+            $tasks->filter(array('id' => 0));
+        }
         $queue_sort_options = array('closed', 'updated', 'created', 'number', 'hot');
         break;
     case 'overdue':
@@ -95,16 +98,32 @@ switch ($queue_name) {
     default:
     case 'assigned':
         $status = 'open';
-        $staffId = $thisstaff->getId();
         $results_type = __('Casos asignados a mí');
-
         $tasks->filter(array('staff_id' => $thisstaff->getId()));
         $queue_sort_options = array('updated', 'created', 'hot', 'number');
         break;
     case 'assigned_dept':
         $status = 'open';
         $results_type = __('Casos asignados a Mi Dependencia');
-        $tasks->filter(array('dept_id' => $thisstaff->getDept()->getID()));
+        if ($thisstaff->getManagedDepartments()) {
+            $tasks->filter(array('dept_id' => $thisstaff->getDept()->getID()));
+        } else {
+            $tasks->filter(array('id' => 0));
+        }
+        $queue_sort_options = array('updated', 'created', 'hot', 'number');
+        break;
+    case 'unassigned_dept':
+        $status = 'open';
+        $results_type = __('Casos sin asignar en Mi Dependencia');
+        if ($thisstaff->getManagedDepartments() || $thisstaff->getLeadedTeams()) {
+            $tasks->filter(array(
+                'dept_id' => $thisstaff->getDept()->getID(),
+                'staff_id' => 0,
+                'team_id' => 0
+            ));
+        } else {
+            $tasks->filter(array('id' => 0));
+        }
         $queue_sort_options = array('updated', 'created', 'hot', 'number');
         break;
     case 'open_me':
@@ -133,43 +152,29 @@ switch ($queue_name) {
 
         $queue_sort_options = array('updated', 'created', 'hot', 'number');
         break;
-    case 'requested_us':
+    case 'transferred':
         $results_type = __('Transferidos a otra dependencia');
         $deptId = $thisstaff->getDept()->getID();
-        $sql = 'SELECT t.id '
+        $sql = 'SELECT DISTINCT t.id '
             . 'FROM ' . TASK_TABLE . ' t, '
             .   THREAD_TABLE . ' th, '
             .   THREAD_EVENT_TABLE . ' te, '
             .   EVENT_TABLE . ' e '
-            . 'WHERE e.name = \'transferred\' '
+            . 'WHERE e.name IN (\'transferred\', \'created\') ' // creados en mi dep o transferidos a mi dep
             . ' AND t.id = th.object_id '
             . ' AND th.id = te.thread_id '
             . ' AND th.object_type = \'A\' '
             . ' AND te.event_id = e.id '
-            . ' AND te.id = ( '
-            . '   SELECT MAX(te_inner.id)'
-            . '   FROM ' . THREAD_EVENT_TABLE . ' te_inner '
-            . '   WHERE te_inner.thread_id = th.id '
-            . '       AND te_inner.event_id = e.id '
-            . ' ) '
-            . ' AND te.dept_id != ' . $deptId
-            . ' AND 1 = ( '
-            . '     SELECT 1'
-            . '     FROM ' . THREAD_EVENT_TABLE . ' te_inner, '
-            .           EVENT_TABLE . ' e_inner '
-            . '     WHERE e_inner.name = \'created\' '
-            . '         AND te_inner.thread_id = th.id '
-            . '         AND te_inner.event_id = e_inner.id '
-            . '         AND te_inner.dept_id = ' . $deptId
-            . ')';
+            . ' AND t.dept_id != ' . $deptId // ya no están en mi dep
+                . ' AND te.dept_id = ' . $deptId; // estuvieron en mi dep
 
         $ids = array();
-        if (($res = db_query($sql)) && db_num_rows($res)) {
+        if ($thisstaff->getManagedDepartments() && ($res = db_query($sql)) && db_num_rows($res)) {
             while (list($id) = db_fetch_row($res))
                 $ids[] = (int) $id;
-                $tasks->filter(array('id__in' => $ids));
+            $tasks->filter(array('id__in' => $ids));
         } else {
-                $tasks->filter(array('id' => 0));
+            $tasks->filter(array('id' => 0));
         }
 
         $queue_sort_options = array('updated', 'created', 'hot', 'number');
@@ -209,8 +214,14 @@ switch ($queue_name) {
     case 'unassigned_mteams':
         $status = 'open';
         $results_type = __('Casos sin asignar en mis equipos');
-        $tasks->filter(array('team_id__in' => $thisstaff->teams->values_flat('team_id')));
-        $tasks->filter(array('staff_id' => 0));
+        if ($thisstaff->getLeadedTeams()) {
+            $tasks->filter(array(
+                'team_id__in' => $thisstaff->teams->values_flat('team_id'),
+                'staff_id' => 0
+            ));
+        } else {
+            $tasks->filter(array('id' => 0));
+        }
         $queue_sort_options = array('updated', 'created', 'hot', 'number');
         break;
     case 'closed_mteams':
@@ -526,7 +537,15 @@ if ($thisstaff->hasPerm(Task::PERM_DELETE, false)) {
                     $assignee = '';
                     $dept = Dept::getLocalById($T['dept_id'], 'name', $T['dept__name']);
                     $assinee = '';
-                    if ($T['staff_id']) {
+                    if ($T['staff_id'] && $T['team_id']) {
+                        $staff =  new AgentsName($T['staff__firstname'] . ' ' . $T['staff__lastname']);
+                        $team = Team::getLocalById($T['team_id'], 'name', $T['team__name']);
+                        $assignee = sprintf(
+                            '<span class="Icon staffAssigned">%s</span><span class="Icon teamAssigned">%s</span>',
+                            Format::truncate((string) $staff, 40),
+                            Format::truncate((string) $team, 40)
+                        );
+                    } else if ($T['staff_id']) {
                         $staff =  new AgentsName($T['staff__firstname'] . ' ' . $T['staff__lastname']);
                         $assignee = sprintf(
                             '<span class="Icon staffAssigned">%s</span>',
