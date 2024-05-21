@@ -3,7 +3,7 @@ header("Content-Type: text/html; charset=UTF-8");
 header("Content-Security-Policy: frame-ancestors ".$cfg->getAllowIframes().";");
 
 $title = ($ost && ($title=$ost->getPageTitle()))
-    ? $title : ('osTicket :: '.__('Staff Control Panel'));
+    ? $title : ('Iris UD :: '.__('Sistema Integrado de Solicitudes y Trámites'));
 
 if (!isset($_SERVER['HTTP_X_PJAX'])) { ?>
 <!DOCTYPE HTML PUBLIC "-//W3C//DTD HTML 4.01//EN" "http://www.w3.org/TR/html4/strict.dtd">
@@ -98,7 +98,7 @@ if (osTicket::is_ie())
         if (strpos($h, '<script ') !== false)
             echo $h;
     } ?>
-    <title><?php echo ($ost && ($title=$ost->getPageTitle()))?$title:'osTicket :: '.__('Staff Control Panel'); ?></title><?php
+    <title><?php echo ($ost && ($title=$ost->getPageTitle()))?$title:'Iris UD :: '.__('Sistema Integrado de Solicitudes y Trámites'); ?></title><?php
 } # endif X_PJAX ?>
     <ul id="nav">
 <?php include STAFFINC_DIR . "templates/navigation.tmpl.php"; ?>
