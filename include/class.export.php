@@ -146,7 +146,7 @@ class Export {
                 'cdata.title' =>    __('Title'),
                 'dept::getLocalName' => __('Department'),
                 '::getStatusExport' =>    __('Current Status'),
-                'duedate' =>        __('Due Date'),
+                '::getDueDateExport' =>        __('Due Date'),
                 'staff::getName' => __('Agent Assigned'),
                 'team::getName' =>  __('Team Assigned'),
                 'thread_count' =>   __('Thread Count'),
