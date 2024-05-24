@@ -142,10 +142,10 @@ class Export {
         return self::dumpQuery($tasks,
             array(
                 'number' =>         __('Task Number'),
-                'created' =>        __('Date Created'),
+                '::getCreateDateExport' =>        __('Date Created'),
                 'cdata.title' =>    __('Title'),
                 'dept::getLocalName' => __('Department'),
-                '::getStatus' =>    __('Current Status'),
+                '::getStatusExport' =>    __('Current Status'),
                 'duedate' =>        __('Due Date'),
                 'staff::getName' => __('Agent Assigned'),
                 'team::getName' =>  __('Team Assigned'),

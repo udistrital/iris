@@ -272,6 +272,14 @@ class Task extends TaskModel implements RestrictedAccess, Threadable {
         return $this->isOpen() ? __('Open') : __('Completed');
     }
 
+    function getStatusExport() {
+        return $this->isOpen() ? 'Abierto' : 'Cerrado';
+    }
+
+    function getCreateDateExport() {
+        return Format::datetimeLocal($this->getCreateDate());
+    }
+
     function getTitle() {
         return $this->__cdata('title', ObjectModel::OBJECT_TYPE_TASK);
     }
