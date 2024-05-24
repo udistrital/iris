@@ -280,6 +280,10 @@ class Task extends TaskModel implements RestrictedAccess, Threadable {
         return Format::datetimeLocal($this->getCreateDate());
     }
 
+    function getDueDateExport() {
+        return Format::datetimeLocal($this->getDueDate());
+    }
+
     function getTitle() {
         return $this->__cdata('title', ObjectModel::OBJECT_TYPE_TASK);
     }
