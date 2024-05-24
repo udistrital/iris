@@ -839,6 +839,21 @@ class Format {
                 '%x %X', $timezone ?: $cfg->getTimezone(), $user);
     }
 
+    static function datetimeLocal($timestamp) {
+        global $cfg;
+
+        return self::__formatDate(
+            $timestamp,
+            'yyy-MM-dd hh:mm:ss',
+            true,
+            IDF_SHORT,
+            IDF_SHORT,
+            '%x %X',
+            $cfg->getTimezone(),
+            false
+        );
+    }
+
     static function daydatetime($timestamp, $fromDb=true, $format=false,  $timezone=false, $user=false) {
         global $cfg;
 
