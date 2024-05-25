@@ -5289,7 +5289,7 @@ class FileUploadWidget extends Widget {
             ?>" class="filedrop"><div class="files"></div>
             <div class="dropzone"><i class="icon-upload"></i>
             <?php echo sprintf(
-                __('Drop files here or %s choose them %s'),
+                __('%s Seleccionar archivos %s, máximo 64 MB'),
                 '<a href="#" class="manual">', '</a>'); ?>
         <input type="file" multiple="multiple"
             id="file-<?php echo $id; ?>" style="display:none;"
