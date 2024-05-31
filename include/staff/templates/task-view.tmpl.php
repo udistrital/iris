@@ -383,7 +383,7 @@ if (!$ticket) { ?>
                     <?php
                     if ($task->isOpen()) { ?>
                     <tr>
-                        <th width="100"><?php 'Asignado'; //Cambio de nombre ?>:</th>
+                        <th width="100"><?php echo __('Assigned To'); ?>:</th>
                         <?php
                         if ($role->hasPerm(Task::PERM_ASSIGN)) {?>
                         <td>
@@ -426,12 +426,12 @@ if (!$ticket) { ?>
                     <?php
                     } ?>
                     <tr>
-                        <th><?php echo __('Collaborators');?>:</th>
+                        <th><?php echo __('Con Copia');?>:</th>
                         <td>
                             <?php
-                            $collaborators = __('Collaborators');
+                            $collaborators = __('CC');
                             if ($task->getThread()->getNumCollaborators())
-                                $collaborators = sprintf(__('Collaborators (%d)'),
+                                $collaborators = sprintf(__('CC (%d)'),
                                         $task->getThread()->getNumCollaborators());
 
                             echo sprintf('<span><a class="collaborators preview"
@@ -590,7 +590,7 @@ else
                     echo sprintf('<span><a class="collaborators preview"
                             href="#thread/%d/collaborators/1"> %s &nbsp;<span id="t%d-recipients">%s</span></a></span>',
                             $thread->getId(),
-                            __('Collaborators'),
+                            __('Con Copia'),
                             $thread->getId(),
                             $recipients);
                    ?>

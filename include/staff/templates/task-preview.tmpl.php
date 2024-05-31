@@ -29,7 +29,7 @@ if ($task->getThread()->getNumCollaborators()) {
     echo sprintf('
         <li><a id="collab_tab" href="#collab"
             ><i class="icon-fixed-width icon-group
-            faded"></i>&nbsp;'.__('Collaborators (%d)').'</a></li>',
+            faded"></i>&nbsp;'.__('CC (%d)').'</a></li>',
             $task->getThread()->getNumCollaborators());
 }
 echo '</ul>';
@@ -118,7 +118,7 @@ echo '</div>';
                             href="#thread/%d/collaborators/1">%s</a></span>',
                             $task->getThreadId(),
                             $task->getThread()->getNumCollaborators()
-                                ? __('Manage Collaborators') : __('Add Collaborator')
+                                ? __('Manage') : __('Add')
                                 );
     ?>
 </div>
