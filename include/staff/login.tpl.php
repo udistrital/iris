@@ -14,7 +14,7 @@ if ($thisstaff && $thisstaff->is2FAPending())
     </div>
     <h1 id="logo"><a href="index.php">
         <span class="valign-helper"></span>
-        <img src="logo.php?login" alt="osTicket :: <?php echo __('Staff Control Panel');?>" />
+        <img src="logo.php?login" alt="Iris :: <?php echo __('Sistema Integrado de Solicitudes y Trámites');?>" />
     </a></h1>
     <h3 id="login-message"><?php echo Format::htmlchars($msg); ?></h3>
     <div class="banner"><small><?php echo ($content) ? Format::display($content->getLocalBody()) : ''; ?></small></div>

@@ -167,7 +167,7 @@ div.hr {
     <td><?php echo Format::datetime($task->getCloseDate()); ?></td>
     <?php
     } ?>
-    <th><?php echo __('Collaborators'); ?></th>
+    <th><?php echo __('Con Copia'); ?></th>
     <td><?php echo $task->getParticipants(); ?></td>
 </tr>
 </tbody>

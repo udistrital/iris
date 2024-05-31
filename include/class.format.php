@@ -844,7 +844,7 @@ class Format {
 
         return self::__formatDate(
             $timestamp,
-            'yyy-MM-dd hh:mm:ss',
+            'yyy-MM-dd HH:mm:ss',
             true,
             IDF_SHORT,
             IDF_SHORT,
