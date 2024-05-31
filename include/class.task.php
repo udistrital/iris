@@ -1513,6 +1513,10 @@ class Task extends TaskModel implements RestrictedAccess, Threadable {
             $desc->save();
         }
 
+        $userId = $thisstaff->getUserIdStaff();
+        if ($userId)
+            $thread->addCollaboratorTask($userId);
+
         $task->logEvent('created', null, $thisstaff);
 
         // Get role for the dept
@@ -1827,6 +1831,14 @@ class TaskThread extends ObjectThread {
             $vars['message'] = $vars['description'];
         unset($vars['description']);
         return MessageThreadEntry::add($vars, $errors);
+    }
+
+    function addCollaboratorTask($user) {
+        $err = array();
+        $vars = array(
+            'threadId' => $this->getId(),
+            'userId' => $user);
+        return Collaborator::add($vars, $err);
     }
 
     static function create($task=false) {
