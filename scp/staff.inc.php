@@ -145,6 +145,6 @@ if($thisstaff->forcePasswdChange() && !$exempt) {
     exit;
 }
 $ost->setWarning($sysnotice);
-$ost->setPageTitle(__('Iris UD :: Sistema Integrado de Solicitudes y Trámites'));
+$ost->setPageTitle(__('Iris :: Sistema Integrado de Solicitudes y Trámites'));
 
 ?>

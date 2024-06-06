@@ -1,7 +1,7 @@
 <?php
 $title=($cfg && is_object($cfg) && $cfg->getTitle())
-    ? $cfg->getTitle() : 'osTicket :: '.__('Support Ticket System');
-$signin_url = ROOT_PATH . "login.php"
+    ? $cfg->getTitle() : 'Iris :: '.__('Sistema Integrado de Solicitudes y Trámites');
+$signin_url = ROOT_PATH . "scp/login.php"
     . ($thisclient ? "?e=".urlencode($thisclient->getEmail()) : "");
 $signout_url = ROOT_PATH . "logout.php?auth=".$ost->getLinkToken();
 

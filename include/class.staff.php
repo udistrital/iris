@@ -326,6 +326,11 @@ implements AuthenticatedUser, EmailContact, TemplateVariable, Searchable {
         return $this->getId();
     }
 
+    function getUserIdStaff() {
+        $user = new UserEmail();
+        return $user->getIdByEmail($this->getEmail());
+    }
+
     function getEmail() {
         return $this->email;
     }

@@ -240,7 +240,7 @@ if($ticket->isOverdue())
                 <li>
 
                     <?php
-                    $recipients = __(' Manage Collaborators');
+                    $recipients = __(' Manage');
 
                     echo sprintf('<a class="collaborators manage-collaborators"
                             href="#thread/%d/collaborators/1"><i class="icon-group"></i>%s</a>',
@@ -520,7 +520,7 @@ if($ticket->isOverdue())
                 <?php
                 if($ticket->isOpen()) { ?>
                 <tr style="display:none;">
-                    <th width="100"><?php echo 'Asignado'; //Cambio de nombre ?>:</th>
+                    <th width="100"><?php echo __('Assigned To'); ?>:</th>
                     <?php
                     if ($role->hasPerm(Ticket::PERM_ASSIGN)) {?>
                     <td>
@@ -895,7 +895,7 @@ if ($errors['err'] && isset($_POST['a'])) {
                                  collaborators preview noclick %s"
                                   href="#thread/%d/collaborators/1">
                                  %s</a></span>',
-                                 __('Collaborators'),
+                                 __('Con Copia'),
                                  $ticket->getNumCollaborators()
                                   ? '' : 'hidden',
                                  $ticket->getThreadId(),
@@ -914,7 +914,7 @@ if ($errors['err'] && isset($_POST['a'])) {
                             data-dropdown="#action-dropdown-collaborators"
                             data-placement="bottom"
                             data-toggle="tooltip"
-                            title="<?php echo __('Manage Collaborators'); ?>"
+                            title="<?php echo __('Manage'); ?>"
                             >
                             <i class="icon-caret-down pull-right"></i>
                             <a class="ticket-action" id="collabs-button"
@@ -939,7 +939,7 @@ if ($errors['err'] && isset($_POST['a'])) {
                              <li><a class="manage-collaborators"
                                 href="#thread/<?php echo
                                 $ticket->getThreadId(); ?>/collaborators/1"><i
-                                class="icon-cog"></i> <?php echo __('Manage Collaborators'); ?></a>
+                                class="icon-cog"></i> <?php echo __('Manage'); ?></a>
                           </ul>
                         </div>
                         <?php

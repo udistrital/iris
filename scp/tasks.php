@@ -175,17 +175,15 @@ $open_name = _P(
     'assigned'
 ); // cambio de nombre a la cola
 
-if ($stats['assigned']) {
-    $nav->addSubMenu(
-        array(
-            'desc' => __('Asignados a mí'),
-            'title' => __('Casos asignados'),
-            'href' => 'tasks.php?status=assigned',
-            'iconclass' => 'assignedTickets'
-        ),
-        ($_REQUEST['status'] == 'assigned')
-    );
-}
+$nav->addSubMenu(
+    array(
+        'desc' => __('Asignados a mí'),
+        'title' => __('Casos asignados'),
+        'href' => 'tasks.php?status=assigned',
+        'iconclass' => 'assignedTickets'
+    ),
+    ($_REQUEST['status'] == 'assigned')
+);
 // $nav->addSubMenu(
 //     array(
 //         'desc' => $open_name . ' (' . number_format($stats['open']) . ')',
@@ -202,7 +200,8 @@ $nav->addSubMenu(
         'title' => __('Casos abiertos y cerrados'),
         'href' => 'tasks.php?status=open_me',
         'iconclass' => 'assignedTickets'
-    )
+    ),
+    ($_REQUEST['status'] == 'open_me')
 );
 
 $nav->addSubMenu(
@@ -211,28 +210,30 @@ $nav->addSubMenu(
         'title' => __('Gestionados por mí (Abiertos y Cerrados)'),
         'href' => 'tasks.php?status=thread_me',
         'iconclass' => 'closedTickets'
-    )
+    ),
+    ($_REQUEST['status'] == 'thread_me')
 );
 
-if ($stats['closed']) {
-    $nav->addSubMenu(
-        array(
-            'desc' => __('Mis casos cerrados'),
-            'title' => __('Casos cerrados'),
-            'href' => 'tasks.php?status=closed',
-            'iconclass' => 'closedTickets'
-        ),
-        ($_REQUEST['status'] == 'closed')
-    );
-}
+$nav->addSubMenu(
+    array(
+        'desc' => __('Mis casos cerrados'),
+        'title' => __('Casos cerrados'),
+        'href' => 'tasks.php?status=closed',
+        'iconclass' => 'closedTickets'
+    ),
+    ($_REQUEST['status'] == 'closed')
+);
 
 if ($thisstaff->getManagedDepartments()) {
-    $nav->addSubMenu(array(
-        'desc' => __('Mi dependencia'),
-        'title' => __('Casos asignados a Mi Dependencia'),
-        'href' => 'tasks.php?status=assigned_dept',
-        'iconclass' => 'departments'
-    ));
+    $nav->addSubMenu(
+        array(
+            'desc' => __('Mi dependencia'),
+            'title' => __('Casos asignados a Mi Dependencia'),
+            'href' => 'tasks.php?status=assigned_dept',
+            'iconclass' => 'departments'
+        ),
+        ($_REQUEST['status'] == 'assigned_dept')
+    );
 
     $nav->addSubMenu(
         array(
@@ -240,7 +241,8 @@ if ($thisstaff->getManagedDepartments()) {
             'title' => __('Transferidos a otra dependencia'),
             'href' => 'tasks.php?status=transferred',
             'iconclass' => 'departments'
-        )
+        ),
+        ($_REQUEST['status'] == 'transferred')
     );
 
     $nav->addSubMenu(
@@ -250,30 +252,31 @@ if ($thisstaff->getManagedDepartments()) {
             'href' => 'tasks.php?status=closed_dept',
             'iconclass' => 'closedTickets'
         ),
-        ($_REQUEST['status'] == 'closed')
+        ($_REQUEST['status'] == 'closed_dept')
     );
 }
 
 // Queue for team members
 if ($thisstaff->getTeams()) {
-    $nav->addSubMenu(array(
-        'desc' => __('Mis equipos'),
-        'title' => __('Casos asignados a mis equipos'),
-        'href' => 'tasks.php?status=assigned_mteams',
-        'iconclass' => 'teams'
-    ));
+    $nav->addSubMenu(
+        array(
+            'desc' => __('Mis equipos'),
+            'title' => __('Casos asignados a mis equipos'),
+            'href' => 'tasks.php?status=assigned_mteams',
+            'iconclass' => 'teams'
+        ),
+        ($_REQUEST['status'] == 'assigned_mteams')
+    );
 
-    if ($stats['closed']) {
-        $nav->addSubMenu(
-            array(
-                'desc' => __('Cerrados en Mis equipos'),
-                'title' => __('Casos cerrados asignados a mis equipos'),
-                'href' => 'tasks.php?status=closed_mteams',
-                'iconclass' => 'closedTickets'
-            ),
-            ($_REQUEST['status'] == 'closed')
-        );
-    }
+    $nav->addSubMenu(
+        array(
+            'desc' => __('Cerrados en Mis equipos'),
+            'title' => __('Casos cerrados asignados a mis equipos'),
+            'href' => 'tasks.php?status=closed_mteams',
+            'iconclass' => 'closedTickets'
+        ),
+        ($_REQUEST['status'] == 'closed_mteams')
+    );
 }
 
 if ($thisstaff->getManagedDepartments() || $thisstaff->getLeadedTeams()) {
@@ -283,7 +286,8 @@ if ($thisstaff->getManagedDepartments() || $thisstaff->getLeadedTeams()) {
             'title' => __('Casos sin asignar en mi dependencia'),
             'href' => 'tasks.php?status=unassigned_dept',
             'iconclass' => 'overdueTickets'
-        )
+        ),
+        ($_REQUEST['status'] == 'unassigned_dept')
     );
 }
 
@@ -294,7 +298,8 @@ if ($thisstaff->getLeadedTeams()) {
             'title' => __('Casos sin asignar en mis equipos'),
             'href' => 'tasks.php?status=unassigned_mteams',
             'iconclass' => 'overdueTickets'
-        )
+        ),
+        ($_REQUEST['status'] == 'unassigned_mteams')
     );
 }
 

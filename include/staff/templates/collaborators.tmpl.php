@@ -1,4 +1,4 @@
-<h3 class="drag-handle"><?php echo __('Collaborators'); ?></h3>
+<h3 class="drag-handle"><?php echo __('Con Copia'); ?></h3>
 <b><a class="close" href="#"><i class="icon-remove-circle"></i></a></b>
 <?php
 if($info && $info['msg']) {
@@ -54,7 +54,7 @@ if(($users=$thread->getCollaborators())) {?>
     <td>
       <div><a class="collaborator" id="addcollaborator"
           href="#thread/<?php echo $thread->getId(); ?>/add-collaborator/addcc"
-          ><i class="icon-plus-sign"></i> <?php echo __('Add Collaborator'); ?></a></div>
+          ><i class="icon-plus-sign"></i> <?php echo __('Add'); ?></a></div>
     </td>
     </table>
     <hr style="margin-top:1em"/>

@@ -66,5 +66,5 @@ $ost->setWarning($sysnotice);
 $nav = new AdminNav($thisstaff);
 
 //Page title.
-$ost->setPageTitle(__('Iris UD :: Admin Control Panel'));
+$ost->setPageTitle(__('Iris :: Admin Control Panel'));
 ?>

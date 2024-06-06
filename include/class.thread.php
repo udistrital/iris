@@ -2495,7 +2495,7 @@ class CollaboratorEvent extends ThreadEvent {
             $desc = sprintf($base, implode(', ', $collabs));
             break;
         case isset($data['add']):
-            $base = __('<b>{somebody}</b> added <strong>%s</strong> as collaborators {timestamp}');
+            $base = __('<b>{somebody}</b> agregó a <strong>%s</strong> como solicitante {timestamp}');
             $collabs = array();
             if ($data['add']) {
                 $users = User::objects()->filter(array('id__in' => array_keys($data['add'])));
