@@ -365,6 +365,10 @@ implements AuthenticatedUser, EmailContact, TemplateVariable, Searchable {
         return new AgentsName(array('first' => $this->ht['firstname'], 'last' => $this->ht['lastname']));
     }
 
+    function getNameStaffDept() {
+        return new AgentsName(array('first' => $this->ht['firstname'] . ' ' . $this->ht['lastname'], 'last' => (' de ' . $this->dept->getName())));
+    }
+
     function getAvatarAndName() {
         return $this->getAvatar().Format::htmlchars((string) $this->getName());
     }
