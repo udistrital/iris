@@ -369,6 +369,8 @@ class Mail_mimeDecode extends PEAR
 						$return->body = ($this->_decode_bodies ? $this->_decodeBody($body, $encoding) : $body);
 					}
                     $obj = new Mail_mimeDecode($body);
+                    if (!isset($return->body))
+                        $return->body = $body;
                     $return->parts[] = $obj->decode(array('include_bodies' => $this->_include_bodies,
 					                                      'decode_bodies'  => $this->_decode_bodies,
 														  'decode_headers' => $this->_decode_headers));
