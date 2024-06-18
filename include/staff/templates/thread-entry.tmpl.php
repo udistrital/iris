@@ -9,7 +9,13 @@ if ($thisstaff && !strcasecmp($thisstaff->datetime_format, 'relative')) {
 
 $entryTypes = array('M'=>'message', 'R'=>'response', 'N'=>'note');
 $user = $entry->getUser() ?: $entry->getStaff();
-$name = $user ? ($entry->type == 'M' ? $user->getNameStaffDept() : $user->getName()) : $entry->poster;
+if ($entry->getUser())
+    $name = $user->getName();
+else if ($entry->getStaff())
+    $name = $entry->type == 'M' ? $user->getNameStaffDept() : $user->getName();
+else
+    $name = $entry->poster;
+
 $avatar = '';
 if ($user && $cfg->isAvatarsEnabled())
     $avatar = $user->getAvatar();
