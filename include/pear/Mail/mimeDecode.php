@@ -169,12 +169,7 @@ class Mail_mimeDecode extends PEAR
         $this->_include_bodies = true;
         $this->_rfc822_bodies  = false;
     }
-    // BC
-    function Mail_mimeDecode($input)
-    {
-        $this->__construct($input);
-    }
-    
+
     /* Return raw header...added 10/23/07 by kip.
      *
      */
