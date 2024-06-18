@@ -34,32 +34,33 @@ $sort_options = array(
 
 $queue_columns = array(
     'number' => array(
-        'width' => '8%',
+        'width' => '11%',
         'heading' => __('Number'),
+        'sort_col'  => 'number',
     ),
     'ticket' => array(
-        'width' => '16%',
+        'width' => '11%',
         'heading' => __('Expediente'),
         'sort_col'  => 'ticket__number',
     ),
     'date' => array(
-        'width' => '20%',
+        'width' => '15%',
         'heading' => __('Date Created'),
-        'sort_col' => 'created',
+        'filter_type' => 'date',
     ),
     'title' => array(
-        'width' => '38%',
+        'width' => '18%',
         'heading' => __('Title'),
         'sort_col' => 'cdata__title',
     ),
     'dept' => array(
-        'width' => '16%',
-        'heading' => __('Department'),
+        'width' => '18%',
+        'heading' => __('Dependencia'),
         'sort_col'  => 'dept__name',
     ),
     'assignee' => array(
-        'width' => '16%',
-        'heading' => __('Assignee'),
+        'width' => '23%',
+        'heading' => __('Assigned To'),
     ),
 );
 
@@ -76,6 +77,7 @@ switch ($queue_name) {
         $showassigned = true; //closed by.
         // mis casos cerrados
         $tasks->filter(array('staff_id' => $thisstaff->getId()));
+        setFilter($status, $tasks);
         $queue_sort_options = array('closed', 'updated', 'created', 'number', 'hot');
         break;
     case 'closed_dept':
@@ -87,20 +89,23 @@ switch ($queue_name) {
         } else {
             $tasks->filter(array('id' => 0));
         }
+        setFilter($status, $tasks);
         $queue_sort_options = array('closed', 'updated', 'created', 'number', 'hot');
         break;
     case 'overdue':
         $status = 'open';
         $results_type = __('Overdue Tasks');
         $tasks->filter(array('isoverdue' => 1));
-        $queue_sort_options = array('updated', 'created', 'number', 'hot');
+        setFilter($status, $tasks);
+        $queue_sort_options = array('created', 'updated', 'number', 'hot');
         break;
     default:
     case 'assigned':
         $status = 'open';
         $results_type = __('Casos asignados a mí');
         $tasks->filter(array('staff_id' => $thisstaff->getId()));
-        $queue_sort_options = array('updated', 'created', 'hot', 'number');
+        setFilter($status, $tasks);
+        $queue_sort_options = array('created', 'updated', 'number', 'hot');
         break;
     case 'assigned_dept':
         $status = 'open';
@@ -110,7 +115,8 @@ switch ($queue_name) {
         } else {
             $tasks->filter(array('id' => 0));
         }
-        $queue_sort_options = array('updated', 'created', 'hot', 'number');
+        setFilter($status, $tasks);
+        $queue_sort_options = array('created', 'updated', 'number', 'hot');
         break;
     case 'unassigned_dept':
         $status = 'open';
@@ -124,7 +130,8 @@ switch ($queue_name) {
         } else {
             $tasks->filter(array('id' => 0));
         }
-        $queue_sort_options = array('updated', 'created', 'hot', 'number');
+        setFilter($status, $tasks);
+        $queue_sort_options = array('created', 'updated', 'number', 'hot');
         break;
     case 'open_me':
         $results_type = __('Creados por mí (abiertos y cerrados)');
@@ -150,7 +157,8 @@ switch ($queue_name) {
                 $tasks->filter(array('id' => 0));
         }
 
-        $queue_sort_options = array('updated', 'created', 'hot', 'number');
+        setFilter($status, $tasks);
+        $queue_sort_options = array('created', 'updated', 'number', 'hot');
         break;
     case 'transferred':
         $results_type = __('Transferidos a otra dependencia');
@@ -177,7 +185,8 @@ switch ($queue_name) {
             $tasks->filter(array('id' => 0));
         }
 
-        $queue_sort_options = array('updated', 'created', 'hot', 'number');
+        setFilter($status, $tasks);
+        $queue_sort_options = array('created', 'updated', 'number', 'hot');
         break;
     case 'thread_me':
         $results_type = __('Asignados por mí a otro agente');
@@ -203,13 +212,15 @@ switch ($queue_name) {
                 $tasks->filter(array('id' => 0));
         }
 
-        $queue_sort_options = array('updated', 'created', 'hot', 'number');
+        setFilter($status, $tasks);
+        $queue_sort_options = array('created', 'updated', 'number', 'hot');
         break;
     case 'assigned_mteams':
         $status = 'open';
         $results_type = __('Casos asignados a mis equipos');
         $tasks->filter(array('team_id__in' => $thisstaff->teams->values_flat('team_id')));
-        $queue_sort_options = array('updated', 'created', 'hot', 'number');
+        setFilter($status, $tasks);
+        $queue_sort_options = array('created', 'updated', 'number', 'hot');
         break;
     case 'unassigned_mteams':
         $status = 'open';
@@ -222,36 +233,56 @@ switch ($queue_name) {
         } else {
             $tasks->filter(array('id' => 0));
         }
-        $queue_sort_options = array('updated', 'created', 'hot', 'number');
+        setFilter($status, $tasks);
+        $queue_sort_options = array('created', 'updated', 'number', 'hot');
         break;
     case 'closed_mteams':
         $status = 'closed';
         $results_type = __('Casos cerrados asignados a mis equipos');
         $showassigned = true; //closed by.
         $tasks->filter(array('team_id__in' => $thisstaff->teams->values_flat('team_id')));
+        setFilter($status, $tasks);
         $queue_sort_options = array('closed', 'updated', 'created', 'number', 'hot');
         break;
-    case 'search':
-        $queue_sort_options = array('closed', 'updated', 'created', 'number', 'hot');
-        // Consider basic search
-        if ($_REQUEST['query']) {
-            $results_type = __('Search Results');
-            $tasks = $tasks->filter(Q::any(array(
-                'number__startswith' => $_REQUEST['query'],
-                'cdata__title__contains' => $_REQUEST['query'],
-            )));
-            unset($_SESSION[$queue_key]);
-            break;
-        }
-        // Fall-through and show open tickets
-    // case 'open':
-    //     $status = 'open';
-    //     $results_type = __('Open Tasks');
-    //     $queue_sort_options = array('created', 'updated', 'due', 'number', 'hot');
-    //     break;
 }
 
 // Apply filters
+function setFilter($status, $tasks) {
+    if ($_REQUEST['number']) {
+        $tasks->filter(array('number__contains' => $_REQUEST['number']));
+    }
+
+    if ($_REQUEST['ticket']) {
+        $tasks->filter(array('ticket__number__contains' => $_REQUEST['ticket']));
+    }
+
+    if ($_REQUEST['date']) {
+        $initDate = $_REQUEST['date'] . ' 05:00:00';
+        $interval = new DateInterval('P1D');
+        $endDate = new DateTime($initDate);
+        $endDate->add($interval);
+        $endFormat = $endDate->format('Y-m-d H:i:s');
+        $column = $status === 'closed' ? 'closed' : 'created';
+        $tasks->filter(array(($column . '__range') => array("'" . $initDate . "'", "'" . $endFormat . "'", true)));
+    }
+
+    if ($_REQUEST['title']) {
+        $tasks->filter(array('cdata__title__contains' => $_REQUEST['title']));
+    }
+
+    if ($_REQUEST['dept']) {
+        $tasks->filter(array('dept__name__contains' => $_REQUEST['dept']));
+    }
+
+    if ($_REQUEST['assignee']) {
+        $tasks = $tasks->filter(Q::any(array(
+            'staff__firstname__contains' => $_REQUEST['assignee'],
+            'staff__lastname__contains' => $_REQUEST['assignee'],
+            'team__name__contains' => $_REQUEST['assignee'],
+        )));
+    }
+}
+
 $filters = array();
 if ($status) {
     $SQ = new Q(array('flags__hasbit' => TaskModel::ISOPEN));
@@ -441,32 +472,6 @@ if ($thisstaff->hasPerm(Task::PERM_DELETE, false)) {
 
 
 ?>
-<!-- SEARCH FORM START -->
-<div id='basic_search'>
-    <div class="pull-right" style="height:25px">
-        <span class="valign-helper"></span>
-        <?php
-        require STAFFINC_DIR . 'templates/tasks-queue-sort.tmpl.php';
-        ?>
-    </div>
-    <form action="tasks.php" method="get" onsubmit="javascript:
-        $.pjax({
-        url:$(this).attr('action') + '?' + $(this).serialize(),
-        container:'#pjax-container',
-        timeout: 2000
-        });
-        return false;">
-        <input type="hidden" name="a" value="search">
-        <input type="hidden" name="search-type" value="" />
-        <div class="attached input">
-            <input type="text" class="basic-search" data-url="ajax.php/tasks/lookup" name="query" autofocus size="30" value="<?php echo Format::htmlchars($_REQUEST['query'], true); ?>" autocomplete="off" autocorrect="off" autocapitalize="off">
-            <button type="submit" class="attached button"><i class="icon-search"></i>
-            </button>
-        </div>
-    </form>
-
-</div>
-<!-- SEARCH FORM END -->
 <div class="clear"></div>
 <div style="margin-bottom:20px; padding-top:5px;">
     <div class="sticky bar opaque">
@@ -494,7 +499,7 @@ if ($thisstaff->hasPerm(Task::PERM_DELETE, false)) {
             <thead>
                 <tr>
                     <?php if ($thisstaff->canManageTickets()) { ?>
-                        <th width="4%">&nbsp;</th>
+                        <th width="4%">&nbsp;<form action="tasks.php" method="get"></form></th>
                     <?php } ?>
 
                     <?php
@@ -504,15 +509,26 @@ if ($thisstaff->hasPerm(Task::PERM_DELETE, false)) {
                     // Show headers
                     foreach ($queue_columns as $k => $column) {
                         echo sprintf(
-                            '<th width="%s"><a href="?sort=%s&dir=%s&%s"
-                        class="%s">%s</a></th>',
+                            '<th width="%s"><a href="?sort=%s&dir=%s&%s" class="%s">%s</a>
+                            <form action="tasks.php" method="get">
+                                <input type="hidden" name="status" value="%s" />
+                                <div class="attached input">
+                                    <input type="%s" class="column-search" name="%s" value="%s">
+                                    <button type="submit" class="attached button"><i class="icon-search"></i></button>
+                                </div>
+                            </form>
+                        </th>',
                             $column['width'],
                             $column['sort'] ?: $k,
                             $column['sort_dir'] ? 0 : 1,
                             $qstr,
                             isset($column['sort_dir'])
                                 ? ($column['sort_dir'] ? 'asc' : 'desc') : '',
-                            $column['heading']
+                            $column['heading'],
+                            $_REQUEST['status'],
+                            $column['filter_type'] ?: 'text',
+                            $k,
+                            Format::htmlchars($_REQUEST[$k], true),
                         );
                     }
                     ?>
@@ -541,7 +557,7 @@ if ($thisstaff->hasPerm(Task::PERM_DELETE, false)) {
                         $staff =  new AgentsName($T['staff__firstname'] . ' ' . $T['staff__lastname']);
                         $team = Team::getLocalById($T['team_id'], 'name', $T['team__name']);
                         $assignee = sprintf(
-                            '<span class="Icon staffAssigned">%s</span><br>&nbsp;<span class="Icon teamAssigned">%s</span>',
+                            '<span class="Icon staffAssigned">%s</span><br><span class="Icon teamAssigned">%s</span>',
                             Format::truncate((string) $staff, 30),
                             Format::truncate((string) $team, 30)
                         );
@@ -582,8 +598,8 @@ if ($thisstaff->hasPerm(Task::PERM_DELETE, false)) {
                         <td nowrap>
                             <a class="preview" href="tickets.php?id=<?php echo $T['ticket__ticket_id']; ?>" data-preview="#tickets/<?php echo $T['ticket__ticket_id']; ?>/preview"><?php echo $T['ticket__number']; ?></a>
                         </td>
-                        <td align="center" nowrap><?php echo
-                                                    Format::datetime($T[$date_col ?: 'created']); ?></td>
+                        <td nowrap><?php echo
+                                    Format::datetime($T[$date_col ?: 'created']); ?></td>
                         <td><a <?php if ($flag) { ?> class="Icon <?php echo $flag; ?>Ticket" title="<?php echo ucfirst($flag); ?> Ticket" <?php } ?> href="tasks.php?id=<?php echo $T['id']; ?>"><?php
                                                                                                                                                                                                     echo $title; ?></a>
                             <?php
@@ -596,8 +612,8 @@ if ($thisstaff->hasPerm(Task::PERM_DELETE, false)) {
                                 echo '<i class="icon-fixed-width icon-paperclip"></i>&nbsp;';
                             ?>
                         </td>
-                        <td nowrap>&nbsp;<?php echo Format::truncate($dept, 40); ?></td>
-                        <td nowrap>&nbsp;<?php echo $assignee; ?></td>
+                        <td><?php echo $dept; ?></td>
+                        <td><?php echo $assignee; ?></td>
                     </tr>
                 <?php
                 } //end of foreach
