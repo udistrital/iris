@@ -319,13 +319,17 @@ implements TemplateVariable, Searchable {
             $this->flags &= ~$flag;
     }
 
-    static function getHelpTopics($publicOnly=false, $disabled=false, $localize=true, $whitelist=array(), $allData=false) {
+    static function getHelpTopics($publicOnly=false, $disabled=false, $localize=true, $whitelist=array(), $allData=false, $dept=0) {
       global $cfg;
       static $topics, $names = array();
 
       // If localization is specifically requested, then rebuild the list.
       if (!$names || $localize) {
-          $objects = self::objects()->values_flat(
+          $objects = self::objects();
+          if ($dept) {
+              $objects->filter(array('dept_id' => $dept));
+          }
+          $objects->values_flat(
               'topic_id', 'topic_pid', 'ispublic', 'flags', 'topic', 'dept_id'
           )
           ->order_by('sort');
