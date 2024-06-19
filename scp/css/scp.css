@@ -2547,6 +2547,9 @@ select + .button {
   height: 100%;
   box-sizing: border-box;
 }
+.column-search {
+  width: calc(100% - 30px);
+}
 
 .green.button:hover {
   background-color: inherit;

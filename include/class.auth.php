@@ -756,7 +756,7 @@ abstract class ExternalStaffAuthenticationBackend
 
     function renderExternalLink() {
         $service = sprintf('%s %s',
-                __('Sign in with'),
+                __('Iniciar sesión con'),
                 $this->getServiceName());
         ?>
         <a class="external-sign-in" title="<?php echo $service; ?>"
