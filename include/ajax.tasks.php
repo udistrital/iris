@@ -105,7 +105,6 @@ class TasksAjaxAPI extends AjaxController {
             if (!$form->isValid())
                 $isvalid = false;
 
-            $permError = '';
             if ($isvalid) {
                 $vars = $_POST;
                 $vars['default_formdata'] = $form->getClean();
@@ -154,11 +153,9 @@ class TasksAjaxAPI extends AjaxController {
                   }
 
                   Http::response(201, $task->getId());
-                } else {
-                    $permError = __('No tiene permiso para crear una tarea en esta dependencia');
                 }
               }
-              $info['error'] = $permError ? $permError : sprintf('%s - %s', __('Error adding task'), __('Please try again!'));
+              $info['error'] = sprintf('%s - %s', __('Error adding task'), __('Please try again!'));
             }
 
         if ($originalTask) {

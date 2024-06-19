@@ -75,7 +75,7 @@ if ($count) { ?>
             <th width="100"><?php echo __('Status'); ?></th>
             <th width="300"><?php echo __('Title'); ?></th>
             <th width="200"><?php echo 'Dependencia'; //Cambio de nombre ?></th>
-            <th width="200"><?php echo 'Asignado'; //Cambio de nombre ?></th>
+            <th width="200"><?php echo __('Assigned to'); ?></th>
         </tr>
     </thead>
     <tbody class="tasks">
@@ -92,7 +92,7 @@ if ($count) { ?>
                     Format::truncate($task->getAssigned(),40));
         }
 
-        $status = $task->isOpen() ? '<strong>open</strong>': 'closed';
+        $status = $task->isOpen() ? '<strong>Abierto</strong>': 'Cerrado';
 
         $title = Format::htmlchars(Format::truncate($task->getTitle(),40));
         $threadcount = $task->getThread() ?

@@ -143,6 +143,7 @@ class Export {
             array(
                 'number' =>         __('Task Number'),
                 '::getCreateDateExport' =>        __('Date Created'),
+                '::getCloseDateExport' =>   __('Date Closed'),
                 'cdata.title' =>    __('Title'),
                 'dept::getLocalName' => __('Department'),
                 '::getStatusExport' =>    __('Current Status'),
