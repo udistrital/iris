@@ -24,6 +24,8 @@ if(!defined('SETUPINC')) die('Kwaheri!');
             <?php echo __('You can use osTicket without these, but you may not be able to use all features.');?>
             <ul class="progress">
                 <li class="<?php echo extension_loaded('gd')?'yes':'no'; ?>">Gdlib <?php echo __('Extension');?></li>
+                <li class="<?php echo extension_loaded('iconv')?'yes':'no'; ?>">PHP ICONV <?php echo __('Extension');?> &mdash; <em><?php
+                    echo __('Useful for email processing');?></em></li>
                 <li class="<?php echo extension_loaded('imap')?'yes':'no'; ?>">PHP IMAP <?php echo __('Extension');?> &mdash; <em><?php
                     echo __('Useful for email processing');?></em></li>
                 <li class="<?php echo extension_loaded('ctype')?'yes':'no'; ?>">PHP CTYPE <?php echo __('Extension');?> &mdash; <em><?php
