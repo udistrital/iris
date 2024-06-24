@@ -58,6 +58,15 @@ class TasksAjaxAPI extends AjaxController {
         return $this->json_encode($tasks);
     }
 
+    function getFormTeams($deptId) {
+        if (Team::checkTeamsDept($deptId)) {
+            $tForm = TaskForm::getTeamForm($deptId);
+            return $tForm->asTable();
+        } else {
+            return null;
+        }
+    }
+
     function triggerThreadAction($task_id, $thread_id, $action) {
         $thread = ThreadEntry::lookup($thread_id);
         if (!$thread)
@@ -99,6 +108,7 @@ class TasksAjaxAPI extends AjaxController {
             $form->setSource($_POST);
             // Internal form
             $iform = TaskForm::getInternalForm($_POST);
+            $tform = TaskForm::getTeamForm($_POST);
             $isvalid = true;
             if (!$iform->isValid())
                 $isvalid = false;
@@ -109,6 +119,7 @@ class TasksAjaxAPI extends AjaxController {
                 $vars = $_POST;
                 $vars['default_formdata'] = $form->getClean();
                 $vars['internal_formdata'] = $iform->getClean();
+                $vars['team_formdata'] = $tform->getClean();
                 $desc = $form->getField('description');
                 $vars['description'] = $desc->getClean();
                 if ($desc

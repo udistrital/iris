@@ -22,7 +22,7 @@ if ($info['error']) {
     echo sprintf('<p id="msg_notice">%s</p>', $info['msg']);
 } ?>
 <div id="new-task-form" style="display:block;">
-<form id="formAddTask" method="post" class="org" action="<?php echo $info['action'] ?: '#tasks/add'; ?>">
+<form method="post" class="org" action="<?php echo $info['action'] ?: '#tasks/add'; ?>">
     <?php
         $form = $form ?: TaskForm::getInstance();
         echo $form->getForm($vars)->asTable(' ',
@@ -32,11 +32,19 @@ if ($info['error']) {
         $iform = $iform ?: TaskForm::getInternalForm();
         echo $iform->asTable(__("Task Visibility & Assignment"));
 ?>
+    <div id="teamForm"></div>
         <script>
-            var fieldName = "<?php echo $iform->getFieldNameByKey('assignee'); ?>";
-            var selector = '#field_' + fieldName;
-            $('#formAddTask').on('change', 'select', function() {
-                $(selector).hide();
+            var selectorDept = "<?php echo '#_' . $iform->getFieldNameByKey('dept_id'); ?>";
+            $(selectorDept).on('change', function() {
+                $.ajax(
+                    'ajax.php/tasks/dept_id/' + $(this).val(),
+                    {
+                        dataType: 'text',
+                        success: function(response) {
+                            $('#teamForm').empty();
+                            $('#teamForm').html(response);
+                        },
+                    });
             });
         </script>
     <hr>
