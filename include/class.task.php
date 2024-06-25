@@ -1841,12 +1841,12 @@ extends AbstractForm {
                     'required' => true,
                     'layout' => new GridFluidCell(6),
                     )),
-                'assignee' => new AssigneeField(array(
+                /* 'assignee' => new AssigneeField(array(
                     'id'=>2,
                     'label' => __('Assignee'),
                     'required' => false,
                     'layout' => new GridFluidCell(6),
-                    )),
+                    )), */
                 'duedate'  =>  new DatetimeField(array(
                     'id' => 3,
                     'label' => __('Due Date'),
@@ -1897,7 +1897,7 @@ extends AbstractForm {
         );
         $mode = @$this->options['mode'];
         if ($mode && $mode == 'edit') {
-            unset($fields['assignee']);
+            unset($fields['team']);
         }
 
         return $fields;

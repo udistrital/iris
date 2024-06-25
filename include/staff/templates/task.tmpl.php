@@ -33,20 +33,20 @@ if ($info['error']) {
         echo $iform->asTable(__("Task Visibility & Assignment"));
 ?>
     <div id="teamForm"></div>
-        <script>
-            var selectorDept = "<?php echo '#_' . $iform->getFieldNameByKey('dept_id'); ?>";
-            $(selectorDept).on('change', function() {
-                $.ajax(
-                    'ajax.php/tasks/dept_id/' + $(this).val(),
-                    {
-                        dataType: 'text',
-                        success: function(response) {
-                            $('#teamForm').empty();
-                            $('#teamForm').html(response);
-                        },
-                    });
-            });
-        </script>
+    <script>
+        var selectorDept = "<?php echo '#_' . $iform->getFieldNameByKey('dept_id'); ?>";
+        $(selectorDept).on('change', function() {
+            $('#teamForm').empty();
+            $.ajax(
+                'ajax.php/tasks/dept_id/' + $(this).val(),
+                {
+                    dataType: 'text',
+                    success: function(response) {
+                        $('#teamForm').html(response);
+                    },
+                });
+        });
+    </script>
     <hr>
     <p class="full-width">
         <span class="buttons pull-left">

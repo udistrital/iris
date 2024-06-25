@@ -108,7 +108,7 @@ class TasksAjaxAPI extends AjaxController {
             $form->setSource($_POST);
             // Internal form
             $iform = TaskForm::getInternalForm($_POST);
-            $tform = TaskForm::getTeamForm($_POST);
+            $tform = TaskForm::getTeamForm(0, $_POST);
             $isvalid = true;
             if (!$iform->isValid())
                 $isvalid = false;
