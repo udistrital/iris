@@ -136,26 +136,12 @@ switch ($queue_name) {
     case 'open_me':
         $results_type = __('Creados por mí (abiertos y cerrados)');
         $staffId = $thisstaff->getId();
-        $sql = 'SELECT t.id '
-            . 'FROM ' . TASK_TABLE . ' t, '
-            . THREAD_TABLE . ' th, '
-            . THREAD_EVENT_TABLE . ' te, '
-            . EVENT_TABLE . ' e '
-            . 'WHERE e.name = \'created\' '
-            . 'AND t.id = th.object_id '
-            . 'AND th.id = te.thread_id '
-            . 'AND th.object_type = \'A\' '
-            . 'AND te.event_id = e.id '
-            . 'AND te.uid = ' . $staffId;
-
-        $ids = array();
-        if (($res = db_query($sql)) && db_num_rows($res)) {
-            while (list($id) = db_fetch_row($res))
-                $ids[] = (int) $id;
-                $tasks->filter(array('id__in' => $ids));
-        } else {
-                $tasks->filter(array('id' => 0));
-        }
+        $tasks->filter(
+            array(
+                'thread__events__agent' => $staffId,
+                'thread__events__event__name' => 'created',
+            ),
+        );
 
         setFilter($status, $tasks);
         $queue_sort_options = array('created', 'updated', 'number', 'hot');
@@ -163,24 +149,17 @@ switch ($queue_name) {
     case 'transferred':
         $results_type = __('Transferidos a otra dependencia');
         $deptId = $thisstaff->getDept()->getID();
-        $sql = 'SELECT DISTINCT t.id '
-            . 'FROM ' . TASK_TABLE . ' t, '
-            .   THREAD_TABLE . ' th, '
-            .   THREAD_EVENT_TABLE . ' te, '
-            .   EVENT_TABLE . ' e '
-            . 'WHERE e.name IN (\'transferred\', \'created\') ' // creados en mi dep o transferidos a mi dep
-            . ' AND t.id = th.object_id '
-            . ' AND th.id = te.thread_id '
-            . ' AND th.object_type = \'A\' '
-            . ' AND te.event_id = e.id '
-            . ' AND t.dept_id != ' . $deptId // ya no están en mi dep
-                . ' AND te.dept_id = ' . $deptId; // estuvieron en mi dep
-
-        $ids = array();
-        if ($thisstaff->getManagedDepartments() && ($res = db_query($sql)) && db_num_rows($res)) {
-            while (list($id) = db_fetch_row($res))
-                $ids[] = (int) $id;
-            $tasks->filter(array('id__in' => $ids));
+        if ($thisstaff->getManagedDepartments()) {
+            $tasks->distinct('id');
+            $tasks->filter(
+                array(
+                    'thread__events__dept' => $deptId,
+                    'thread__events__event__name__in' => array('transferred', 'created'),
+                ),
+                Q::not(
+                    array('dept' => $deptId),
+                ),
+            );
         } else {
             $tasks->filter(array('id' => 0));
         }
@@ -191,26 +170,18 @@ switch ($queue_name) {
     case 'thread_me':
         $results_type = __('Asignados por mí a otro agente');
         $staffId = $thisstaff->getId();
-        $sql = 'SELECT DISTINCT t.id '
-            . 'FROM ' . TASK_TABLE . ' t, '
-            . THREAD_TABLE . ' th, '
-            . THREAD_EVENT_TABLE . ' te, '
-            . EVENT_TABLE . ' e '
-            . 'WHERE e.name = \'assigned\' '
-            . 'AND t.id = th.object_id '
-            . 'AND th.id = te.thread_id '
-            . 'AND th.object_type = \'A\' '
-            . 'AND te.event_id = e.id '
-            . 'AND te.uid = ' . $staffId;
-
-        $ids = array();
-        if (($res = db_query($sql)) && db_num_rows($res)) {
-            while (list($id) = db_fetch_row($res))
-                $ids[] = (int) $id;
-                $tasks->filter(array('id__in' => $ids));
-        } else {
-                $tasks->filter(array('id' => 0));
-        }
+        $tasks->distinct('id');
+        $tasks->filter(
+            array(
+                'thread__events__agent' => $staffId,
+                'thread__events__event__name' => 'assigned',
+            ),
+            Q::not(
+                array(
+                    'thread__events__staff' => $staffId,
+                ),
+            ),
+        );
 
         setFilter($status, $tasks);
         $queue_sort_options = array('created', 'updated', 'number', 'hot');
