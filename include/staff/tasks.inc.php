@@ -215,6 +215,33 @@ switch ($queue_name) {
         setFilter($status, $tasks);
         $queue_sort_options = array('closed', 'updated', 'created', 'number', 'hot');
         break;
+    case 'created_dep':
+        $results_type = __('Creados en mi dependencia');
+        if ($thisstaff->getManagedDepartments()) {
+            $tasks->filter(
+                array(
+                    'thread__events__agent__dept' => $thisstaff->getDept()->getID(),
+                    'thread__events__event__name' => 'created',
+                ),
+            );
+        } else {
+            $tasks->filter(array('id' => 0));
+        }
+
+        setFilter($status, $tasks);
+        $queue_sort_options = array('created', 'updated', 'number', 'hot');
+        break;
+    case 'cc':
+        $results_type = __('Con Copia');
+        $userId = $thisstaff->getUserIdStaff();
+        if ($userId) {
+            $tasks->filter(array('thread__collaborators__user' => $userId));
+        } else {
+            $tasks->filter(array('id' => 0));
+        }
+        setFilter($status, $tasks);
+        $queue_sort_options = array('created', 'updated', 'number', 'hot');
+        break;
 }
 
 // Apply filters
