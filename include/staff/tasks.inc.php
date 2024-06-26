@@ -196,7 +196,7 @@ switch ($queue_name) {
     case 'unassigned_mteams':
         $status = 'open';
         $results_type = __('Casos sin asignar en mis equipos');
-        if ($thisstaff->getLeadedTeams()) {
+        if ($thisstaff->getManagedDepartments() || $thisstaff->getLeadedTeams()) {
             $tasks->filter(array(
                 'team_id__in' => $thisstaff->teams->values_flat('team_id'),
                 'staff_id' => 0
@@ -216,7 +216,7 @@ switch ($queue_name) {
         $queue_sort_options = array('closed', 'updated', 'created', 'number', 'hot');
         break;
     case 'created_dep':
-        $results_type = __('Creados en mi dependencia');
+        $results_type = __('Casos creados por alguien de mi dependencia');
         if ($thisstaff->getManagedDepartments()) {
             $tasks->filter(
                 array(
@@ -232,7 +232,7 @@ switch ($queue_name) {
         $queue_sort_options = array('created', 'updated', 'number', 'hot');
         break;
     case 'cc':
-        $results_type = __('Con Copia');
+        $results_type = __('Casos con copia a mí');
         $userId = $thisstaff->getUserIdStaff();
         if ($userId) {
             $tasks->filter(array('thread__collaborators__user' => $userId));

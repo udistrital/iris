@@ -299,9 +299,7 @@ if ($thisstaff->getManagedDepartments() || $thisstaff->getLeadedTeams()) {
         ),
         ($_REQUEST['status'] == 'unassigned_dept')
     );
-}
 
-if ($thisstaff->getLeadedTeams()) {
     $nav->addSubMenu(
         array(
             'desc' => __('Sin asignar'),
