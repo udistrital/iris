@@ -195,8 +195,14 @@ switch ($queue_name) {
         break;
     case 'unassigned_mteams':
         $status = 'open';
-        $results_type = __('Casos sin asignar en mis equipos');
-        if ($thisstaff->getManagedDepartments() || $thisstaff->getLeadedTeams()) {
+        $results_type = __('Casos sin asignar a un agente');
+        if ($thisstaff->getManagedDepartments()) {
+            $tasks->filter(array(
+                'dept_id' => $thisstaff->getDept()->getID(),
+                'staff_id' => 0,
+                'team_id__gt' => 0
+            ));
+        } else if ($thisstaff->getLeadedTeams()) {
             $tasks->filter(array(
                 'team_id__in' => $thisstaff->teams->values_flat('team_id'),
                 'staff_id' => 0
@@ -235,7 +241,17 @@ switch ($queue_name) {
         $results_type = __('Casos con copia a mí');
         $userId = $thisstaff->getUserIdStaff();
         if ($userId) {
-            $tasks->filter(array('thread__collaborators__user' => $userId));
+            $tasks->filter(
+                array(
+                    'thread__collaborators__user' => $userId,
+                    'thread__events__event__name' => 'created',
+                ),
+                Q::not(
+                    array(
+                        'thread__events__agent' => $thisstaff->getId(),
+                    ),
+                ),
+            );
         } else {
             $tasks->filter(array('id' => 0));
         }
