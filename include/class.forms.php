@@ -150,6 +150,14 @@ class Form {
         }
     }
 
+    function getFieldNameByKey($key='') {
+        $field = $this->getField($key);
+        if (!$field) {
+            return false;
+        }
+        return $field->getFormName();
+    }
+
     function getClean($validate=true) {
         if (!$this->_clean) {
             $this->_clean = array();

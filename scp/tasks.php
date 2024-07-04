@@ -254,6 +254,26 @@ if ($thisstaff->getManagedDepartments()) {
         ),
         ($_REQUEST['status'] == 'closed_dept')
     );
+
+    $nav->addSubMenu(
+        array(
+            'desc' => __('Creados dependencia'),
+            'title' => __('Casos creados por alguien de mi dependencia'),
+            'href' => 'tasks.php?status=created_dep',
+            'iconclass' => 'assignedTickets'
+        ),
+        ($_REQUEST['status'] == 'created_dep')
+    );
+
+    $nav->addSubMenu(
+        array(
+            'desc' => __('Todo dependencia'),
+            'title' => __('Todos los casos en Mi Dependencia'),
+            'href' => 'tasks.php?status=dept',
+            'iconclass' => 'assignedTickets'
+        ),
+        ($_REQUEST['status'] == 'dept')
+    );
 }
 
 // Queue for team members
@@ -289,19 +309,27 @@ if ($thisstaff->getManagedDepartments() || $thisstaff->getLeadedTeams()) {
         ),
         ($_REQUEST['status'] == 'unassigned_dept')
     );
-}
 
-if ($thisstaff->getLeadedTeams()) {
     $nav->addSubMenu(
         array(
             'desc' => __('Sin asignar'),
-            'title' => __('Casos sin asignar en mis equipos'),
-            'href' => 'tasks.php?status=unassigned_mteams',
+            'title' => __('Casos sin asignar a un agente'),
+            'href' => 'tasks.php?status=unassigned',
             'iconclass' => 'overdueTickets'
         ),
-        ($_REQUEST['status'] == 'unassigned_mteams')
+        ($_REQUEST['status'] == 'unassigned')
     );
 }
+
+$nav->addSubMenu(
+    array(
+        'desc' => __('Con Copia'),
+        'title' => __('Casos con copia a mí'),
+        'href' => 'tasks.php?status=cc',
+        'iconclass' => 'closedTickets'
+    ),
+    ($_REQUEST['status'] == 'cc')
+);
 
 if ($stats['overdue']) {
     $nav->addSubMenu(

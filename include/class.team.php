@@ -336,6 +336,10 @@ implements TemplateVariable {
                 ->filter(array('members_count__gt'=>0));
             }
 
+            if ($criteria['limit']) {
+                $query->limit($criteria['limit']);
+            }
+
             $items = array();
             foreach ($query as $row) {
                 //TODO: Fix enabled - flags is a bit field.
@@ -362,6 +366,15 @@ implements TemplateVariable {
 
         if (!isset($teams))
             $teams = self::getTeams(array('active' => true, 'dept_id' => $deptId));
+
+        return $teams;
+    }
+
+    static function checkTeamsDept($deptId) {
+        static $teams = null;
+
+        if (!isset($teams))
+            $teams = self::getTeams(array('active' => true, 'dept_id' => $deptId, 'limit' => 1));
 
         return $teams;
     }

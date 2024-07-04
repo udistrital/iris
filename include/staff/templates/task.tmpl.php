@@ -32,6 +32,21 @@ if ($info['error']) {
         $iform = $iform ?: TaskForm::getInternalForm();
         echo $iform->asTable(__("Task Visibility & Assignment"));
 ?>
+    <div id=""></div>
+    <script>
+        var selectorDept = "<?php echo '#_' . $iform->getFieldNameByKey('dept_id'); ?>";
+        $(selectorDept).on('change', function() {
+            $('#teamForm').empty();
+            $.ajax(
+                'ajax.php/tasks/dept_id/' + $(this).val(),
+                {
+                    dataType: 'text',
+                    success: function(response) {
+                        $('#teamForm').html(response);
+                    },
+                });
+        });
+    </script>
     <hr>
     <p class="full-width">
         <span class="buttons pull-left">
