@@ -34,32 +34,37 @@ $sort_options = array(
 
 $queue_columns = array(
     'number' => array(
-        'width' => '11%',
+        'width' => '10%',
         'heading' => __('Number'),
         'sort_col'  => 'number',
     ),
     'ticket' => array(
-        'width' => '11%',
+        'width' => '10%',
         'heading' => __('Expediente'),
         'sort_col'  => 'ticket__number',
     ),
     'date' => array(
-        'width' => '15%',
+        'width' => '12%',
         'heading' => __('Date Created'),
         'filter_type' => 'date',
     ),
+    'last_entry' => array(
+        'width' => '10%',
+        'heading' => __('Última Actividad'),
+        'filter_type' => 'date',
+    ),
     'title' => array(
-        'width' => '18%',
+        'width' => '19%',
         'heading' => __('Title'),
         'sort_col' => 'cdata__title',
     ),
     'dept' => array(
-        'width' => '18%',
+        'width' => '15%',
         'heading' => __('Dependencia'),
         'sort_col'  => 'dept__name',
     ),
     'assignee' => array(
-        'width' => '23%',
+        'width' => '20%',
         'heading' => __('Assigned To'),
     ),
 );
@@ -372,6 +377,7 @@ $tasks->annotate(array(
             ->otherwise(new SqlField('thread__entries__id')),
         true
     ),
+    'last_entry' => SqlAggregate::MAX('thread__entries__created')
 ));
 
 $tasks->values(
@@ -660,6 +666,8 @@ if ($thisstaff->hasPerm(Task::PERM_DELETE, false)) {
                         </td>
                         <td nowrap><?php echo
                                     Format::datetime($T[$date_col ?: 'created']); ?></td>
+                        <td nowrap><?php echo
+                                    Format::datetime($T['last_entry']); ?></td>
                         <td><a <?php if ($flag) { ?> class="Icon <?php echo $flag; ?>Ticket" title="<?php echo ucfirst($flag); ?> Ticket" <?php } ?> href="tasks.php?id=<?php echo $T['id']; ?>"><?php
                                                                                                                                                                                                     echo $title; ?></a>
                             <?php
