@@ -392,14 +392,21 @@ list($sort_cols, $sort_dir) = $_SESSION[$queue_sort_key];
 $orm_dir = $sort_dir ? QuerySet::ASC : QuerySet::DESC;
 $orm_dir_r = $sort_dir ? QuerySet::DESC : QuerySet::ASC;
 
+if ($status == 'closed') {
+    $queue_columns['date']['heading'] = __('Date Closed');
+    $queue_columns['date']['sort'] = 'closed';
+    $queue_columns['date']['sort_col'] = $date_col = 'closed';
+    $tasks->values('closed');
+}
+
+if ($sort_cols == 'date') {
+    $sort_cols = $status == 'closed' ? 'closed' : 'created';
+}
+
 switch ($sort_cols) {
     case 'number':
         $queue_columns['number']['sort_dir'] = $sort_dir;
-        $tasks->extra(array(
-            'order_by' => array(
-                array(SqlExpression::times(new SqlField('number'), 1), $orm_dir)
-            )
-        ));
+        $tasks->order_by($sort_dir ? 'id' : '-id');
         break;
     case 'due':
         $queue_columns['date']['heading'] = __('Due Date');
