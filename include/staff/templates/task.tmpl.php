@@ -32,7 +32,7 @@ if ($info['error']) {
         $iform = $iform ?: TaskForm::getInternalForm();
         echo $iform->asTable(__("Task Visibility & Assignment"));
 ?>
-    <div id="teamForm"></div>
+    <div id=""></div>
     <script>
         var selectorDept = "<?php echo '#_' . $iform->getFieldNameByKey('dept_id'); ?>";
         $(selectorDept).on('change', function() {
