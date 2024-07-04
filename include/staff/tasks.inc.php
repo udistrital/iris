@@ -280,7 +280,18 @@ function setFilter($status, $tasks) {
         $tasks->filter(array('ticket__number__contains' => $_REQUEST['ticket']));
     }
 
-    if ($_REQUEST['date']) {
+    if ($_REQUEST['start'] || $_REQUEST['end']) {
+        if ($_REQUEST['start']) {
+            $initDate = $_REQUEST['start'] . ' 05:00:00';
+            $tasks->filter(array('created__gt' => $initDate));
+        }
+        if ($_REQUEST['end']) {
+            $endDate = new DateTime($_REQUEST['end']);
+            $interval = new DateInterval('PT29H');
+            $endDate->add($interval);
+            $tasks->filter(array('created__lt' => $endDate));
+        }
+    } else if ($_REQUEST['date']) {
         $initDate = $_REQUEST['date'] . ' 05:00:00';
         $interval = new DateInterval('P1D');
         $endDate = new DateTime($initDate);
@@ -520,6 +531,24 @@ if ($thisstaff->hasPerm(Task::PERM_DELETE, false)) {
         </div>
     </div>
     <div class="clear"></div>
+    <form action="tasks.php" method="get">
+        <input type="hidden" name="status" value="<?php echo $_REQUEST['status']; ?>" />
+        <div id="basic_search" style="min-height:25px; margin: auto">
+            <label>
+                <?php echo __('Desde'); ?>:
+                <input type="date" class="input-medium search-query" name="start"
+                    value="<?php echo $_REQUEST['start']; ?>" />
+            </label>
+            <label>
+                <?php echo __('Hasta'); ?>:
+                <input type="date" class="input-medium search-query" name="end"
+                    value="<?php echo $_REQUEST['end']; ?>" />
+            </label>
+            <button class="green button action-button muted" type="submit">
+                <?php echo __( 'Buscar');?>
+            </button>
+        </div>
+    </form>
     <form action="tasks.php" method="POST" name='tasks' id="tasks">
         <?php csrf_token(); ?>
         <input type="hidden" name="a" value="mass_process">
@@ -541,14 +570,14 @@ if ($thisstaff->hasPerm(Task::PERM_DELETE, false)) {
                     foreach ($queue_columns as $k => $column) {
                         echo sprintf(
                             '<th width="%s"><a href="?sort=%s&dir=%s&%s" class="%s">%s</a>
-                            <form action="tasks.php" method="get">
-                                <input type="hidden" name="status" value="%s" />
-                                <div class="attached input">
-                                    <input type="%s" class="column-search" name="%s" value="%s">
-                                    <button type="submit" class="attached button"><i class="icon-search"></i></button>
-                                </div>
-                            </form>
-                        </th>',
+                                <form action="tasks.php" method="get">
+                                    <input type="hidden" name="status" value="%s" />
+                                    <div class="attached input">
+                                        <input type="%s" class="column-search" name="%s" value="%s">
+                                        <button type="submit" class="attached button"><i class="icon-search"></i></button>
+                                    </div>
+                                </form>
+                            </th>',
                             $column['width'],
                             $column['sort'] ?: $k,
                             $column['sort_dir'] ? 0 : 1,
