@@ -52,6 +52,7 @@ $queue_columns = array(
         'width' => '10%',
         'heading' => __('Última Actividad'),
         'filter_type' => 'date',
+        'disabled' => true,
     ),
     'title' => array(
         'width' => '19%',
@@ -473,6 +474,10 @@ switch ($sort_cols) {
         $queue_columns['date']['sort_col'] = $date_col = 'created';
         $tasks->order_by($sort_dir ? 'created' : '-created');
         break;
+    case 'last_entry':
+        $queue_columns['last_entry']['sort_dir'] = $sort_dir;
+        $tasks->order_by($sort_dir ? 'last_entry' : '-last_entry');
+        break;
 }
 
 if (in_array($sort_cols, array('created', 'due', 'updated')))
@@ -579,8 +584,8 @@ if ($thisstaff->hasPerm(Task::PERM_DELETE, false)) {
                                 <form action="tasks.php" method="get">
                                     <input type="hidden" name="status" value="%s" />
                                     <div class="attached input">
-                                        <input type="%s" class="column-search" name="%s" value="%s">
-                                        <button type="submit" class="attached button"><i class="icon-search"></i></button>
+                                        <input type="%s" class="column-search" name="%s" value="%s" %s>
+                                        <button type="submit" class="attached button" %s><i class="icon-search"></i></button>
                                     </div>
                                 </form>
                             </th>',
@@ -595,6 +600,8 @@ if ($thisstaff->hasPerm(Task::PERM_DELETE, false)) {
                             $column['filter_type'] ?: 'text',
                             $k,
                             Format::htmlchars($_REQUEST[$k], true),
+                            $column['disabled'] ? 'disabled': '',
+                            $column['disabled'] ? 'disabled': '',
                         );
                     }
                     ?>
@@ -691,7 +698,7 @@ if ($thisstaff->hasPerm(Task::PERM_DELETE, false)) {
             </tbody>
             <tfoot>
                 <tr>
-                    <td colspan="7">
+                    <td colspan="8">
                         <?php if ($total && $thisstaff->canManageTickets()) { ?>
                             <?php echo __('Select'); ?>:&nbsp;
                             <a id="selectAll" href="#ckb"><?php echo __('All'); ?></a>&nbsp;&nbsp;
