@@ -1882,6 +1882,7 @@ extends AbstractForm {
     }
 
     function buildFields() {
+        global $thisstaff;
         $fields = array(
             'team' => new AssigneeField(array(
                 'id' => 4,
@@ -1890,6 +1891,7 @@ extends AbstractForm {
                 'layout' => new GridFluidCell(6),
                 'configuration' => array(
                     'deptid' => $this->deptId,
+                    'directRequest' => $this->deptId != $thisstaff->getDeptId(),
                     'target' => 'teams',
                 ),
             )),
