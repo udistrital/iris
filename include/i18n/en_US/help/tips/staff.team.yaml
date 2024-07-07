@@ -46,6 +46,11 @@ assignment_alert:
       - title: Configure Alerts &amp; Notices
         href: /scp/settings.php?t=alerts
 
+direct_request_alert:
+    title: Solicitud Directa
+    content: >
+        Permite seleccionar el equipo cuando un agente de otra dependencia está creando una tarea.
+
 members:
     title: Team Members
     content: >
