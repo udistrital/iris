@@ -34,32 +34,38 @@ $sort_options = array(
 
 $queue_columns = array(
     'number' => array(
-        'width' => '11%',
+        'width' => '10%',
         'heading' => __('Number'),
         'sort_col'  => 'number',
     ),
     'ticket' => array(
-        'width' => '11%',
+        'width' => '10%',
         'heading' => __('Expediente'),
         'sort_col'  => 'ticket__number',
     ),
     'date' => array(
-        'width' => '15%',
+        'width' => '12%',
         'heading' => __('Date Created'),
         'filter_type' => 'date',
     ),
+    'last_entry' => array(
+        'width' => '10%',
+        'heading' => __('Última Actividad'),
+        'filter_type' => 'date',
+        'disabled' => true,
+    ),
     'title' => array(
-        'width' => '18%',
+        'width' => '19%',
         'heading' => __('Title'),
         'sort_col' => 'cdata__title',
     ),
     'dept' => array(
-        'width' => '18%',
+        'width' => '15%',
         'heading' => __('Dependencia'),
         'sort_col'  => 'dept__name',
     ),
     'assignee' => array(
-        'width' => '23%',
+        'width' => '20%',
         'heading' => __('Assigned To'),
     ),
 );
@@ -372,6 +378,7 @@ $tasks->annotate(array(
             ->otherwise(new SqlField('thread__entries__id')),
         true
     ),
+    'last_entry' => SqlAggregate::MAX('thread__entries__created')
 ));
 
 $tasks->values(
@@ -466,6 +473,10 @@ switch ($sort_cols) {
         $queue_columns['date']['sort'] = 'created';
         $queue_columns['date']['sort_col'] = $date_col = 'created';
         $tasks->order_by($sort_dir ? 'created' : '-created');
+        break;
+    case 'last_entry':
+        $queue_columns['last_entry']['sort_dir'] = $sort_dir;
+        $tasks->order_by($sort_dir ? 'last_entry' : '-last_entry');
         break;
 }
 
@@ -573,8 +584,8 @@ if ($thisstaff->hasPerm(Task::PERM_DELETE, false)) {
                                 <form action="tasks.php" method="get">
                                     <input type="hidden" name="status" value="%s" />
                                     <div class="attached input">
-                                        <input type="%s" class="column-search" name="%s" value="%s">
-                                        <button type="submit" class="attached button"><i class="icon-search"></i></button>
+                                        <input type="%s" class="column-search" name="%s" value="%s" %s>
+                                        <button type="submit" class="attached button" %s><i class="icon-search"></i></button>
                                     </div>
                                 </form>
                             </th>',
@@ -589,6 +600,8 @@ if ($thisstaff->hasPerm(Task::PERM_DELETE, false)) {
                             $column['filter_type'] ?: 'text',
                             $k,
                             Format::htmlchars($_REQUEST[$k], true),
+                            $column['disabled'] ? 'disabled': '',
+                            $column['disabled'] ? 'disabled': '',
                         );
                     }
                     ?>
@@ -660,6 +673,8 @@ if ($thisstaff->hasPerm(Task::PERM_DELETE, false)) {
                         </td>
                         <td nowrap><?php echo
                                     Format::datetime($T[$date_col ?: 'created']); ?></td>
+                        <td nowrap><?php echo
+                                    Format::datetime($T['last_entry']); ?></td>
                         <td><a <?php if ($flag) { ?> class="Icon <?php echo $flag; ?>Ticket" title="<?php echo ucfirst($flag); ?> Ticket" <?php } ?> href="tasks.php?id=<?php echo $T['id']; ?>"><?php
                                                                                                                                                                                                     echo $title; ?></a>
                             <?php
@@ -683,7 +698,7 @@ if ($thisstaff->hasPerm(Task::PERM_DELETE, false)) {
             </tbody>
             <tfoot>
                 <tr>
-                    <td colspan="7">
+                    <td colspan="8">
                         <?php if ($total && $thisstaff->canManageTickets()) { ?>
                             <?php echo __('Select'); ?>:&nbsp;
                             <a id="selectAll" href="#ckb"><?php echo __('All'); ?></a>&nbsp;&nbsp;

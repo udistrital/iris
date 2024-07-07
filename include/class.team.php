@@ -34,6 +34,7 @@ implements TemplateVariable {
 
     const FLAG_ENABLED  = 0x0001;
     const FLAG_NOALERTS = 0x0002;
+    const FLAG_DIRECT_REQUEST = 0x0004;
 
     var $_members;
 
@@ -155,6 +156,10 @@ implements TemplateVariable {
         return ($this->flags & self::FLAG_NOALERTS) == 0;
     }
 
+    function directRequest() {
+        return ($this->flags & self::FLAG_DIRECT_REQUEST);
+    }
+
     function getTranslateTag($subtag) {
         return _H(sprintf('team.%s.%s', $subtag, $this->getId()));
     }
@@ -177,14 +182,16 @@ implements TemplateVariable {
         }
 
         $vars['noalerts'] = isset($vars['noalerts']) ? self::FLAG_NOALERTS : 0;
+        $vars['directRequest'] = isset($vars['directRequest']) ? self::FLAG_DIRECT_REQUEST : 0;
         if ($this->getId()) {
             //flags
             $auditEnabled = $this->flagChanged(self::FLAG_ENABLED, $vars['isenabled']);
             $auditAlerts = $this->flagChanged(self::FLAG_NOALERTS, $vars['noalerts']);
+            $directRequest = $this->flagChanged(self::FLAG_DIRECT_REQUEST, $vars['directRequest']);
 
             foreach ($vars as $key => $value) {
                 if (isset($this->$key) && ($this->$key != $value) && $key != 'members' ||
-                   ($auditEnabled && $key == 'isenabled' || $auditAlerts && $key == 'noalerts')) {
+                   ($auditEnabled && $key == 'isenabled' || $auditAlerts && $key == 'noalerts' || $directRequest && $key == 'directRequest')) {
                     $type = array('type' => 'edited', 'key' => $key);
                     Signal::send('object.edited', $this, $type);
                 }
@@ -200,7 +207,8 @@ implements TemplateVariable {
 
         $this->flags =
               ($vars['isenabled'] ? self::FLAG_ENABLED : 0)
-            | ($vars['noalerts']);
+            | ($vars['noalerts'])
+            | ($vars['directRequest']);
         $this->lead_id = $vars['lead_id'] ?: 0;
         $this->name = Format::striptags($vars['name']);
         $this->notes = Format::sanitize($vars['notes']);
@@ -315,7 +323,7 @@ implements TemplateVariable {
         if (!$teams || $criteria) {
             $teams = array();
             $query = static::objects()
-                ->values_flat('team_id', 'name', 'flags')
+                ->values_flat('team_id', 'name', 'flags', 'notes')
                 ->order_by('name');
 
             if (isset($criteria['dept_id']) && $criteria['dept_id']) {
@@ -336,6 +344,10 @@ implements TemplateVariable {
                 ->filter(array('members_count__gt'=>0));
             }
 
+            if (isset($criteria['direct']) && $criteria['direct']) {
+                $query->filter(array('flags__hasbit' => self::FLAG_DIRECT_REQUEST));
+            }
+
             if ($criteria['limit']) {
                 $query->limit($criteria['limit']);
             }
@@ -343,10 +355,11 @@ implements TemplateVariable {
             $items = array();
             foreach ($query as $row) {
                 //TODO: Fix enabled - flags is a bit field.
-                list($id, $name, $flags) = $row;
+                list($id, $name, $flags, $notes) = $row;
                 $enabled = $flags & self::FLAG_ENABLED;
+                $desc = (isset($criteria['direct']) && $criteria['direct']) ? ' — ' . $notes : '';
                 $items[$id] = sprintf('%s%s',
-                    self::getLocalById($id, 'name', $name),
+                    self::getLocalById($id, 'name', $name) . $desc,
                     ($enabled || isset($criteria['active']))
                         ? '' : ' ' . __('(disabled)'));
             }
@@ -361,20 +374,21 @@ implements TemplateVariable {
         return $teams;
     }
 
-    static function getActiveTeams($deptId = 0) {
+    static function getActiveTeams($deptId = 0, $directOnly = false) {
         static $teams = null;
 
         if (!isset($teams))
-            $teams = self::getTeams(array('active' => true, 'dept_id' => $deptId));
+            $teams = self::getTeams(array('active' => true, 'dept_id' => $deptId, 'direct' => $directOnly));
 
         return $teams;
     }
 
     static function checkTeamsDept($deptId) {
+        global $thisstaff;
         static $teams = null;
 
         if (!isset($teams))
-            $teams = self::getTeams(array('active' => true, 'dept_id' => $deptId, 'limit' => 1));
+            $teams = self::getTeams(array('active' => true, 'dept_id' => $deptId, 'limit' => 1, 'direct' => $deptId != $thisstaff->getDeptId()));
 
         return $teams;
     }
