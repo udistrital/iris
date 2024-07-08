@@ -1561,9 +1561,9 @@ class Task extends TaskModel implements RestrictedAccess, Threadable {
         $role = $thisstaff->getRole($task->getDept());
         // Assignment
         $assignee = $vars['internal_formdata']['assignee'] ?: $vars['team_formdata']['team'];
-        if ($assignee
+        if ($assignee) {
                 // skip assignment if the user doesn't have perm.
-                && $role->hasPerm(Task::PERM_ASSIGN)) {
+            // $role->hasPerm(Task::PERM_ASSIGN))
             $_errors = array();
             $assigneeId = sprintf('%s%d',
                     ($assignee  instanceof Staff) ? 's' : 't',
