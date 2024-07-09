@@ -26,10 +26,10 @@
                 }
 
                 # Encrypt/Decrypt secret key - randomly generated during installation.
-                define('SECRET_SALT','8KZCSW18vzXpH_XJSRqCK75yMrh8TOh9');
+                define('SECRET_SALT',$_SERVER['SECRET_SALT']);
 
                 #Default admin email. Used only on db connection issues and related alerts.
-                define('ADMIN_EMAIL','administracioniris@udistrital.edu.co');
+                define('ADMIN_EMAIL',$_SERVER['ADMIN_EMAIL']);
 
                 # Database Options
                 # ---------------------------------------------------
