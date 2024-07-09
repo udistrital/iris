@@ -34,32 +34,38 @@ $sort_options = array(
 
 $queue_columns = array(
     'number' => array(
-        'width' => '11%',
+        'width' => '10%',
         'heading' => __('Number'),
         'sort_col'  => 'number',
     ),
     'ticket' => array(
-        'width' => '11%',
+        'width' => '10%',
         'heading' => __('Expediente'),
         'sort_col'  => 'ticket__number',
     ),
     'date' => array(
-        'width' => '15%',
+        'width' => '12%',
         'heading' => __('Date Created'),
         'filter_type' => 'date',
     ),
+    'last_entry' => array(
+        'width' => '10%',
+        'heading' => __('Última Actividad'),
+        'filter_type' => 'date',
+        'disabled' => true,
+    ),
     'title' => array(
-        'width' => '18%',
+        'width' => '19%',
         'heading' => __('Title'),
         'sort_col' => 'cdata__title',
     ),
     'dept' => array(
-        'width' => '18%',
+        'width' => '15%',
         'heading' => __('Dependencia'),
         'sort_col'  => 'dept__name',
     ),
     'assignee' => array(
-        'width' => '23%',
+        'width' => '20%',
         'heading' => __('Assigned To'),
     ),
 );
@@ -109,7 +115,7 @@ switch ($queue_name) {
         break;
     case 'assigned_dept':
         $status = 'open';
-        $results_type = __('Casos asignados a Mi Dependencia');
+        $results_type = __('Casos abiertos asignados a Mi Dependencia');
         if ($thisstaff->getManagedDepartments()) {
             $tasks->filter(array('dept_id' => $thisstaff->getDept()->getID()));
         } else {
@@ -133,29 +139,25 @@ switch ($queue_name) {
         setFilter($status, $tasks);
         $queue_sort_options = array('created', 'updated', 'number', 'hot');
         break;
+    case 'dept':
+        $results_type = __('Todos los casos en Mi Dependencia');
+        if ($thisstaff->getManagedDepartments()) {
+            $tasks->filter(array('dept_id' => $thisstaff->getDept()->getID()));
+        } else {
+            $tasks->filter(array('id' => 0));
+        }
+        setFilter($status, $tasks);
+        $queue_sort_options = array('created', 'updated', 'number', 'hot');
+        break;
     case 'open_me':
         $results_type = __('Creados por mí (abiertos y cerrados)');
         $staffId = $thisstaff->getId();
-        $sql = 'SELECT t.id '
-            . 'FROM ' . TASK_TABLE . ' t, '
-            . THREAD_TABLE . ' th, '
-            . THREAD_EVENT_TABLE . ' te, '
-            . EVENT_TABLE . ' e '
-            . 'WHERE e.name = \'created\' '
-            . 'AND t.id = th.object_id '
-            . 'AND th.id = te.thread_id '
-            . 'AND th.object_type = \'A\' '
-            . 'AND te.event_id = e.id '
-            . 'AND te.uid = ' . $staffId;
-
-        $ids = array();
-        if (($res = db_query($sql)) && db_num_rows($res)) {
-            while (list($id) = db_fetch_row($res))
-                $ids[] = (int) $id;
-                $tasks->filter(array('id__in' => $ids));
-        } else {
-                $tasks->filter(array('id' => 0));
-        }
+        $tasks->filter(
+            array(
+                'thread__events__agent' => $staffId,
+                'thread__events__event__name' => 'created',
+            ),
+        );
 
         setFilter($status, $tasks);
         $queue_sort_options = array('created', 'updated', 'number', 'hot');
@@ -163,24 +165,17 @@ switch ($queue_name) {
     case 'transferred':
         $results_type = __('Transferidos a otra dependencia');
         $deptId = $thisstaff->getDept()->getID();
-        $sql = 'SELECT DISTINCT t.id '
-            . 'FROM ' . TASK_TABLE . ' t, '
-            .   THREAD_TABLE . ' th, '
-            .   THREAD_EVENT_TABLE . ' te, '
-            .   EVENT_TABLE . ' e '
-            . 'WHERE e.name IN (\'transferred\', \'created\') ' // creados en mi dep o transferidos a mi dep
-            . ' AND t.id = th.object_id '
-            . ' AND th.id = te.thread_id '
-            . ' AND th.object_type = \'A\' '
-            . ' AND te.event_id = e.id '
-            . ' AND t.dept_id != ' . $deptId // ya no están en mi dep
-                . ' AND te.dept_id = ' . $deptId; // estuvieron en mi dep
-
-        $ids = array();
-        if ($thisstaff->getManagedDepartments() && ($res = db_query($sql)) && db_num_rows($res)) {
-            while (list($id) = db_fetch_row($res))
-                $ids[] = (int) $id;
-            $tasks->filter(array('id__in' => $ids));
+        if ($thisstaff->getManagedDepartments()) {
+            $tasks->distinct('id');
+            $tasks->filter(
+                array(
+                    'thread__events__dept' => $deptId,
+                    'thread__events__event__name__in' => array('transferred', 'created'),
+                ),
+                Q::not(
+                    array('dept' => $deptId),
+                ),
+            );
         } else {
             $tasks->filter(array('id' => 0));
         }
@@ -191,26 +186,18 @@ switch ($queue_name) {
     case 'thread_me':
         $results_type = __('Asignados por mí a otro agente');
         $staffId = $thisstaff->getId();
-        $sql = 'SELECT DISTINCT t.id '
-            . 'FROM ' . TASK_TABLE . ' t, '
-            . THREAD_TABLE . ' th, '
-            . THREAD_EVENT_TABLE . ' te, '
-            . EVENT_TABLE . ' e '
-            . 'WHERE e.name = \'assigned\' '
-            . 'AND t.id = th.object_id '
-            . 'AND th.id = te.thread_id '
-            . 'AND th.object_type = \'A\' '
-            . 'AND te.event_id = e.id '
-            . 'AND te.uid = ' . $staffId;
-
-        $ids = array();
-        if (($res = db_query($sql)) && db_num_rows($res)) {
-            while (list($id) = db_fetch_row($res))
-                $ids[] = (int) $id;
-                $tasks->filter(array('id__in' => $ids));
-        } else {
-                $tasks->filter(array('id' => 0));
-        }
+        $tasks->distinct('id');
+        $tasks->filter(
+            array(
+                'thread__events__agent' => $staffId,
+                'thread__events__event__name' => 'assigned',
+            ),
+            Q::not(
+                array(
+                    'thread__events__staff' => $staffId,
+                ),
+            ),
+        );
 
         setFilter($status, $tasks);
         $queue_sort_options = array('created', 'updated', 'number', 'hot');
@@ -222,10 +209,16 @@ switch ($queue_name) {
         setFilter($status, $tasks);
         $queue_sort_options = array('created', 'updated', 'number', 'hot');
         break;
-    case 'unassigned_mteams':
+    case 'unassigned':
         $status = 'open';
-        $results_type = __('Casos sin asignar en mis equipos');
-        if ($thisstaff->getLeadedTeams()) {
+        $results_type = __('Casos sin asignar a un agente');
+        if ($thisstaff->getManagedDepartments()) {
+            $tasks->filter(array(
+                'dept_id' => $thisstaff->getDept()->getID(),
+                'staff_id' => 0,
+                'team_id__gt' => 0
+            ));
+        } else if ($thisstaff->getLeadedTeams()) {
             $tasks->filter(array(
                 'team_id__in' => $thisstaff->teams->values_flat('team_id'),
                 'staff_id' => 0
@@ -244,6 +237,43 @@ switch ($queue_name) {
         setFilter($status, $tasks);
         $queue_sort_options = array('closed', 'updated', 'created', 'number', 'hot');
         break;
+    case 'created_dep':
+        $results_type = __('Casos creados por alguien de mi dependencia');
+        if ($thisstaff->getManagedDepartments()) {
+            $tasks->filter(
+                array(
+                    'thread__events__agent__dept' => $thisstaff->getDept()->getID(),
+                    'thread__events__event__name' => 'created',
+                ),
+            );
+        } else {
+            $tasks->filter(array('id' => 0));
+        }
+
+        setFilter($status, $tasks);
+        $queue_sort_options = array('created', 'updated', 'number', 'hot');
+        break;
+    case 'cc':
+        $results_type = __('Casos con copia a mí');
+        $userId = $thisstaff->getUserIdStaff();
+        if ($userId) {
+            $tasks->filter(
+                array(
+                    'thread__collaborators__user' => $userId,
+                    'thread__events__event__name' => 'created',
+                ),
+                Q::not(
+                    array(
+                        'thread__events__agent' => $thisstaff->getId(),
+                    ),
+                ),
+            );
+        } else {
+            $tasks->filter(array('id' => 0));
+        }
+        setFilter($status, $tasks);
+        $queue_sort_options = array('created', 'updated', 'number', 'hot');
+        break;
 }
 
 // Apply filters
@@ -256,7 +286,18 @@ function setFilter($status, $tasks) {
         $tasks->filter(array('ticket__number__contains' => $_REQUEST['ticket']));
     }
 
-    if ($_REQUEST['date']) {
+    if ($_REQUEST['start'] || $_REQUEST['end']) {
+        if ($_REQUEST['start']) {
+            $initDate = $_REQUEST['start'] . ' 05:00:00';
+            $tasks->filter(array('created__gt' => $initDate));
+        }
+        if ($_REQUEST['end']) {
+            $endDate = new DateTime($_REQUEST['end']);
+            $interval = new DateInterval('PT29H');
+            $endDate->add($interval);
+            $tasks->filter(array('created__lt' => $endDate));
+        }
+    } else if ($_REQUEST['date']) {
         $initDate = $_REQUEST['date'] . ' 05:00:00';
         $interval = new DateInterval('P1D');
         $endDate = new DateTime($initDate);
@@ -337,6 +378,7 @@ $tasks->annotate(array(
             ->otherwise(new SqlField('thread__entries__id')),
         true
     ),
+    'last_entry' => SqlAggregate::MAX('thread__entries__created')
 ));
 
 $tasks->values(
@@ -368,14 +410,21 @@ list($sort_cols, $sort_dir) = $_SESSION[$queue_sort_key];
 $orm_dir = $sort_dir ? QuerySet::ASC : QuerySet::DESC;
 $orm_dir_r = $sort_dir ? QuerySet::DESC : QuerySet::ASC;
 
+if ($status == 'closed') {
+    $queue_columns['date']['heading'] = __('Date Closed');
+    $queue_columns['date']['sort'] = 'closed';
+    $queue_columns['date']['sort_col'] = $date_col = 'closed';
+    $tasks->values('closed');
+}
+
+if ($sort_cols == 'date') {
+    $sort_cols = $status == 'closed' ? 'closed' : 'created';
+}
+
 switch ($sort_cols) {
     case 'number':
         $queue_columns['number']['sort_dir'] = $sort_dir;
-        $tasks->extra(array(
-            'order_by' => array(
-                array(SqlExpression::times(new SqlField('number'), 1), $orm_dir)
-            )
-        ));
+        $tasks->order_by($sort_dir ? 'id' : '-id');
         break;
     case 'due':
         $queue_columns['date']['heading'] = __('Due Date');
@@ -424,6 +473,10 @@ switch ($sort_cols) {
         $queue_columns['date']['sort'] = 'created';
         $queue_columns['date']['sort_col'] = $date_col = 'created';
         $tasks->order_by($sort_dir ? 'created' : '-created');
+        break;
+    case 'last_entry':
+        $queue_columns['last_entry']['sort_dir'] = $sort_dir;
+        $tasks->order_by($sort_dir ? 'last_entry' : '-last_entry');
         break;
 }
 
@@ -489,6 +542,24 @@ if ($thisstaff->hasPerm(Task::PERM_DELETE, false)) {
         </div>
     </div>
     <div class="clear"></div>
+    <form action="tasks.php" method="get">
+        <input type="hidden" name="status" value="<?php echo $_REQUEST['status']; ?>" />
+        <div id="basic_search" style="min-height:25px; margin: auto">
+            <label>
+                <?php echo __('Desde'); ?>:
+                <input type="date" class="input-medium search-query" name="start"
+                    value="<?php echo $_REQUEST['start']; ?>" />
+            </label>
+            <label>
+                <?php echo __('Hasta'); ?>:
+                <input type="date" class="input-medium search-query" name="end"
+                    value="<?php echo $_REQUEST['end']; ?>" />
+            </label>
+            <button class="green button action-button muted" type="submit">
+                <?php echo __( 'Buscar');?>
+            </button>
+        </div>
+    </form>
     <form action="tasks.php" method="POST" name='tasks' id="tasks">
         <?php csrf_token(); ?>
         <input type="hidden" name="a" value="mass_process">
@@ -510,14 +581,14 @@ if ($thisstaff->hasPerm(Task::PERM_DELETE, false)) {
                     foreach ($queue_columns as $k => $column) {
                         echo sprintf(
                             '<th width="%s"><a href="?sort=%s&dir=%s&%s" class="%s">%s</a>
-                            <form action="tasks.php" method="get">
-                                <input type="hidden" name="status" value="%s" />
-                                <div class="attached input">
-                                    <input type="%s" class="column-search" name="%s" value="%s">
-                                    <button type="submit" class="attached button"><i class="icon-search"></i></button>
-                                </div>
-                            </form>
-                        </th>',
+                                <form action="tasks.php" method="get">
+                                    <input type="hidden" name="status" value="%s" />
+                                    <div class="attached input">
+                                        <input type="%s" class="column-search" name="%s" value="%s" %s>
+                                        <button type="submit" class="attached button" %s><i class="icon-search"></i></button>
+                                    </div>
+                                </form>
+                            </th>',
                             $column['width'],
                             $column['sort'] ?: $k,
                             $column['sort_dir'] ? 0 : 1,
@@ -529,6 +600,8 @@ if ($thisstaff->hasPerm(Task::PERM_DELETE, false)) {
                             $column['filter_type'] ?: 'text',
                             $k,
                             Format::htmlchars($_REQUEST[$k], true),
+                            $column['disabled'] ? 'disabled': '',
+                            $column['disabled'] ? 'disabled': '',
                         );
                     }
                     ?>
@@ -600,6 +673,8 @@ if ($thisstaff->hasPerm(Task::PERM_DELETE, false)) {
                         </td>
                         <td nowrap><?php echo
                                     Format::datetime($T[$date_col ?: 'created']); ?></td>
+                        <td nowrap><?php echo
+                                    Format::datetime($T['last_entry']); ?></td>
                         <td><a <?php if ($flag) { ?> class="Icon <?php echo $flag; ?>Ticket" title="<?php echo ucfirst($flag); ?> Ticket" <?php } ?> href="tasks.php?id=<?php echo $T['id']; ?>"><?php
                                                                                                                                                                                                     echo $title; ?></a>
                             <?php
@@ -623,7 +698,7 @@ if ($thisstaff->hasPerm(Task::PERM_DELETE, false)) {
             </tbody>
             <tfoot>
                 <tr>
-                    <td colspan="7">
+                    <td colspan="8">
                         <?php if ($total && $thisstaff->canManageTickets()) { ?>
                             <?php echo __('Select'); ?>:&nbsp;
                             <a id="selectAll" href="#ckb"><?php echo __('All'); ?></a>&nbsp;&nbsp;

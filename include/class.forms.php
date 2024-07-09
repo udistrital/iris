@@ -150,6 +150,14 @@ class Form {
         }
     }
 
+    function getFieldNameByKey($key='') {
+        $field = $this->getField($key);
+        if (!$field) {
+            return false;
+        }
+        return $field->getFormName();
+    }
+
     function getClean($validate=true) {
         if (!$this->_clean) {
             $this->_clean = array();
@@ -3457,7 +3465,8 @@ class AssigneeField extends ChoiceField {
             break;
         case 'teams':
             $deptid = $config['deptid'] ?: 0;
-            foreach (Team::getActiveTeams($deptid) ?: array() as $id => $name)
+            $directRequest = ($deptid != 0 && $config['directRequest']) ? $config['directRequest'] : false;
+            foreach (Team::getActiveTeams($deptid, $directRequest) ?: array() as $id => $name)
                 $assignees['t'.$id] = $name;
             break;
         default:

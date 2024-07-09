@@ -1329,7 +1329,13 @@ implements AuthenticatedUser, EmailContact, TemplateVariable, Searchable {
 
             // Format access update as [array(dept_id, role_id, alerts?)]
             $access = array();
-            if (isset($vars['dept_access'])) {
+            if ($vars['submit'] == 'Dar Acceso Global') {
+                $depts = Dept::getDepartments();
+                foreach ($depts as $id => $_) {
+                    if ($vars['dept_id'] != $id)
+                        $access[] = array($id, 4, 1);
+                }
+            } else if (isset($vars['dept_access'])) {
                 foreach (@$vars['dept_access'] as $dept_id) {
                     $access[] = array($dept_id, $vars['dept_access_role'][$dept_id],
                         @$vars['dept_access_alerts'][$dept_id]);

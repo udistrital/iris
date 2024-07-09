@@ -1560,10 +1560,10 @@ class Task extends TaskModel implements RestrictedAccess, Threadable {
         // Get role for the dept
         $role = $thisstaff->getRole($task->getDept());
         // Assignment
-        $assignee = $vars['internal_formdata']['assignee'];
-        if ($assignee
+        $assignee = $vars['internal_formdata']['assignee'] ?: $vars['team_formdata']['team'];
+        if ($assignee) {
                 // skip assignment if the user doesn't have perm.
-                && $role->hasPerm(Task::PERM_ASSIGN)) {
+            // $role->hasPerm(Task::PERM_ASSIGN))
             $_errors = array();
             $assigneeId = sprintf('%s%d',
                     ($assignee  instanceof Staff) ? 's' : 't',
@@ -1773,6 +1773,7 @@ class TaskForm extends DynamicForm {
     static $instance;
     static $defaultForm;
     static $internalForm;
+    static $teamForm;
 
     static $forms;
 
@@ -1814,6 +1815,13 @@ class TaskForm extends DynamicForm {
 
         return static::$internalForm;
     }
+
+    static function getTeamForm($deptId, $source=null, $options=array()) {
+        if (!isset(static::$teamForm))
+            static::$teamForm = new TaskTeamForm($deptId, $source, $options);
+
+        return static::$teamForm;
+    }
 }
 
 class TaskInternalForm
@@ -1829,12 +1837,12 @@ extends AbstractForm {
                     'required' => true,
                     'layout' => new GridFluidCell(6),
                     )),
-                /*'assignee' => new AssigneeField(array(
+                /* 'assignee' => new AssigneeField(array(
                     'id'=>2,
                     'label' => __('Assignee'),
                     'required' => false,
                     'layout' => new GridFluidCell(6),
-                    )),*/
+                    )), */
                 'duedate'  =>  new DatetimeField(array(
                     'id' => 3,
                     'label' => __('Due Date'),
@@ -1853,6 +1861,41 @@ extends AbstractForm {
         if ($mode && $mode == 'edit') {
             unset($fields['dept_id']);
             unset($fields['assignee']);
+        }
+
+        return $fields;
+    }
+}
+
+class TaskTeamForm
+extends AbstractForm {
+    static $layout = 'GridFormLayout';
+    static $deptId;
+
+    public function __construct($deptId, $source=null, $options=array()) {
+        $this->deptId = $deptId;
+        parent::__construct($source, $options);
+    }
+
+    function buildFields() {
+        global $thisstaff;
+        $fields = array(
+            'team' => new AssigneeField(array(
+                'id' => 4,
+                'label' => __('Team'),
+                'required' => false,
+                'layout' => new GridFluidCell(6),
+                'configuration' => array(
+                    'deptid' => $this->deptId,
+                    'directRequest' => $this->deptId != $thisstaff->getDeptId(),
+                    'target' => 'teams',
+                ),
+            )),
+
+        );
+        $mode = @$this->options['mode'];
+        if ($mode && $mode == 'edit') {
+            unset($fields['team']);
         }
 
         return $fields;
