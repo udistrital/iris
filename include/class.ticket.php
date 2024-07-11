@@ -4370,7 +4370,7 @@ implements RestrictedAccess, Threadable, Searchable {
             $ticket->email_id = $vars['emailId'];
 
         //Make sure the origin is staff - avoid firebug hack!
-        if ($vars['duedate'] && !strcasecmp($origin,'staff'))
+        if ($vars['duedate'] && in_array(strtolower($origin), ['staff', 'api']))
             $ticket->duedate = date('Y-m-d G:i',
                 Misc::dbtime($vars['duedate']));
 
