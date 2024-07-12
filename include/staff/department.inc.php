@@ -469,6 +469,7 @@ foreach ($dept->getMembers() as $member) {
 
 <p style="text-align:center">
     <input type="submit" name="submit" value="<?php echo $submit_text; ?>">
+    <input type="submit" name="submit" value="Dar Acceso Global">
     <input type="reset"  name="reset"  value="<?php echo __('Reset');?>">
     <input type="button" name="cancel" value="<?php echo __('Cancel');?>"
         onclick='window.location.href="?"'>
