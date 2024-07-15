@@ -1633,6 +1633,7 @@ class SelectionField extends FormField {
             $values = array();
             $choices = $this->getChoices();
             foreach (explode(',', $value) as $V) {
+                $V = trim($V);
                 if (isset($choices[$V]))
                     $values[$V] = $choices[$V];
             }
