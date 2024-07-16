@@ -1882,7 +1882,7 @@ extends AbstractForm {
         $fields = array(
             'team' => new AssigneeField(array(
                 'id' => 4,
-                'label' => __('Team'),
+                'label' => 'Equipo (opcional). Si no está seguro de qué equipo seleccionar, favor ignore este campo. Tenga en cuenta que si no selecciona el equipo adecuado, generará retrasos en la solicitud',
                 'required' => false,
                 'layout' => new GridFluidCell(6),
                 'configuration' => array(
