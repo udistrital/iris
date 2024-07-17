@@ -144,6 +144,7 @@ class Export {
                 'number' =>         __('Task Number'),
                 '::getCreateDateExport' =>        __('Date Created'),
                 '::getCloseDateExport' =>   __('Date Closed'),
+                '::getLastActivityDateExport' => __('Última Actividad'),
                 'cdata.title' =>    __('Title'),
                 'dept::getLocalName' => __('Department'),
                 '::getStatusExport' =>    __('Current Status'),

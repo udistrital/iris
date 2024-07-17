@@ -168,6 +168,10 @@ class TaskModel extends VerySimpleModel {
         return $this->duedate;
     }
 
+    function getLastActivityDate() {
+        return $this->last_entry;
+    }
+
     function getCloseDate() {
         return $this->isClosed() ? $this->closed : '';
     }
@@ -286,6 +290,10 @@ class Task extends TaskModel implements RestrictedAccess, Threadable {
 
     function getCloseDateExport() {
         return Format::datetimeLocal($this->getCloseDate());
+    }
+
+    function getLastActivityDateExport() {
+        return Format::datetimeLocal($this->getLastActivityDate());
     }
 
     function getTitle() {
