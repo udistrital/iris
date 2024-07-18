@@ -1,7 +1,4 @@
 <?php
-
-use phpDocumentor\Reflection\Types\Array_;
-
 $tasks = Task::objects();
 $date_header = $date_col = false;
 
