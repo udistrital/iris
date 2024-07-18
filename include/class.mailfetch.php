@@ -57,8 +57,15 @@ class Fetcher {
     }
 
     function getTicketsApi() {
+        // We're forcing CLI interface - this is absolutely necessary since
+        // Email Fetching is considered a CLI operation regardless of how
+        // it's triggered (cron job / task or autocron)
+
+        // Please note that PHP_SAPI cannot be trusted for installations
+        // using php-fpm or php-cgi binaries for php CLI executable.
+
         if (!isset($this->api))
-            $this->api = new \TicketApiController();
+            $this->api = new \TicketApiController('cli');
 
         return $this->api;
     }
@@ -67,13 +74,13 @@ class Fetcher {
         return ($this->mbox && $this->mbox->noop());
     }
 
-    function processMessage(int $i) {
+    function processMessage(int $i, array $defaults = []) {
         try {
             // Please note that the returned object could be anything from
             // ticket, task to thread entry or a boolean.
             // Don't let TicketApi call fool you!
             return $this->getTicketsApi()->processEmail(
-                    $this->mbox->getRawEmail($i));
+                    $this->mbox->getRawEmail($i), $defaults);
         } catch (\TicketDenied $ex) {
             // If a ticket is denied we're going to report it as processed
             // so it can be moved out of the Fetch Folder or Deleted based
@@ -118,12 +125,15 @@ class Fetcher {
             $messages = range(1, min($max, $messageCount));
         }
 
+        $defaults = [
+            'emailId' => $this->getEmailId()
+        ];
         $msgs = $errors = 0;
         // TODO: Use message UIDs instead of ids
         foreach ($messages as $i) {
             try {
                 // Okay, let's try to create a ticket
-                if (($result=$this->processMessage($i))) {
+                if (($result=$this->processMessage($i, $defaults))) {
                     // Mark the message as "Seen" (IMAP only)
                     $this->mbox->markAsSeen($i);
                     // Attempt to move the message if archive folder is set or

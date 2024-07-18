@@ -23,5 +23,5 @@ if (!osTicket::is_cli())
     die(__('pipe.php only supports local piping - use http -> api/tickets.email'));
 
 require_once(INCLUDE_DIR.'api.tickets.php');
-PipeApiController::process();
+PipeApiController::process('cli');
 ?>

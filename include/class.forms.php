@@ -1549,7 +1549,7 @@ class TextboxField extends FormField {
                 function($v) use ($config) {
                     $regex = $config['regex'];
                     return @preg_match($regex, $v);
-                }, __('Value does not match required pattern')
+                }, $config['validator-error'] ?? __('Value does not match required pattern')
             ),
         );
         // Support configuration forms, as well as GUI-based form fields
@@ -2093,7 +2093,7 @@ class ChoiceField extends FormField {
         $name = $name ?: $this->get('name');
         $val = $value;
         if ($value && is_array($value))
-            $val = '"?'.implode('("|,|$)|"?', array_keys($value)).'("|,|$)';
+            $val = '"?(?<![0-9])'.implode('("|,|$)|"?(?<![0-9])', array_keys($value)).'("|,|$)';
         switch ($method) {
         case '!includes':
             return Q::not(array("{$name}__regex" => $val));
@@ -3886,6 +3886,10 @@ class FileUploadField extends FormField {
                 'hint'=>__('Optionally, enter comma-separated list of additional file types, by extension. (e.g .doc, .pdf).'),
                 'configuration'=>array('html'=>false, 'rows'=>2),
             )),
+            'strictmimecheck' => new BooleanField([
+                'id' => 4, 'label'=>__('Strict Mime Type Check'), 'required' => false, 'default' => false,
+                'hint' => 'File Mime Type associations is OS dependent',
+                'configuration' => ['desc' => __('Enable strict Mime Type check')]]),
             'max' => new TextboxField(array(
                 'label'=>__('Maximum Files'),
                 'hint'=>__('Users cannot upload more than this many files.'),
@@ -3910,8 +3914,9 @@ class FileUploadField extends FormField {
             Http::response(400, 'Send one file at a time');
         $file = array_shift($files);
         $file['name'] = urldecode($file['name']);
+        $config = $this->getConfiguration();
 
-        if (!self::isValidFile($file))
+        if (!self::isValidFile($file, $config['strictmimecheck']))
             Http::response(413, 'Invalid File');
 
         if (!$bypass && !$this->isValidFileType($file['name'], $file['type']))
@@ -3940,10 +3945,11 @@ class FileUploadField extends FormField {
         if (!$this->isValidFileType($file['name'], $file['type']))
             throw new FileUploadError(__('File type is not allowed'));
 
-        if (!self::isValidFile($file))
+        $config = $this->getConfiguration();
+
+        if (!self::isValidFile($file, $config['strictmimecheck']))
              throw new FileUploadError(__('Invalid File'));
 
-        $config = $this->getConfiguration();
         if ($file['size'] > $config['size'])
             throw new FileUploadError(__('File size is too large'));
 
@@ -3980,7 +3986,19 @@ class FileUploadField extends FormField {
         return $F;
     }
 
-    static function isValidFile($file) {
+    /**
+     * Strict mode can be enabled in Admin Panel > Settings > Tickets
+     *
+     * PS: Please note that the a mismatch can happen if the mime types
+     * database is not up to date or a little different compared to what the
+     * browser reports.
+     **/
+    static function isValidFile($file, $strict = false) {
+        // Strict mime check
+        if ($strict
+            && !empty($file['type'])
+            && FileObject::mimecmp($file['tmp_name'], $file['type']))
+            return false;
 
         // Check invalid image hacks
         if ($file['tmp_name']
@@ -4106,7 +4124,7 @@ class FileUploadField extends FormField {
         if (isset($this->attachments) && $this->attachments) {
             $this->attachments->keepOnlyFileIds($value);
         }
-        return JsonDataEncoder::encode($value);
+        return JsonDataEncoder::encode($value) ?? NULL;
     }
 
     function parse($value) {
@@ -5298,7 +5316,7 @@ class FileUploadWidget extends Widget {
         // Get Form Type
         $type = $this->field->getForm()->type;
         // Determine if for Ticket/Task/Custom
-        if ($type) {
+        if ($type && !is_numeric($field_id)) {
             if ($type == 'T')
                 $field_id = 'ticket/attach';
             elseif ($type == 'A')

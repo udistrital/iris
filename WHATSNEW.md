@@ -1,3 +1,65 @@
+osTicket v1.17.5
+================
+### Improvements
+* update: README.md PHP & Laminas (4baf9dc8, 555c4a74, 88294e2d, 30a4a6e9)
+* issue: putenv() Disabled (3c0d5f47)
+* i18n: Update Signing (98706274, 776c0f27)
+* i18n: Flags Position & Codes (3ee11112, 45f5b5b4)
+* mailer: Undefined SmtpAccount::getName() (560a4f1d)
+* issue: SystemSessionHandler (7e17daa6)
+* issue: Status List Overflow (1deee342)
+* faq: Category Notes Images (ccca0f59)
+* patches: Latest 10/03/2023 (65e12297, 48e8501d, a8d42a9d, 4475e03e, bd034712, 64b8c81d, 070eefcb, 1775ce75)
+* mail: NoValidateCert (d3c140ce)
+* issue: Choice/Selection Field Searches (00e22fad)
+* stubs: Add stubs to pass lint test (895c7236)
+* issue: Canned Response Inline Images (a503c160)
+* format: Viewable Images Bug (2a412883)
+
+### Security
+* issue: CSP Headers (6228f640)
+* security: Latest Vulns 09/2023 (04f4e611, 88a87a33, c4ad48de, 37cf8350)
+* issue: User Account Creation (777e6f0b)
+
+osTicket v1.17.4
+================
+### Improvements
+* issue: Thread Entry Actions z-index (215a0ce2)
+* oauth2: Strict Matching Bug (e014ffd2)
+* Make string translatable (1105cde7)
+* issue: Inline-Images Canned Responses (4493b126)
+* issue: Remove Old Login Code (e17ad463)
+* issue: i18n Audit Exports (45dd7c4f)
+* Bug: Custom File Upload Field Config (6371269a, 7283ac81, 902b5d35)
+* issue: Duplicate User Copy/Paste Import (b304cdb)
+* issue: Relocate Typeahead JS/CSS Files (62cd406)
+* issue: strftime() Deprecation (3fe132c4)
+* jquery: Update To 3.7.0 (ffa23da)
+* issue: glob() Empty Array (c64a2611)
+* issue: Email Only Attachment (9e45f3fa)
+* installer: Change Email (a11aee29)
+
+### Security
+* security: Latest Vulns 06/2023 (86c2ba02, 69244175, 73b997a, ae37925, e4bfb00)
+
+osTicket v1.17.3
+================
+### Enhancements
+* oauth2: Strict Matching (7275d67b, b7718be4, ca913ba2, cb3625e8, f531718a, c0cd8b16)
+* OAuth2 Resource Owner (5c239adb)
+
+### Improvements
+* session: Regenerate Session Id (d5853245)
+* fetcher: Mail Fetcher / Parser Error Handling (d4d9c424, 0a4498b2)
+* mysql: Support Sidecar Database Proxies (246aaa4d)
+* Misc. Fixes (e6beeb9b, 24fd5075, eac9960a, 10af29a5)
+* fetcher: Default Department (f410d4ec)
+* issue: LDAP Multi-Instance Fatal Error (f6486044)
+* issue: TicketDenied errno (6de7cf4c)
+* session: User Logged Out (00d409d3)
+* Uncaught Error: Call to a member function getId() on bool (af83896d)
+* Mailer: Inline Images (7efbdfd2, 8815d087, 64a8abf3)
+
 osTicket v1.17.2
 ================
 ### Improvements
@@ -83,6 +145,30 @@ osTicket v1.17-rc1
 ==================
 ### Enhancements
 * Oauth2 / Modern Email Authentication Support (d99ff6e1-163c28b5)
+
+osTicket v1.16.6
+================
+### Improvements
+* session: Collab View Ticket (6afe0efa)
+* issue: Static forTask() (1079011f)
+* issue: Featured FAQs (8df09581)
+* print: Hidden Thread Events (f63fc67d)
+* issue: Does Not Have A Value (d47fc2b1)
+* issue: Disabled Queues Run Counts (3ff3ce93)
+* issue: Queue Counts Incorrect (2428cc58)
+* jquery: Update jQueryUI 1.13.2 (b896f70d)
+* issue: Department Export (5418cf20)
+* jquery: Update To 3.6.3 (8d39a4cc)
+* i18n: make-pot (74274b5c)
+* update: README PHP Version (6087bc55)
+* issue: mPDF Font Files (427a8aa6)
+* issue: FileUpload False (8dd2ab61)
+* Add translation for "last resort" standard column labels (cb528044)
+* add translation for task status (46c005a0)
+* issue: getRealPath() Stub (32a229aa)
+
+### Security
+* security: Latest Security Patches 03/2023 (86f9693d, 091ddba9, ec604393, daee20fd, 9fb01bc1, 619ce0f6, 343a2b47, 8a55c29f, e2c8f799, ee7ce3d9, 263f71a3)
 
 osTicket v1.16.5
 ================

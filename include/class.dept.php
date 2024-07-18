@@ -604,7 +604,7 @@ implements TemplateVariable, Searchable {
                 return true;
     }
 
-    function export($dept, $criteria=null, $filename='') {
+    static function export($dept, $criteria=null, $filename='') {
         include_once(INCLUDE_DIR.'class.error.php');
         $members = $dept->getMembers();
 
@@ -822,16 +822,7 @@ implements TemplateVariable, Searchable {
 
         // Format access update as [array(dept_id, role_id, alerts?)]
         $access = array();
-        if ($vars['submit'] == 'Dar Acceso Global') {
-            $agents = Staff::getStaffMembers();
-            $dept = Dept::lookup($vars['id']);
-            foreach ($dept->getPrimaryMembers() as $member) {
-                unset($agents[$member->getId()]);
-            }
-            foreach ($agents as $id => $_) {
-                $access[] = array($id, 4, 1);
-            }
-        } else if (isset($vars['members'])) {
+        if (isset($vars['members'])) {
             foreach (@$vars['members'] as $staff_id) {
                 $access[] = array($staff_id, $vars['member_role'][$staff_id],
                     @$vars['member_alerts'][$staff_id]);
