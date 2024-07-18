@@ -83,7 +83,7 @@ if (osTicket::is_ie())
         </p>
         <a href="<?php echo ROOT_PATH ?>scp/index.php" class="no-pjax" id="logo">
             <span class="valign-helper"></span>
-            <img src="<?php echo ROOT_PATH ?>scp/logo.php?<?php echo strtotime($cfg->lastModified('staff_logo_id')); ?>" alt="osTicket &mdash; <?php echo __('Customer Support System'); ?>"/>
+            <img src="<?php echo ROOT_PATH ?>scp/logo.php?<?php echo strtotime($cfg->lastModified('staff_logo_id')); ?>" alt="Iris &mdash; Sistema Integrado de Solicitudes y Trámites"/>
         </a>
     </div>
     <div id="pjax-container" class="<?php if ($_POST) echo 'no-pjax'; ?>">
