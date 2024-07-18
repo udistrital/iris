@@ -1,3 +1,37 @@
+osTicket v1.17.2
+================
+### Improvements
+* Fix old reference to SessionData (cf8b8ce7)
+* Email Misc. Fixes (de620fe6, c19a5f03)
+* session: Memcache Max TTL (ea3e03d2)
+* mailer: Use Namespaced Mailer (133585f8)
+
+osTicket v1.17.1
+================
+### Enhancements
+* mail: Add plain:// encryption scheme hint (7c1b97b3, 39d76258)
+
+### Improvements
+* mailer: Make Headers Valid Again (c08a8a8a, aaee6b0f, 00981554, 2223877c, 020fa0d3, 60c8c884)
+* POP3 Configration can not saved (b84547b0, ccd8445e)
+* fetcher: Errors Handling & Logging (384aad13, 22edf2b4, c92006e6)
+* upgrader: Email Account Status (aee25d69)
+* issue: Plugin Config Item Exists (fdf9e412)
+* mailer: Improvements & Enhancements (845e5008, 23a80592, 977cf9aa)
+* smtp: Use proper name when saying What's Up (HELO/EHLO) (b0e5ac83)
+* email: Make sure Email Account is Active 4realz! (5efd9f14, a9b57496)
+* Session++ (ced0ef4d, b943a955, b6b63c99, f58e1c5d, 47df2b44, e2e6c0f4, 9ab5b4f1, da667366, f2c01840, c2be4ebf, db913bd3)
+* setup: Use Bootstrap:ini() to initialize setup dir sessions (48e436f0)
+* issue: Plugin Config Item Exists (fdf9e412)
+* upgrader: Email Account Status (aee25d69)
+* fetcher: Errors Handling & Logging (384aad13, 22edf2b4, c92006e6)
+* fetcher: Mail Fetch Order (f1639d41, 24338c2b)
+* SMTP: Dont send 'QUIT' on __destruct() (dbeae227)
+* issue: MTA Typo (03eeb8e2)
+* sendmail: Strip "To" and "Subject" headers (ac3855a4)
+* Mail Parse Error Handling (320981df, 75c5cfe9, a4e36d39, ba2d31cd, 30ad9cd4, 678098d8, 46b7899b, f85f9036)
+* Issue/session revisited (49d91b05, 4fc5f5cc)
+
 osTicket v1.17
 ==============
 ### Enhancements
@@ -49,6 +83,54 @@ osTicket v1.17-rc1
 ==================
 ### Enhancements
 * Oauth2 / Modern Email Authentication Support (d99ff6e1-163c28b5)
+
+osTicket v1.16.5
+================
+### Improvements
+* Fix trusted proxy wildcard check (04c0bb3a)
+* issue: Html Typo (50dfe931)
+* mailparse: Parse filenames with complex format (c8067212)
+* validator: Email Domain Verification (3c4a20a8)
+* user: Make sure User has a valid Email on create (55fbfcb5)
+
+osTicket v1.16.4
+================
+### Enhancements
+* i18n: Default Ticket Queue (7a5dd0eb)
+* mailparse: thread_entry_recipients to (a82af698)
+* issue: Unique Variable Names (0dc5a02e)
+* php: 8.1 Support (22b599e3, c24ee575, dd2b9a43)
+* issue: Session Cookie Refresh (1630459a)
+
+### Improvements
+* oops: jQuery UI Images (822a05fe)
+* issue: Manually Sorted Topics (a80db8a7)
+* issue: Queue Export Headings (47449758)
+* installer: Checking Existing Install (a3f2e246)
+* Catch storage error when mailing ticket response (ca5932ac)
+* issue: Staff Ticket Open Session (4f3d3cff)
+* issue: External Auth Regenerate Session (83252260)
+* issue: Searching Numbers (e00003f6)
+* Replace hacky way with ReflectionClass (55f61390)
+* Issue: Installer YAML (6780f29e)
+* issue: Fix Upgrader Session Issues (311089a6)
+* issue: Undefined Variable ORM (4009881a)
+* v1.16: Misc Bug Fixes (4c0341e2)
+* issue: User/Agent Password Reset (d3de1599)
+* issue: imagesx Boolean (5d06ee46)
+* file: Possible Key Collision (21c71c6e)
+* cli: User Import (4c43e46f)
+* issue: Miscellaneous Fixes (50bc1a21, 5002bef9, e036fd9a, 35684189, 9c280b49, c2a15b64, 5e970061)
+* issue: urldecode Dispatcher (c00b8e87)
+* issue: Information and SectionBreak Fields On Edit (7b60c576)
+* issue: Favicons Login Headers (61655ec6)
+* issue: Schedules stops_on (e2dcbb69)
+* Issue: Agent Permission to Assign Tickets (b4732b05)
+* issue: File Upload Size (45f554ad)
+
+### Security
+* security: Username XSS (5213ff13)
+* security: Refresh URL (3702a4fb)
 
 osTicket v1.16.3
 ================

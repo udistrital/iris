@@ -196,16 +196,16 @@ class ApiController extends Controller {
      * hashtable. For JSON formats, this is mostly a noop, the conversion
      * work will be done for XML requests
      */
-    function getRequest($format) {
+    function getRequest($format, $validate=true) {
         $input = osTicket::is_cli()?'php://stdin':'php://input';
         if (!($stream = @fopen($input, 'r')))
             $this->exerr(400, __("Unable to read request body"));
 
-        return $this->parseRequest($stream, $format);
+        return $this->parseRequest($stream, $format, $validate);
     }
 
     function getEmailRequest() {
-        return $this->getRequest('email');
+        return $this->getRequest('email', false);
     }
 
     function parseRequest($stream, $format, $validate=true) {

@@ -2769,6 +2769,14 @@ class SectionBreakField extends FormField {
     function isBlockLevel() {
         return true;
     }
+
+    function isEditableToStaff() {
+        return $this->isVisibleToStaff();
+    }
+
+    function isEditableToUsers() {
+        return $this->isVisibleToUsers();
+    }
 }
 
 class ThreadEntryField extends FormField {
@@ -3903,7 +3911,7 @@ class FileUploadField extends FormField {
         $file = array_shift($files);
         $file['name'] = urldecode($file['name']);
 
-        if (!$this->isValidFile($file))
+        if (!self::isValidFile($file))
             Http::response(413, 'Invalid File');
 
         if (!$bypass && !$this->isValidFileType($file['name'], $file['type']))
@@ -3932,7 +3940,7 @@ class FileUploadField extends FormField {
         if (!$this->isValidFileType($file['name'], $file['type']))
             throw new FileUploadError(__('File type is not allowed'));
 
-        if (!$this->isValidFile($file))
+        if (!self::isValidFile($file))
              throw new FileUploadError(__('Invalid File'));
 
         $config = $this->getConfiguration();
@@ -3972,12 +3980,11 @@ class FileUploadField extends FormField {
         return $F;
     }
 
-    function isValidFile($file) {
+    static function isValidFile($file) {
 
         // Check invalid image hacks
         if ($file['tmp_name']
                 && stripos($file['type'], 'image/') === 0
-                && function_exists('exif_imagetype')
                 && !exif_imagetype($file['tmp_name']))
             return false;
 
@@ -4035,7 +4042,11 @@ class FileUploadField extends FormField {
     }
 
     function getConfiguration() {
+        global $cfg;
+
         $config = parent::getConfiguration();
+        // If no size present default to system setting
+        $config['size'] ??= $cfg->getMaxFileSize();
         $_types = self::getFileTypes();
         $mimetypes = array();
         $extensions = array();
@@ -5409,6 +5420,14 @@ class FreeTextField extends FormField {
 
     function isBlockLevel() {
         return true;
+    }
+
+    function isEditableToStaff() {
+        return $this->isVisibleToStaff();
+    }
+
+    function isEditableToUsers() {
+        return $this->isVisibleToUsers();
     }
 
     /* utils */
