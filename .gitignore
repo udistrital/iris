@@ -1,5 +1,6 @@
 .htaccess
 php53.cgi
+include/ost-config.php
 setup/cli/modules/importer
 *.sw[a-z]
 .DS_Store
@@ -11,7 +12,7 @@ Vagrantfile
 stage
 
 # Ignore packaged plugins and language packs
-# *.phar
+*.phar
 
 # Ignore mPDF temp files
 include/mpdf/ttfontdata

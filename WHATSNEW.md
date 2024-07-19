@@ -1,3 +1,21 @@
+osTicket v1.18.1
+================
+### Improvements
+* Update upgrade.php (9fd83eba)
+* Update upgrade.inc.php (8c8a7fd1)
+* update: PHP Requirements 1.18.x (1c0c670b)
+* CLI: Make sure manage util can be executed via CLI (0caf5864)
+* Update raphael-min.js to 2.3.0 (d4aeada1)
+
+osTicket v1.18
+==============
+### Enhancements
+* update: Laminas-Mail (66fa10af, bb45d37a)
+
+### Improvements
+* Database: Change Plugin Name to varchar(255) (aac546d0)
+* update: MAJOR_VERSION (3eac42e5)
+
 osTicket v1.17.5
 ================
 ### Improvements
