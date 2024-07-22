@@ -184,6 +184,23 @@ class TaskModel extends VerySimpleModel {
         return !$this->isOpen();
     }
 
+    function isCreator() {
+        global $thisstaff;
+        $this->isCreator = Task::objects()
+            ->filter(
+                array(
+                    'id' => $this->getId(),
+                    'thread__events__agent' => $thisstaff->getId(),
+                    'thread__events__event__name' => 'created',
+                )
+            )
+            ->values_flat('id')
+            ->first()
+            ?: false;
+
+        return $this->isCreator;
+    }
+
     function isCloseable() {
 
         if ($this->isClosed())
