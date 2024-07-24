@@ -822,7 +822,16 @@ implements TemplateVariable, Searchable {
 
         // Format access update as [array(dept_id, role_id, alerts?)]
         $access = array();
-        if (isset($vars['members'])) {
+        if ($vars['submit'] == 'Dar Acceso Global') {
+            $agents = Staff::getStaffMembers();
+            $dept = Dept::lookup($vars['id']);
+            foreach ($dept->getPrimaryMembers() as $member) {
+                unset($agents[$member->getId()]);
+            }
+            foreach ($agents as $id => $_) {
+                $access[] = array($id, 4, 1);
+            }
+        } else if (isset($vars['members'])) {
             foreach (@$vars['members'] as $staff_id) {
                 $access[] = array($staff_id, $vars['member_role'][$staff_id],
                     @$vars['member_alerts'][$staff_id]);
