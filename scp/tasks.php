@@ -364,8 +364,8 @@ if ($thisstaff->hasPerm(TaskModel::PERM_CREATE, false)) {
 }
 
 
-$ost->addExtraHeader('<script type="text/javascript" src="js/ticket.js?1d8b790"></script>');
-$ost->addExtraHeader('<script type="text/javascript" src="js/thread.js?1d8b790"></script>');
+$ost->addExtraHeader('<script type="text/javascript" src="js/ticket.js"></script>');
+$ost->addExtraHeader('<script type="text/javascript" src="js/thread.js"></script>');
 $ost->addExtraHeader(
     '<meta name="tip-namespace" content="tasks.queue" />',
     "$('#content').data('tipNamespace', 'tasks.queue');"
@@ -394,7 +394,7 @@ if ($task) {
     )
         $inc = 'task-open.inc.php';
     elseif ($_REQUEST['a'] == 'export') {
-        $ts = strftime('%Y%m%d');
+        $ts = date('Ymd');
         if (!($query = $_SESSION[':Q:tasks']))
             $errors['err'] = __('Query token not found');
         elseif (!Export::saveTasks($query, "tasks-$ts.csv", 'csv'))

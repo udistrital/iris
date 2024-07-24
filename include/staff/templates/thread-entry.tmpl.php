@@ -9,20 +9,14 @@ if ($thisstaff && !strcasecmp($thisstaff->datetime_format, 'relative')) {
 
 $entryTypes = array('M'=>'message', 'R'=>'response', 'N'=>'note');
 $user = $entry->getUser() ?: $entry->getStaff();
-if ($entry->getUser())
-    $name = $user->getName();
-else if ($entry->getStaff())
-    $name = $entry->type == 'M' ? $user->getNameStaffDept() : $user->getName();
-else
-    $name = $entry->poster;
-
+$name = $user ? $user->getName() : $entry->poster;
 $avatar = '';
 if ($user && $cfg->isAvatarsEnabled())
     $avatar = $user->getAvatar();
 
 ?>
 <div class="thread-entry <?php
-    echo $entry->isSystem() ? 'system' : $entryTypes[$entry->type]; ?> <?php if ($avatar) echo 'avatar'; ?>">
+    echo $entry->isSystem() ? 'system' : $entryTypes[$entry->type]; ?> <?php if ($avatar) echo 'avatar'; ?>" style="position:relative;z-index:auto;">
 <?php if ($avatar) { ?>
     <span class="<?php echo ($entry->type == 'M') ? 'pull-right' : 'pull-left'; ?> avatar">
 <?php echo $avatar; ?>

@@ -25,8 +25,8 @@ define('AJAX_REQUEST', 1);
 require('staff.inc.php');
 
 //Clean house...don't let the world see your crap.
-ini_set('display_errors', '0'); // Set by installer
-ini_set('display_startup_errors', '0'); // Set by installer
+ini_set('display_errors','0'); //Disable error display
+ini_set('display_startup_errors','0');
 
 //TODO: disable direct access via the browser? i,e All request must have REFER?
 if(!defined('INCLUDE_DIR'))	Http::response(500, 'Server configuration error');
@@ -41,7 +41,7 @@ $dispatcher = patterns('',
         url_get('^faq/(?P<id>\d+)$', 'faq')
     )),
     url('^/content/', patterns('ajax.content.php:ContentAjaxAPI',
-        url_get('^log/(?P<id>\d+)', 'log'),
+        url_get('^log/(?P<id>\d+)', 'syslog'),
         url_get('^context$', 'context'),
         url_get('^ticket_variables', 'ticket_variables'),
         url_get('^signature/(?P<type>\w+)(?:/(?P<id>\d+))?$', 'getSignature'),
@@ -116,7 +116,7 @@ $dispatcher = patterns('',
         url('^/import$', 'importUsers'),
         url_get('^/select$', 'selectUser'),
         url_get('^/select/(?P<id>\d+)$', 'selectUser'),
-        url_get('^/select/auth:(?P<bk>\w+):(?P<id>.+)$', 'addRemoteUser'),
+        url_get('^/select/auth:(?P<bk>[\w.]+):(?P<id>.+)$', 'addRemoteUser'),
         url_get('^/(?P<id>\d+)/register$', 'register'),
         url_post('^/(?P<id>\d+)/register$', 'register'),
         url_get('^/(?P<id>\d+)/delete$', 'delete'),
@@ -317,6 +317,7 @@ $dispatcher = patterns('',
     )),
     url('^/email', patterns('ajax.email.php:EmailAjaxAPI',
         url_post('^/(?P<id>\d+)/stash$', 'stashFormData'),
+        url_post('^/(?P<id>\d+)/auth/config/(?P<type>\w+)/delete$', 'deleteToken'),
         url('^/(?P<id>\d+)/auth/config/(?P<type>\w+)/(?P<auth>.+)$', 'configureAuth'),
     ))
 );

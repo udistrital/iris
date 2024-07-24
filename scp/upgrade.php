@@ -25,7 +25,7 @@ if($_POST && $_POST['s'] && !$upgrader->isAborted()) {
             if(!$ost->isUpgradePending()) {
                 $errors['err']=__('Nothing to do! System already upgraded to the current version');
             } elseif(!$upgrader->isUpgradable()) {
-                $errors['err']=__('The upgrader does NOT support upgrading from the current vesion!');
+                $errors['err']=__('The upgrader does NOT support upgrading from the current version!');
             } elseif(!$upgrader->check_prereq()) {
                 $errors['prereq']=__('Minimum requirements not met! Refer to Release Notes for more information');
             } elseif(!strcasecmp(basename(CONFIG_FILE), 'settings.php')) {
@@ -82,7 +82,7 @@ $nav->addSubMenu(array('desc'=>__('Upgrader'),
                            'href'=>'upgrade.php',
                            'iconclass'=>'preferences'),
                         true);
-$ost->addExtraHeader('<script type="text/javascript" src="./js/upgrader.js?1d8b790"></script>');
+$ost->addExtraHeader('<script type="text/javascript" src="./js/upgrader.js"></script>');
 require(STAFFINC_DIR.'header.inc.php');
 require(UPGRADE_DIR.$inc);
 require(STAFFINC_DIR.'footer.inc.php');

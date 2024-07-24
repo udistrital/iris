@@ -45,7 +45,7 @@ if ($thisstaff && $thisstaff->is2FAPending())
             <input type="text" name="userid" id="name" value="<?php
                 echo $info['userid'] ?? null; ?>" placeholder="<?php echo __('Email or Username'); ?>"
                 autofocus autocorrect="off" autocapitalize="off">
-            <input type="password" name="passwd" id="pass" placeholder="<?php echo __('Password'); ?>" autocorrect="off" autocapitalize="off">
+            <input type="password" name="passwd" id="pass" maxlength="128" placeholder="<?php echo __('Password'); ?>" autocorrect="off" autocapitalize="off">
                 <h3 style="display:inline"><a id="reset-link" class="<?php
                     if (!$show_reset || !$cfg->allowPasswordReset()) echo 'hidden';
                     ?>" href="pwreset.php"><?php echo __('Forgot My Password'); ?></a></h3>
@@ -73,8 +73,8 @@ if (($bks=StaffAuthenticationBackend::getExternal())) { ?>
         </div>
     </div>
 </div>
-<div id="poweredBy"><?php echo __('Powered by Dazlian and '); ?>
-    <a href="http://www.dazlian.tech" target="_blank">
+<div id="poweredBy"><?php echo __('Powered by'); ?>
+    <a href="http://www.osticket.com" target="_blank">
         <img alt="osTicket" src="images/osticket-grey.png" class="osticket-logo">
     </a>
 </div>
@@ -167,6 +167,6 @@ if (($bks=StaffAuthenticationBackend::getExternal())) { ?>
         #loginBox:after { background-color: white !important; }
     </style>
     <![endif]-->
-    <script type="text/javascript" src="<?php echo ROOT_PATH; ?>js/jquery-ui-1.13.1.custom.min.js?1d8b790"></script>
+    <script type="text/javascript" src="<?php echo ROOT_PATH; ?>js/jquery-ui-1.13.2.custom.min.js"></script>
 </body>
 </html>
