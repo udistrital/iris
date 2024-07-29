@@ -1,0 +1,22 @@
+branch-defaults:
+  default:
+    environment: test-dev-1
+    group_suffix: null
+environment-defaults:
+  test-dev-1:
+    branch: null
+    repository: null
+global:
+  application_name: Testeb-env-dev
+  branch: null
+  default_ec2_keyname: djangoapp
+  default_platform: PHP 8.1 running on 64bit Amazon Linux 2
+  default_region: us-east-1
+  include_git_submodules: true
+  instance_profile: null
+  platform_name: null
+  platform_version: null
+  profile: null
+  repository: null
+  sc: null
+  workspace_type: Application
