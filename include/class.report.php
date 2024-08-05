@@ -91,7 +91,7 @@ class OverviewReport {
         $res = db_query('SELECT DISTINCT(E.name) FROM '.THREAD_EVENT_TABLE
             .' T JOIN '.EVENT_TABLE . ' E ON E.id = T.event_id'
             .' WHERE timestamp BETWEEN '.$start.' AND '.$stop
-            .' AND T.event_id IN ('.implode(",",$event_ids).') AND T.thread_type = "T"'
+            .' AND T.event_id IN ('.implode(",",$event_ids).') AND T.thread_type = "A"'
             .' ORDER BY 1');
         $events = array();
         while ($row = db_fetch_row($res)) $events[] = __($row[0]);
@@ -186,7 +186,7 @@ class OverviewReport {
                 ->filter(array(
                         'annulled' => 0,
                         'timestamp__range' => array($start, $stop, true),
-                        'thread_type' => 'T',
+                        'thread_type' => 'A',
                    ))
                 ->aggregate(array(
                     'Opened' => SqlAggregate::COUNT(
@@ -220,12 +220,13 @@ class OverviewReport {
             $headers = array(__('Department'));
             $header = function($row) { return Dept::getLocalNameById($row['dept_id'], $row['dept__name']); };
             $pk = 'dept__id';
+            $depts = ($thisstaff->isAdmin() ? $thisstaff->getDepts() : ($thisstaff->isManager($thisstaff->getDept()) ? array($thisstaff->getDeptId()) : 0));
             $stats = $stats
-                ->filter(array('dept_id__in' => $thisstaff->getDepts()))
+                ->filter(array('dept_id__in' => $depts))
                 ->values('dept__id', 'dept__name', 'dept__flags')
                 ->distinct('dept__id');
             $times = $times
-                ->filter(array('dept_id__in' => $thisstaff->getDepts()))
+                ->filter(array('dept_id__in' => $depts))
                 ->values('dept__id')
                 ->distinct('dept__id');
             break;
