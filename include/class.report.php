@@ -140,10 +140,12 @@ class OverviewReport {
     }
 
     function enumTabularGroups() {
-        return array("dept"=>__("Department"), "topic"=>__("Topics"),
-            # XXX: This will be relative to permissions based on the
-            # logged-in-staff. For basic staff, this will be 'My Stats'
-            "staff"=>__("Agent"));
+        global $thisstaff;
+        $tabs = array();
+        if ($thisstaff->getManagedDepartments() || $thisstaff->hasPerm(ReportModel::PERM_AGENTS))
+            $tabs["dept"] = __("Dependencia");
+        $tabs["staff"] = __("Agent");
+        return $tabs;
     }
 
     function getTabularData($group='dept') {
@@ -220,7 +222,7 @@ class OverviewReport {
             $headers = array(__('Department'));
             $header = function($row) { return Dept::getLocalNameById($row['dept_id'], $row['dept__name']); };
             $pk = 'dept__id';
-            $depts = ($thisstaff->isAdmin() ? $thisstaff->getDepts() : ($thisstaff->isManager($thisstaff->getDept()) ? array($thisstaff->getDeptId()) : 0));
+            $depts = ($thisstaff->isAdmin() ? $thisstaff->getDepts() : ($thisstaff->getManagedDepartments() ?: array(0)));
             $stats = $stats
                 ->filter(array('dept_id__in' => $depts))
                 ->values('dept__id', 'dept__name', 'dept__flags')
@@ -257,15 +259,17 @@ class OverviewReport {
                 ->values('staff_id', 'staff__firstname', 'staff__lastname')
                 ->filter(array('staff_id__in' => array_keys($staff)))
                 ->distinct('staff_id');
-            $times = $times->values('staff_id')->distinct('staff_id');
+            $times = $times
+                ->values('staff_id')
+                ->filter(array('staff_id__in' => array_keys($staff)))
+                ->distinct('staff_id');
             $depts = $thisstaff->getManagedDepartments();
             if ($thisstaff->hasPerm(ReportModel::PERM_AGENTS))
                 $depts = array_merge($depts, $thisstaff->getDepts());
-            $Q = Q::any(array(
-                'staff_id' => $thisstaff->getId(),
-            ));
             if ($depts)
-                $Q->add(array('dept_id__in' => $depts));
+                $Q = Q::any(array('dept_id__in' => $depts));
+            else
+                $Q = Q::any(array('staff_id' => $thisstaff->getId()));
             $stats = $stats->filter(array('staff_id__gt'=>0))->filter($Q);
             $times = $times->filter(array('staff_id__gt'=>0))->filter($Q);
             break;
