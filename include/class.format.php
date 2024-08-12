@@ -485,7 +485,7 @@ class Format {
         $exclude = !$cfg->allowExternalImages();
         $local = false;
 
-        $input = preg_replace_callback('/<img ([^>]*)(src="([^"]+)")([^>]*)\/?>/',
+        $input = preg_replace_callback('/<img ([^>]*?)(src="([^"]+)")([^>]*)\/?>/',
             function($match) use ($local, $allowed, $exclude, $display) {
                 if (strpos($match[3], 'cid:') !== false)
                     $local = true;
