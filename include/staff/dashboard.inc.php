@@ -40,7 +40,7 @@ $plots = $report->getPlotData();
 <div class="clear"></div>
 <div style="margin-bottom:20px; padding-top:5px;">
     <div class="pull-left flush-left">
-        <h2><?php echo __('Ticket Activity');
+        <h2><?php echo __('Actividad de Tareas');
             ?>&nbsp;<i class="help-tip icon-question-sign" href="#ticket_activity"></i></h2>
     </div>
 </div>
@@ -53,7 +53,7 @@ $plots = $report->getPlotData();
 
 <hr/>
 <h2><?php echo __('Statistics'); ?>&nbsp;<i class="help-tip icon-question-sign" href="#statistics"></i></h2>
-<p><?php echo __('Statistics of tickets organized by department, help topic, and agent.');?></p>
+<p><?php echo __('Estadísticas de tareas organizadas por dependencias, equipos y agentes.');?></p>
 <p><b><?php echo __('Range: '); ?></b>
   <?php
   $range = array();
@@ -102,11 +102,6 @@ foreach ($groups as $g=>$desc) {
               <i class="help-tip icon-question-sign" href="#assigned"></i>
             <?php
             break;
-            case 'Overdue':
-              ?>
-                <i class="help-tip icon-question-sign" href="#overdue"></i>
-              <?php
-              break;
             case 'Closed':
               ?>
                 <i class="help-tip icon-question-sign" href="#closed"></i>
@@ -115,11 +110,6 @@ foreach ($groups as $g=>$desc) {
             case 'Reopened':
               ?>
                 <i class="help-tip icon-question-sign" href="#reopened"></i>
-              <?php
-              break;
-            case 'Deleted':
-              ?>
-                <i class="help-tip icon-question-sign" href="#deleted"></i>
               <?php
               break;
             case 'Service Time':
