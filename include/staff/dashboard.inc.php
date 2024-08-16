@@ -66,7 +66,7 @@ $plots = $report->getPlotData();
     $timezone = $date->format('e');
     $range[] = $date->format('F j, Y');
   }
-  echo __($range[0] . ' - ' . $range[1] .  ' (' . Format::timezone($timezone) . ')');
+  echo __($range[0] . ' - ' . $range[1]);
 ?>
 
 <ul class="clean tabs">
