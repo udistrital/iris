@@ -92,7 +92,7 @@ foreach ($groups as $g=>$desc) {
       ?>
         <th <?php if ($j === 0) echo 'width="30%" class="flush-left"'; ?>><?php echo Format::htmlchars($c);
         switch ($c) {
-          case 'Opened':
+          case 'Created':
             ?>
               <i class="help-tip icon-question-sign" href="#opened"></i>
             <?php
@@ -115,11 +115,6 @@ foreach ($groups as $g=>$desc) {
             case 'Service Time':
               ?>
                 <i class="help-tip icon-question-sign" href="#service_time"></i>
-              <?php
-              break;
-            case 'Response Time':
-              ?>
-                <i class="help-tip icon-question-sign" href="#response_time"></i>
               <?php
               break;
         }

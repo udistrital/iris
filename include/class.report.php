@@ -158,8 +158,8 @@ class OverviewReport {
         $event = function ($name) use ($event_ids) {
             return $event_ids[$name];
         };
-        $dash_headers = array(__('Opened'),__('Assigned'),__('Closed'),__('Reopened'),
-                              __('Service Time'),__('Response Time'));
+        $dash_headers = array(__('Created'),__('Assigned'),__('Closed'),__('Reopened'),
+                              __('Service Time'));
 
         list($start, $stop) = $this->getDateRange();
         $times = ThreadEvent::objects()
@@ -182,9 +182,6 @@ class OverviewReport {
                 'ServiceTime' => SqlAggregate::AVG(SqlFunction::timestampdiff(
                   new SqlCode('DAY'), new SqlField('thread__task__created'), new SqlField('thread__task__closed'))
                 ),
-                'ResponseTime' => SqlAggregate::AVG(SqlFunction::timestampdiff(
-                    new SqlCode('DAY'),new SqlField('thread__entries__parent__created'), new SqlField('thread__entries__created')
-                )),
             ));
 
             $stats = ThreadEvent::objects()
@@ -298,8 +295,7 @@ class OverviewReport {
             $T = $timings[$R[$pk]];
             $rows[] = array($header($R) . $status, $R['Created'], $R['Assigned'],
                 $R['Closed'], $R['Reopened'],
-                number_format($T['ServiceTime'], 1),
-                number_format($T['ResponseTime'], 1));
+                number_format($T['ServiceTime'], 1));
         }
         return array("columns" => array_merge($headers, $dash_headers),
                      "data" => $rows);
