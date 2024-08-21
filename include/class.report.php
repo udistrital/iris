@@ -84,14 +84,15 @@ class OverviewReport {
 
     function getPlotData() {
         list($start, $stop) = $this->getDateRange();
-        $states = array("created", "closed", "reopened", "assigned", "overdue", "transferred");
+        $states = array("created", "closed", "reopened", "assigned", "transferred");
         $event_ids = Event::getIds();
 
         # Fetch all types of events over the timeframe
         $res = db_query('SELECT DISTINCT(E.name) FROM '.THREAD_EVENT_TABLE
             .' T JOIN '.EVENT_TABLE . ' E ON E.id = T.event_id'
             .' WHERE timestamp BETWEEN '.$start.' AND '.$stop
-            .' AND T.event_id IN ('.implode(",",$event_ids).') AND T.thread_type = "T"'
+            .' AND T.event_id IN ('.implode(",",$event_ids).') AND T.thread_type = "A"'
+            .' AND E.name NOT IN (\'collab\', \'edited\')'
             .' ORDER BY 1');
         $events = array();
         while ($row = db_fetch_row($res)) $events[] = __($row[0]);
@@ -140,10 +141,14 @@ class OverviewReport {
     }
 
     function enumTabularGroups() {
-        return array("dept"=>__("Department"), "topic"=>__("Topics"),
-            # XXX: This will be relative to permissions based on the
-            # logged-in-staff. For basic staff, this will be 'My Stats'
-            "staff"=>__("Agent"));
+        global $thisstaff;
+        $tabs = array();
+        if ($thisstaff->getManagedDepartments() || $thisstaff->hasPerm(ReportModel::PERM_AGENTS))
+            $tabs["dept"] = __("Dependencia");
+        if ($thisstaff->getManagedDepartments() || count($thisstaff->teams->values_flat('team_id')))
+            $tabs["team"] = __("Teams");
+        $tabs["staff"] = __("Agents");
+        return $tabs;
     }
 
     function getTabularData($group='dept') {
@@ -153,8 +158,8 @@ class OverviewReport {
         $event = function ($name) use ($event_ids) {
             return $event_ids[$name];
         };
-        $dash_headers = array(__('Opened'),__('Assigned'),__('Overdue'),__('Closed'),__('Reopened'),
-                              __('Deleted'),__('Service Time'),__('Response Time'));
+        $dash_headers = array(__('Created'),__('Assigned'),__('Closed'),__('Reopened'),
+                              __('Service Time'));
 
         list($start, $stop) = $this->getDateRange();
         $times = ThreadEvent::objects()
@@ -175,31 +180,24 @@ class OverviewReport {
                ))
             ->aggregate(array(
                 'ServiceTime' => SqlAggregate::AVG(SqlFunction::timestampdiff(
-                  new SqlCode('HOUR'), new SqlField('thread__events__timestamp'), new SqlField('timestamp'))
+                  new SqlCode('DAY'), new SqlField('thread__task__created'), new SqlField('thread__task__closed'))
                 ),
-                'ResponseTime' => SqlAggregate::AVG(SqlFunction::timestampdiff(
-                    new SqlCode('HOUR'),new SqlField('thread__entries__parent__created'), new SqlField('thread__entries__created')
-                )),
             ));
 
             $stats = ThreadEvent::objects()
                 ->filter(array(
                         'annulled' => 0,
                         'timestamp__range' => array($start, $stop, true),
-                        'thread_type' => 'T',
+                        'thread_type' => 'A',
                    ))
                 ->aggregate(array(
-                    'Opened' => SqlAggregate::COUNT(
+                    'Created' => SqlAggregate::COUNT(
                         SqlCase::N()
                             ->when(new Q(array('event_id' => $event('created'))), 1)
                     ),
                     'Assigned' => SqlAggregate::COUNT(
                         SqlCase::N()
                             ->when(new Q(array('event_id' => $event('assigned'))), 1)
-                    ),
-                    'Overdue' => SqlAggregate::COUNT(
-                        SqlCase::N()
-                            ->when(new Q(array('event_id' => $event('overdue'))), 1)
                     ),
                     'Closed' => SqlAggregate::COUNT(
                         SqlCase::N()
@@ -209,42 +207,39 @@ class OverviewReport {
                         SqlCase::N()
                             ->when(new Q(array('event_id' => $event('reopened'))), 1)
                     ),
-                    'Deleted' => SqlAggregate::COUNT(
-                        SqlCase::N()
-                            ->when(new Q(array('event_id' => $event('deleted'))), 1)
-                    ),
                 ));
 
         switch ($group) {
         case 'dept':
-            $headers = array(__('Department'));
+            $headers = array(__('Dependencia'));
             $header = function($row) { return Dept::getLocalNameById($row['dept_id'], $row['dept__name']); };
             $pk = 'dept__id';
+            $depts = ($thisstaff->isAdmin() ? $thisstaff->getDepts() : ($thisstaff->getManagedDepartments() ?: array(0)));
             $stats = $stats
-                ->filter(array('dept_id__in' => $thisstaff->getDepts()))
+                ->filter(array('dept_id__in' => $depts))
                 ->values('dept__id', 'dept__name', 'dept__flags')
                 ->distinct('dept__id');
             $times = $times
-                ->filter(array('dept_id__in' => $thisstaff->getDepts()))
+                ->filter(array('dept_id__in' => $depts))
                 ->values('dept__id')
                 ->distinct('dept__id');
             break;
-        case 'topic':
-            $headers = array(__('Help Topic'));
-            $header = function($row) { return Topic::getLocalNameById($row['topic_id'], $row['topic__topic']); };
-            $pk = 'topic_id';
-            $topics = $thisstaff->getTopicNames(false, Topic::DISPLAY_DISABLED);
-            if (empty($topics))
+        case 'team':
+            $headers = array(__('Team'));
+            $header = function($row) { return $row['team__name']; };
+            $pk = 'team_id';
+            $teams = ($thisstaff->getManagedDepartments() ? array_keys(Team::getTeams(array('dept_id' => $thisstaff->getDeptId()))) : $thisstaff->teams->values_flat('team_id'));
+            if (empty($teams))
                 return array("columns" => array_merge($headers, $dash_headers),
                       "data" => array());
             $stats = $stats
-                ->values('topic_id', 'topic__topic', 'topic__flags')
-                ->filter(array('dept_id__in' => $thisstaff->getDepts(), 'topic_id__gt' => 0, 'topic_id__in' => array_keys($topics)))
-                ->distinct('topic_id');
+                ->values('team', 'team__name', 'team__flags')
+                ->filter(array('dept_id' => $thisstaff->getDeptId(), 'team_id__gt' => 0, 'team_id__in' => $teams))
+                ->distinct('team_id');
             $times = $times
-                ->values('topic_id')
-                ->filter(array('topic_id__gt' => 0))
-                ->distinct('topic_id');
+                ->values('team_id')
+                ->filter(array('team_id__gt' => 0))
+                ->distinct('team_id');
             break;
         case 'staff':
             $headers = array(__('Agent'));
@@ -256,15 +251,17 @@ class OverviewReport {
                 ->values('staff_id', 'staff__firstname', 'staff__lastname')
                 ->filter(array('staff_id__in' => array_keys($staff)))
                 ->distinct('staff_id');
-            $times = $times->values('staff_id')->distinct('staff_id');
+            $times = $times
+                ->values('staff_id')
+                ->filter(array('staff_id__in' => array_keys($staff)))
+                ->distinct('staff_id');
             $depts = $thisstaff->getManagedDepartments();
             if ($thisstaff->hasPerm(ReportModel::PERM_AGENTS))
                 $depts = array_merge($depts, $thisstaff->getDepts());
-            $Q = Q::any(array(
-                'staff_id' => $thisstaff->getId(),
-            ));
             if ($depts)
-                $Q->add(array('dept_id__in' => $depts));
+                $Q = Q::any(array('staff__dept_id__in' => $depts));
+            else
+                $Q = Q::any(array('staff_id' => $thisstaff->getId()));
             $stats = $stats->filter(array('staff_id__gt'=>0))->filter($Q);
             $times = $times->filter(array('staff_id__gt'=>0))->filter($Q);
             break;
@@ -296,10 +293,9 @@ class OverviewReport {
           }
 
             $T = $timings[$R[$pk]];
-            $rows[] = array($header($R) . $status, $R['Opened'], $R['Assigned'],
-                $R['Overdue'], $R['Closed'], $R['Reopened'], $R['Deleted'],
-                number_format($T['ServiceTime'], 1),
-                number_format($T['ResponseTime'], 1));
+            $rows[] = array($header($R) . $status, $R['Created'], $R['Assigned'],
+                $R['Closed'], $R['Reopened'],
+                number_format($T['ServiceTime'], 1));
         }
         return array("columns" => array_merge($headers, $dash_headers),
                      "data" => $rows);
