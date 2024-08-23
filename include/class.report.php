@@ -92,7 +92,7 @@ class OverviewReport {
             .' T JOIN '.EVENT_TABLE . ' E ON E.id = T.event_id'
             .' WHERE timestamp BETWEEN '.$start.' AND '.$stop
             .' AND T.event_id IN ('.implode(",",$event_ids).') AND T.thread_type = "A"'
-            .' AND E.name NOT IN (\'collab\', \'edited\')'
+            .' AND E.name IN (\'created\', \'assigned\', \'closed\', \'reopened\')'
             .' ORDER BY 1');
         $events = array();
         while ($row = db_fetch_row($res)) $events[] = __($row[0]);
@@ -183,21 +183,28 @@ class OverviewReport {
                   new SqlCode('DAY'), new SqlField('thread__task__created'), new SqlField('thread__task__closed'))
                 ),
             ));
+            $queryAssignTeam = array('data__contains' => '"team"');
+            $queryAssigned = Q::all(array('event_id' => $event('assigned')));
+            if ($group == 'team')
+                $queryAssigned->add($queryAssignTeam);
+            elseif ($group == 'staff')
+                $queryAssigned->add(Q::not($queryAssignTeam));
 
             $stats = ThreadEvent::objects()
                 ->filter(array(
                         'annulled' => 0,
                         'timestamp__range' => array($start, $stop, true),
                         'thread_type' => 'A',
+                        'event_id__in' => array($event('created'), $event('assigned'), $event('closed'), $event('reopened'))
                    ))
                 ->aggregate(array(
                     'Created' => SqlAggregate::COUNT(
                         SqlCase::N()
-                            ->when(new Q(array('event_id' => $event('created'))), 1)
+                            ->when(new Q(array('event_id' => $event('created'), 'staff_id' => 0)), 1)
                     ),
                     'Assigned' => SqlAggregate::COUNT(
                         SqlCase::N()
-                            ->when(new Q(array('event_id' => $event('assigned'))), 1)
+                            ->when($queryAssigned, 1)
                     ),
                     'Closed' => SqlAggregate::COUNT(
                         SqlCase::N()
@@ -248,22 +255,23 @@ class OverviewReport {
             $pk = 'staff_id';
             $staff = Staff::getStaffMembers();
             $stats = $stats
-                ->values('staff_id', 'staff__firstname', 'staff__lastname')
-                ->filter(array('staff_id__in' => array_keys($staff)))
-                ->distinct('staff_id');
+                ->values('staff_id', 'staff__firstname', 'staff__lastname', 'agent', 'agent__firstname', 'agent__lastname')
+                ->filter(array('staff_id__in' => (array_merge(array(0), array_keys($staff)))))
+                ->distinct('staff_id', 'agent')
+                ->order_by('-staff_id');
             $times = $times
                 ->values('staff_id')
-                ->filter(array('staff_id__in' => array_keys($staff)))
+                ->filter(array('staff_id__in' => array_merge(array(0), array_keys($staff))))
                 ->distinct('staff_id');
             $depts = $thisstaff->getManagedDepartments();
             if ($thisstaff->hasPerm(ReportModel::PERM_AGENTS))
                 $depts = array_merge($depts, $thisstaff->getDepts());
             if ($depts)
-                $Q = Q::any(array('staff__dept_id__in' => $depts));
+                $Q = Q::any(array('dept_id__in' => $depts));
             else
                 $Q = Q::any(array('staff_id' => $thisstaff->getId()));
-            $stats = $stats->filter(array('staff_id__gt'=>0))->filter($Q);
-            $times = $times->filter(array('staff_id__gt'=>0))->filter($Q);
+            $stats = $stats->filter($Q);
+            $times = $times->filter($Q);
             break;
         default:
             # XXX: Die if $group not in $groups
@@ -274,7 +282,19 @@ class OverviewReport {
             $timings[$T[$pk]] = $T;
         }
         $rows = array();
-        foreach ($stats as $R) {
+        $staff = array();
+        foreach ($stats as $row) {
+            if ($row['staff_id'] > 0) {
+                $staff[$row['staff_id']] = $row;
+            } elseif ($row['agent'] > 0 && !isset($staff[$row['agent']])) {
+                $row['staff__firstname'] = $row['agent__firstname'];
+                $row['staff__lastname'] = $row['agent__lastname'];
+                $staff[$row['agent']] = $row;
+            } else {
+                $staff[$row['agent']]['Created'] = $row['Created'];
+            }
+        }
+        foreach ($staff as $R) {
           if (isset($R['dept__flags'])) {
             if ($R['dept__flags'] & Dept::FLAG_ARCHIVED)
               $status = ' - '.__('Archived');
