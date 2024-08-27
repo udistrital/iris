@@ -253,15 +253,12 @@ class OverviewReport {
             $header = function($row) { return new AgentsName(array(
                 'first' => $row['staff__firstname'], 'last' => $row['staff__lastname'])); };
             $pk = 'staff_id';
-            $staff = Staff::getStaffMembers();
             $stats = $stats
                 ->values('staff_id', 'staff__firstname', 'staff__lastname', 'agent', 'agent__firstname', 'agent__lastname')
-                ->filter(array('staff_id__in' => (array_merge(array(0), array_keys($staff)))))
                 ->distinct('staff_id', 'agent')
                 ->order_by('-staff_id');
             $times = $times
                 ->values('staff_id')
-                ->filter(array('staff_id__in' => array_merge(array(0), array_keys($staff))))
                 ->distinct('staff_id');
             $depts = $thisstaff->getManagedDepartments();
             if ($thisstaff->hasPerm(ReportModel::PERM_AGENTS))
@@ -269,7 +266,8 @@ class OverviewReport {
             if ($depts)
                 $Q = Q::any(array('dept_id__in' => $depts));
             else
-                $Q = Q::any(array('staff_id' => $thisstaff->getId()));
+                $Q = Q::any(Q::all(array('staff_id' => $thisstaff->getId(), 'event_id__in' => array(2, 3, 4))))
+                    ->add(Q::all(array('agent' => $thisstaff->getId(), 'event_id' => 1)));
             $stats = $stats->filter($Q);
             $times = $times->filter($Q);
             break;
@@ -285,13 +283,18 @@ class OverviewReport {
         $staff = array();
         if ($group === 'staff')
             foreach ($stats as $row) {
-                if ($row['staff_id'] > 0) {
+                if ($row['staff_id'] > 0 && !isset($staff[$row['staff_id']])) {
                     $staff[$row['staff_id']] = $row;
+                } elseif ($row['staff_id'] > 0 && isset($staff[$row['staff_id']])) {
+                    $staff[$row['staff_id']]['Created'] += $row['Created'];
+                    $staff[$row['staff_id']]['Assigned'] += $row['Assigned'];
+                    $staff[$row['staff_id']]['Closed'] += $row['Closed'];
+                    $staff[$row['staff_id']]['Reopened'] += $row['Reopened'];
                 } elseif ($row['agent'] > 0 && !isset($staff[$row['agent']])) {
                     $row['staff__firstname'] = $row['agent__firstname'];
                     $row['staff__lastname'] = $row['agent__lastname'];
                     $staff[$row['agent']] = $row;
-                } else {
+                } elseif ($row['agent'] > 0 && $row['Created'] > 0) {
                     $staff[$row['agent']]['Created'] = $row['Created'];
                 }
             }
