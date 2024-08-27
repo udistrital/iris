@@ -144,7 +144,7 @@ class OverviewReport {
         global $thisstaff;
         $tabs = array();
         if ($thisstaff->getManagedDepartments() || $thisstaff->hasPerm(ReportModel::PERM_AGENTS))
-            $tabs["dept"] = __("Dependencia");
+            $tabs["dept"] = __("Dependencias");
         if ($thisstaff->getManagedDepartments() || count($thisstaff->teams->values_flat('team_id')))
             $tabs["team"] = __("Teams");
         $tabs["staff"] = __("Agents");
@@ -158,8 +158,8 @@ class OverviewReport {
         $event = function ($name) use ($event_ids) {
             return $event_ids[$name];
         };
-        $dash_headers = array(__('Created'),__('Assigned'),__('Closed'),__('Reopened'),
-                              __('Service Time'));
+        $dash_headers = array_merge($group === 'team' ? array() : array(__('Created')), array(__('Assigned'),__('Closed'),__('Reopened')),
+            $group === 'dept' ? array('Transferidos') : array(), array(__('Service Time')));
 
         list($start, $stop) = $this->getDateRange();
         $times = ThreadEvent::objects()
@@ -195,14 +195,17 @@ class OverviewReport {
                         'annulled' => 0,
                         'timestamp__range' => array($start, $stop, true),
                         'thread_type' => 'A',
-                        'event_id__in' => array($event('created'), $event('assigned'), $event('closed'), $event('reopened'))
+                        'event_id__in' => array_merge(
+                            $group === 'team' ? array() : array($event('created')),
+                            array($event('assigned'), $event('closed'), $event('reopened')),
+                            $group === 'dept' ? array($event('transferred')) : array())
                    ))
-                ->aggregate(array(
-                    'Created' => SqlAggregate::COUNT(
+                ->aggregate(array_merge(
+                    $group === 'team' ? array() : array('Created' => SqlAggregate::COUNT(
                         SqlCase::N()
                             ->when(new Q(array('event_id' => $event('created'), 'staff_id' => 0)), 1)
-                    ),
-                    'Assigned' => SqlAggregate::COUNT(
+                    )),
+                    array('Assigned' => SqlAggregate::COUNT(
                         SqlCase::N()
                             ->when($queryAssigned, 1)
                     ),
@@ -213,7 +216,11 @@ class OverviewReport {
                     'Reopened' => SqlAggregate::COUNT(
                         SqlCase::N()
                             ->when(new Q(array('event_id' => $event('reopened'))), 1)
-                    ),
+                    )),
+                    $group === 'dept' ? array('Transferred' => SqlAggregate::COUNT(
+                        SqlCase::N()
+                            ->when(new Q(array('event_id' => $event('transferred'))), 1)
+                    )) : array(),
                 ));
 
         switch ($group) {
@@ -300,7 +307,13 @@ class OverviewReport {
             }
         else
             $staff = $stats;
+        $total = array();
         foreach ($staff as $R) {
+          $total['Created'] += $R['Created'];
+          $total['Assigned'] += $R['Assigned'];
+          $total['Reopened'] += $R['Reopened'];
+          $total['Transferred'] += $R['Transferred'];
+          $total['Closed'] += $R['Closed'];
           if (isset($R['dept__flags'])) {
             if ($R['dept__flags'] & Dept::FLAG_ARCHIVED)
               $status = ' - '.__('Archived');
@@ -319,10 +332,13 @@ class OverviewReport {
           }
 
             $T = $timings[$R[$pk]];
-            $rows[] = array($header($R) . $status, $R['Created'], $R['Assigned'],
-                $R['Closed'], $R['Reopened'],
-                number_format($T['ServiceTime'], 1));
+            $rows[] = array_merge(array($header($R) . $status), $group === 'team' ? array() : array($R['Created']), array($R['Assigned'],
+                $R['Closed'], $R['Reopened']), $group === 'dept' ? array($R['Transferred']) : array(),
+                array(number_format($T['ServiceTime'], 1)));
         }
+        $rows[] = array_merge(array_merge(array('TOTAL'), $group === 'team' ? array() : array($total['Created']),
+           array($total['Assigned'], $total['Closed'], $total['Reopened']),
+           $group === 'dept' ? array($total['Transferred']) : array()));
         return array("columns" => array_merge($headers, $dash_headers),
                      "data" => $rows);
     }
