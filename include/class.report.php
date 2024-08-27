@@ -283,17 +283,20 @@ class OverviewReport {
         }
         $rows = array();
         $staff = array();
-        foreach ($stats as $row) {
-            if ($row['staff_id'] > 0) {
-                $staff[$row['staff_id']] = $row;
-            } elseif ($row['agent'] > 0 && !isset($staff[$row['agent']])) {
-                $row['staff__firstname'] = $row['agent__firstname'];
-                $row['staff__lastname'] = $row['agent__lastname'];
-                $staff[$row['agent']] = $row;
-            } else {
-                $staff[$row['agent']]['Created'] = $row['Created'];
+        if ($group === 'staff')
+            foreach ($stats as $row) {
+                if ($row['staff_id'] > 0) {
+                    $staff[$row['staff_id']] = $row;
+                } elseif ($row['agent'] > 0 && !isset($staff[$row['agent']])) {
+                    $row['staff__firstname'] = $row['agent__firstname'];
+                    $row['staff__lastname'] = $row['agent__lastname'];
+                    $staff[$row['agent']] = $row;
+                } else {
+                    $staff[$row['agent']]['Created'] = $row['Created'];
+                }
             }
-        }
+        else
+            $staff = $stats;
         foreach ($staff as $R) {
           if (isset($R['dept__flags'])) {
             if ($R['dept__flags'] & Dept::FLAG_ARCHIVED)
