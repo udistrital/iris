@@ -46,24 +46,6 @@ if ($thisstaff->hasPerm(User::PERM_CREATE)) { ?>
 if ($user) { ?>
     <div><strong id="user-name"><?php echo Format::htmlchars($user->getName()->getOriginal()); ?></strong></div>
     <div>&lt;<span id="user-email"><?php echo $user->getEmail(); ?></span>&gt;</div>
-    <?php
-    if ($org=$user->getOrganization()) { ?>
-    <div><span id="user-org"><?php echo $org->getName(); ?></span></div>
-    <?php
-    } ?>
-    <table style="margin-top: 1em;">
-<?php foreach ($user->getDynamicData() as $entry) { ?>
-    <tr><td colspan="2" style="border-bottom: 1px dotted black"><strong><?php
-         echo $entry->getTitle(); ?></strong></td></tr>
-<?php foreach ($entry->getAnswers() as $a) { ?>
-    <tr style="vertical-align:top"><td style="width:30%;border-bottom: 1px dotted #ccc"><?php echo Format::htmlchars($a->getField()->get('label'));
-         ?>:</td>
-    <td style="border-bottom: 1px dotted #ccc"><?php echo $a->display(); ?></td>
-    </tr>
-<?php }
-}
-?>
-</table>
 <?php } ?>
     <div class="clear"></div>
     <hr>
