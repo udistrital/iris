@@ -159,7 +159,7 @@ class OverviewReport {
             return $event_ids[$name];
         };
         $dash_headers = array_merge($group === 'team' ? array() : array(__('Created')), array(__('Assigned'),__('Closed'),__('Reopened')),
-            $group === 'dept' ? array('Transferidos') : array(), array(__('Service Time')));
+            $group === 'dept' ? array('Transferidos') : array());
 
         list($start, $stop) = $this->getDateRange();
         $times = ThreadEvent::objects()
@@ -177,11 +177,6 @@ class OverviewReport {
                 ))
             ->filter(array(
                     'timestamp__range' => array($start, $stop, true),
-               ))
-            ->aggregate(array(
-                'ServiceTime' => SqlAggregate::AVG(SqlFunction::timestampdiff(
-                  new SqlCode('DAY'), new SqlField('thread__task__created'), new SqlField('thread__task__closed'))
-                ),
             ));
             $queryAssignTeam = array('data__contains' => '"team"');
             $queryAssigned = Q::all(array('event_id' => $event('assigned')));
@@ -307,7 +302,7 @@ class OverviewReport {
             }
         else
             $staff = $stats;
-        $total = array();
+        $total = array('Created' => 0, 'Assigned' => 0, 'Reopened' => 0, 'Transferred' => 0, 'Closed' => 0);
         foreach ($staff as $R) {
           $total['Created'] += $R['Created'];
           $total['Assigned'] += $R['Assigned'];
@@ -333,8 +328,7 @@ class OverviewReport {
 
             $T = $timings[$R[$pk]];
             $rows[] = array_merge(array($header($R) . $status), $group === 'team' ? array() : array($R['Created']), array($R['Assigned'],
-                $R['Closed'], $R['Reopened']), $group === 'dept' ? array($R['Transferred']) : array(),
-                array(number_format($T['ServiceTime'], 1)));
+                $R['Closed'], $R['Reopened']), $group === 'dept' ? array($R['Transferred']) : array());
         }
         $rows[] = array_merge(array_merge(array('TOTAL'), $group === 'team' ? array() : array($total['Created']),
            array($total['Assigned'], $total['Closed'], $total['Reopened']),
