@@ -313,6 +313,11 @@ class Task extends TaskModel implements RestrictedAccess, Threadable {
         return Format::datetimeLocal($this->getLastActivityDate());
     }
 
+    function getTaskStaffLink() {
+        global $cfg;
+        return sprintf('%s/scp/tasks.php?id=%d', $cfg->getBaseUrl(), $this->getId());
+    }
+
     function getTitle() {
         return $this->__cdata('title', ObjectModel::OBJECT_TYPE_TASK);
     }

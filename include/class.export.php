@@ -141,6 +141,7 @@ class Export {
 
         return self::dumpQuery($tasks,
             array(
+                '::getTaskStaffLink' => 'Enlace',
                 'number' =>         __('Task Number'),
                 '::getCreateDateExport' =>        __('Date Created'),
                 '::getCloseDateExport' =>   __('Date Closed'),
