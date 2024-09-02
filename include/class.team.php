@@ -35,6 +35,7 @@ implements TemplateVariable {
     const FLAG_ENABLED  = 0x0001;
     const FLAG_NOALERTS = 0x0002;
     const FLAG_DIRECT_REQUEST = 0x0004;
+    const FLAG_ALERT_ALL = 0x0008;
 
     var $_members;
 
@@ -122,6 +123,8 @@ implements TemplateVariable {
         $base = $this->ht;
         $base['isenabled'] = $this->isEnabled();
         $base['noalerts'] = !$this->alertsEnabled();
+        $base['directRequest'] = !$this->directRequest();
+        $base['alertAll'] = !$this->alertAll();
         unset($base['members']);
         return $base;
     }
@@ -160,6 +163,10 @@ implements TemplateVariable {
         return ($this->flags & self::FLAG_DIRECT_REQUEST);
     }
 
+    function alertAll() {
+        return ($this->flags & self::FLAG_ALERT_ALL);
+    }
+
     function getTranslateTag($subtag) {
         return _H(sprintf('team.%s.%s', $subtag, $this->getId()));
     }
@@ -183,15 +190,18 @@ implements TemplateVariable {
 
         $vars['noalerts'] = isset($vars['noalerts']) ? self::FLAG_NOALERTS : 0;
         $vars['directRequest'] = isset($vars['directRequest']) ? self::FLAG_DIRECT_REQUEST : 0;
+        $vars['alertAll'] = !$vars['noalerts'] && isset($vars['alertAll']) ? self::FLAG_ALERT_ALL : 0;
         if ($this->getId()) {
             //flags
             $auditEnabled = $this->flagChanged(self::FLAG_ENABLED, $vars['isenabled']);
             $auditAlerts = $this->flagChanged(self::FLAG_NOALERTS, $vars['noalerts']);
             $directRequest = $this->flagChanged(self::FLAG_DIRECT_REQUEST, $vars['directRequest']);
+            $alertAll = $this->flagChanged(self::FLAG_ALERT_ALL, $vars['alertAll']);
 
             foreach ($vars as $key => $value) {
                 if (isset($this->$key) && ($this->$key != $value) && $key != 'members' ||
-                   ($auditEnabled && $key == 'isenabled' || $auditAlerts && $key == 'noalerts' || $directRequest && $key == 'directRequest')) {
+                   ($auditEnabled && $key == 'isenabled' || $auditAlerts && $key == 'noalerts' || $directRequest && $key == 'directRequest' ||
+                   $alertAll && $key == 'alertAll')) {
                     $type = array('type' => 'edited', 'key' => $key);
                     Signal::send('object.edited', $this, $type);
                 }
@@ -208,7 +218,8 @@ implements TemplateVariable {
         $this->flags =
               ($vars['isenabled'] ? self::FLAG_ENABLED : 0)
             | ($vars['noalerts'])
-            | ($vars['directRequest']);
+            | ($vars['directRequest'])
+            | ($vars['alertAll']);
         $this->lead_id = $vars['lead_id'] ?: 0;
         $this->name = Format::striptags($vars['name']);
         $this->notes = Format::sanitize($vars['notes']);

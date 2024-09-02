@@ -926,7 +926,7 @@ class Task extends TaskModel implements RestrictedAccess, Threadable {
             if ($cfg->alertStaffONTaskAssignment())
                 $recipients[] = $assignee;
         } elseif (($assignee instanceof Team) && $assignee->alertsEnabled()) {
-            if ($cfg->alertTeamMembersONTaskAssignment() && ($members=$assignee->getMembersForAlerts()))
+            if (($cfg->alertTeamMembersONTaskAssignment() || $assignee->alertAll()) && ($members=$assignee->getMembersForAlerts()))
                 $recipients = array_merge($recipients, $members);
             elseif ($cfg->alertTeamLeadONTaskAssignment() && ($lead=$assignee->getTeamLead()))
                 $recipients[] = $lead;
