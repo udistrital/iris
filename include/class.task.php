@@ -1563,8 +1563,11 @@ class Task extends TaskModel implements RestrictedAccess, Threadable {
         if ($vars['internal_formdata']['dept_id'])
             $task->dept_id = $vars['internal_formdata']['dept_id'];
 
-        if ($vars['internal_formdata']['duedate'])
-	    $task->duedate = date('Y-m-d G:i', Misc::dbtime($vars['internal_formdata']['duedate']));
+        if ($vars['internal_formdata']['duedate']) {
+            $time = new DateTime($vars['internal_formdata']['duedate']);
+            $time->setTime(23, 59, 59);
+	        $task->duedate = date('Y-m-d G:i:s', $time->getTimestamp());
+        }
 
         if (!$task->save(true))
             return false;
@@ -1867,21 +1870,16 @@ extends AbstractForm {
                     'required' => true,
                     'layout' => new GridFluidCell(6),
                     )),
-                /* 'assignee' => new AssigneeField(array(
-                    'id'=>2,
-                    'label' => __('Assignee'),
-                    'required' => false,
-                    'layout' => new GridFluidCell(6),
-                    )), */
                 'duedate'  =>  new DatetimeField(array(
                     'id' => 3,
                     'label' => __('Due Date'),
                     'required' => true,
                     'configuration' => array(
-                        'min' => Misc::gmtime(),
-                        'time' => true,
+                        'min' => Misc::bogTimeStartToday(),
+                        'time' => false,
                         'gmt' => false,
                         'future' => true,
+                        'timezone' => 'America/Bogota',
                         ),
                     )),
 

@@ -151,6 +151,24 @@ switch ($queue_name) {
         setFilter($status, $tasks);
         $queue_sort_options = array('created', 'updated', 'number', 'hot');
         break;
+    case 'created_pairs':
+        $results_type = __('Creados por alguien de mis equipos');
+        $staffId = $thisstaff->getId();
+        $pairs = TeamMember::objects();
+        $pairs->distinct('staff_id');
+        $pairs->filter(array('team_id__in' => $thisstaff->getTeams()));
+        $pairs->exclude(array('staff_id' => $staffId));
+        $pairs->values('staff_id');
+        $tasks->filter(
+            array(
+                'thread__events__agent__in' => $pairs,
+                'thread__events__event__name' => 'created',
+            ),
+        );
+
+        setFilter($status, $tasks);
+        $queue_sort_options = array('created', 'updated', 'number', 'hot');
+        break;
     case 'transferred':
         $results_type = __('Transferidos a otra dependencia');
         $deptId = $thisstaff->getDept()->getID();
