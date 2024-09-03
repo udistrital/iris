@@ -139,6 +139,13 @@ class Misc {
         return $time->getTimestamp() - $tz->getOffset($time);
     }
 
+    static function bogTimeStartToday() {
+        $tz = new DateTimeZone('America/Bogota');
+        $time = new DateTime('now', $tz);
+        $time->setTime(0, 0, 0);
+        return $time->getTimestamp();
+    }
+
     /* Needed because of PHP 4 support */
     static function micro_time() {
         list($usec, $sec) = explode(" ", microtime());
