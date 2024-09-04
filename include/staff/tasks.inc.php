@@ -152,19 +152,39 @@ switch ($queue_name) {
         $queue_sort_options = array('created', 'updated', 'number', 'hot');
         break;
     case 'created_pairs':
-        $results_type = __('Creados por alguien de mis equipos');
+        $results_type = __('Creados por un miembro de mis equipos');
+        if ($teams = $thisstaff->getTeams()) {
+            $pairs = TeamMember::objects();
+            $pairs->distinct('staff_id');
+            $pairs->filter(array('team_id__in' => $teams));
+            $pairs->exclude(array('staff_id' => $thisstaff->getId()));
+            $pairs->values('staff_id');
+        }
+
+        if (!$teams || !$pairs)
+            $tasks->filter(array('id' => 0));
+        else
+            $tasks->filter(
+                array(
+                    'thread__events__agent__in' => $pairs,
+                    'thread__events__event__name' => 'created',
+                ),
+            );
+
+        setFilter($status, $tasks);
+        $queue_sort_options = array('created', 'updated', 'number', 'hot');
+        break;
+    case 'involved':
+        $results_type = __('Casos en los que he participado y no estoy asignado');
         $staffId = $thisstaff->getId();
-        $pairs = TeamMember::objects();
-        $pairs->distinct('staff_id');
-        $pairs->filter(array('team_id__in' => $thisstaff->getTeams()));
-        $pairs->exclude(array('staff_id' => $staffId));
-        $pairs->values('staff_id');
+        $tasks->distinct('id');
         $tasks->filter(
             array(
-                'thread__events__agent__in' => $pairs,
-                'thread__events__event__name' => 'created',
+                'thread__entries__type__in' => array('N', 'R'),
+                'thread__entries__staff' => $staffId,
             ),
         );
+        $tasks->exclude(array('staff_id' => $staffId));
 
         setFilter($status, $tasks);
         $queue_sort_options = array('created', 'updated', 'number', 'hot');
