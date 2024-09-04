@@ -206,6 +206,16 @@ $nav->addSubMenu(
 
 $nav->addSubMenu(
     array(
+        'desc' => __('Participaciones'),
+        'title' => __('Casos en los que he participado y no estoy asignado'),
+        'href' => 'tasks.php?status=involved',
+        'iconclass' => 'assignedTickets'
+    ),
+    ($_REQUEST['status'] == 'involved')
+);
+
+$nav->addSubMenu(
+    array(
         'desc' => __('Gestionados por mí'),
         'title' => __('Gestionados por mí (Abiertos y Cerrados)'),
         'href' => 'tasks.php?status=thread_me',
@@ -296,6 +306,16 @@ if ($thisstaff->getTeams()) {
             'iconclass' => 'closedTickets'
         ),
         ($_REQUEST['status'] == 'closed_mteams')
+    );
+
+    $nav->addSubMenu(
+        array(
+            'desc' => __('Creados por Mis equipos'),
+            'title' => __('Creados otro miembro de mis equipos'),
+            'href' => 'tasks.php?status=created_pairs',
+            'iconclass' => 'assignedTickets'
+        ),
+        ($_REQUEST['status'] == 'created_pairs')
     );
 }
 

@@ -152,17 +152,41 @@ switch ($queue_name) {
         $queue_sort_options = array('created', 'updated', 'number', 'hot');
         break;
     case 'created_pairs':
-        $results_type = __('Creados por alguien de mis equipos');
+        $results_type = __('Creados por un miembro de mis equipos');
+        if ($teams = $thisstaff->getTeams()) {
+            $pairs = TeamMember::objects();
+            $pairs->distinct('staff_id');
+            $pairs->filter(
+                array(
+                    'team_id__in' => $teams,
+                    'staff_id__notequal' => $thisstaff->getId(),
+                ),
+            );
+            $pairs->values('staff_id');
+        }
+
+        if (!$teams || !$pairs)
+            $tasks->filter(array('id' => 0));
+        else
+            $tasks->filter(
+                array(
+                    'thread__events__agent__in' => $pairs,
+                    'thread__events__event__name' => 'created',
+                ),
+            );
+
+        setFilter($status, $tasks);
+        $queue_sort_options = array('created', 'updated', 'number', 'hot');
+        break;
+    case 'involved':
+        $results_type = __('Casos en los que he participado y no estoy asignado');
         $staffId = $thisstaff->getId();
-        $pairs = TeamMember::objects();
-        $pairs->distinct('staff_id');
-        $pairs->filter(array('team_id__in' => $thisstaff->getTeams()));
-        $pairs->exclude(array('staff_id' => $staffId));
-        $pairs->values('staff_id');
+        $tasks->distinct('id');
         $tasks->filter(
             array(
-                'thread__events__agent__in' => $pairs,
-                'thread__events__event__name' => 'created',
+                'thread__entries__type__in' => array('N', 'R'),
+                'thread__entries__staff' => $staffId,
+                'staff_id__notequal' => $staffId,
             ),
         );
 
@@ -178,9 +202,7 @@ switch ($queue_name) {
                 array(
                     'thread__events__dept' => $deptId,
                     'thread__events__event__name__in' => array('transferred', 'created'),
-                ),
-                Q::not(
-                    array('dept' => $deptId),
+                    'dept__notequal' => $deptId,
                 ),
             );
         } else {
@@ -198,11 +220,7 @@ switch ($queue_name) {
             array(
                 'thread__events__agent' => $staffId,
                 'thread__events__event__name' => 'assigned',
-            ),
-            Q::not(
-                array(
-                    'thread__events__staff' => $staffId,
-                ),
+                'thread__events__staff__notequal' => $staffId,
             ),
         );
 
@@ -268,11 +286,7 @@ switch ($queue_name) {
                 array(
                     'thread__collaborators__user' => $userId,
                     'thread__events__event__name' => 'created',
-                ),
-                Q::not(
-                    array(
-                        'thread__events__agent' => $thisstaff->getId(),
-                    ),
+                    'thread__events__agent__notequal' => $thisstaff->getId()
                 ),
             );
         } else {
