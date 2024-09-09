@@ -2988,7 +2988,8 @@ class ResponseThreadEntry extends ThreadEntry {
 
         if (!$vars || !is_array($vars) || !$vars['threadId'])
             $errors['err'] = __('Missing or invalid data');
-        elseif (!$vars['response'])
+        elseif ((!$vars['response'] || $vars['response'] == '<p><br></p>') &&
+            (!$vars['changeStatus'] || $vars['task:status'] == 'open'))
             $errors['response'] = __('Response content is required');
 
         if ($errors) return false;
@@ -3032,7 +3033,8 @@ class NoteThreadEntry extends ThreadEntry {
         //Check required params.
         if (!$vars || !is_array($vars) || !$vars['threadId'])
             $errors['err'] = __('Missing or invalid data');
-        elseif (!$vars['note'])
+        elseif ((!$vars['note'] || $vars['note'] == '<p><br></p>')
+            && (!$vars['changeStatus'] || $vars['task:status'] == 'open'))
             $errors['note'] = __('Note content is required');
 
         if ($errors) return false;

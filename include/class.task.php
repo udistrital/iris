@@ -1068,6 +1068,8 @@ class Task extends TaskModel implements RestrictedAccess, Threadable {
             $vars['poster'] = $poster;
         }
 
+        $vars['changeStatus'] = ($vars['task:status'] == 'open' && !$this->isOpen()) ||
+            ($vars['task:status'] == 'closed' && !$this->isClosed());
         if (!($note=$this->getThread()->addNote($vars, $errors)))
             return null;
 
@@ -1102,6 +1104,8 @@ class Task extends TaskModel implements RestrictedAccess, Threadable {
         if (!$vars['ip_address'] && $_SERVER['REMOTE_ADDR'])
             $vars['ip_address'] = $_SERVER['REMOTE_ADDR'];
 
+        $vars['changeStatus'] = ($vars['task:status'] == 'open' && !$this->isOpen()) ||
+            ($vars['task:status'] == 'closed' && !$this->isClosed());
         if (!($response = $this->getThread()->addResponse($vars, $errors)))
             return null;
 
