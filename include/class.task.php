@@ -662,7 +662,10 @@ class Task extends TaskModel implements RestrictedAccess, Threadable {
         case 'open':
             if ($this->isOpen())
                 return false;
-
+            else if (!$comments || $comments == '<p><br></p>') {
+                $errors['error'] = 'Debe indicar la razón por la que se reabre la tarea.';
+                return false;
+            }
             $this->reopen();
             $this->closed = null;
 
