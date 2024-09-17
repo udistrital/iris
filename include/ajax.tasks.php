@@ -881,11 +881,11 @@ class TasksAjaxAPI extends AjaxController {
                         $task->getId())
                     );
 
-            $info[':placeholder'] = 'Indique las razones para cerrar la tarea (opcional).';
             if (($m=$task->isCloseable()) !== true)
                 $errors['err'] = $info['error'] = $m;
             else
-                $info['warn'] = '¿Está seguro de cerrar la tarea?';
+                $info['warn'] = sprintf(__('Are you sure you want to change status of %s?'),
+                        __('this task'));
             break;
         default:
             Http::response(404, __('Unknown status'));
