@@ -662,7 +662,10 @@ class Task extends TaskModel implements RestrictedAccess, Threadable {
         case 'open':
             if ($this->isOpen())
                 return false;
-
+            else if (!$comments || $comments == '<p><br></p>') {
+                $errors['error'] = 'Debe indicar la razón por la que se reabre la tarea.';
+                return false;
+            }
             $this->reopen();
             $this->closed = null;
 
@@ -1068,6 +1071,8 @@ class Task extends TaskModel implements RestrictedAccess, Threadable {
             $vars['poster'] = $poster;
         }
 
+        $vars['changeStatus'] = ($vars['task:status'] == 'open' && !$this->isOpen()) ||
+            ($vars['task:status'] == 'closed' && !$this->isClosed());
         if (!($note=$this->getThread()->addNote($vars, $errors)))
             return null;
 
@@ -1102,6 +1107,8 @@ class Task extends TaskModel implements RestrictedAccess, Threadable {
         if (!$vars['ip_address'] && $_SERVER['REMOTE_ADDR'])
             $vars['ip_address'] = $_SERVER['REMOTE_ADDR'];
 
+        $vars['changeStatus'] = ($vars['task:status'] == 'open' && !$this->isOpen()) ||
+            ($vars['task:status'] == 'closed' && !$this->isClosed());
         if (!($response = $this->getThread()->addResponse($vars, $errors)))
             return null;
 
