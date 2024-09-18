@@ -898,10 +898,12 @@ class TasksAjaxAPI extends AjaxController {
                         $statuses[$status]);
 
         if ($_POST && !$errors) {
-            if ($task->setStatus($status, $_POST['comments'], $errors))
+            if ($status == 'open' && Misc::isCommentEmpty($_POST['comments']))
+                $info['error'] = 'Debe indicar la razón por la que se reabre la tarea.';
+            else if ($task->setStatus($status, $_POST['comments'], $errors))
                 Http::response(201, 0);
-
-            $info['error'] = $errors['err'] ?: __('Unable to change status of the task');
+            else
+                $info['error'] = $errors['err'] ?: __('Unable to change status of the task');
         }
 
         $info['status'] = $status;
