@@ -2988,7 +2988,7 @@ class ResponseThreadEntry extends ThreadEntry {
 
         if (!$vars || !is_array($vars) || !$vars['threadId'])
             $errors['err'] = __('Missing or invalid data');
-        elseif (!$vars['response'])
+        elseif (Misc::isCommentEmpty($vars['response']))
             $errors['response'] = __('Response content is required');
 
         if ($errors) return false;
@@ -3032,7 +3032,7 @@ class NoteThreadEntry extends ThreadEntry {
         //Check required params.
         if (!$vars || !is_array($vars) || !$vars['threadId'])
             $errors['err'] = __('Missing or invalid data');
-        elseif (!$vars['note'])
+        elseif (Misc::isCommentEmpty($vars['note']))
             $errors['note'] = __('Note content is required');
 
         if ($errors) return false;

@@ -238,5 +238,9 @@ class Misc {
         return $rp ? $rp : $path;
     }
 
+    static function isCommentEmpty($comment) {
+        return !$comment || $comment == '<p></p>' || $comment == '<p><br></p>' || $comment == '<p>&nbsp;</p>';
+    }
+
 }
 ?>
