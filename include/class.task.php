@@ -1069,7 +1069,7 @@ class Task extends TaskModel implements RestrictedAccess, Threadable {
         }
 
         if ($this->isClosing(newState: $vars['task:status'])) {
-            // Claim if in my teams and it's being closed
+            // Claim if unassigned, in my dept, teams and closing
             if (!$this->getStaffId() &&
                 $thisstaff && $this->getDeptId() == $thisstaff->getDeptId() &&
                 $thisstaff->isTeamMember(teamId: $this->getTeamId())) {
@@ -1119,7 +1119,7 @@ class Task extends TaskModel implements RestrictedAccess, Threadable {
             $vars['ip_address'] = $_SERVER['REMOTE_ADDR'];
 
         if ($this->isClosing(newState: $vars['task:status'])) {
-            // Claim if in my teams and it's being closed
+            // Claim if unassigned, in my dept, teams and closing
             if (!$this->getStaffId() &&
                 $thisstaff && $thisstaff->getDeptId() == $this->getDeptId() &&
                 $thisstaff->isTeamMember(teamId: $this->getTeamId())) {
