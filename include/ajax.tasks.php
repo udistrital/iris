@@ -882,6 +882,14 @@ class TasksAjaxAPI extends AjaxController {
                         $task->getId())
                     );
 
+            // Claim if unassigned, in my dept, teams and closing
+            if ($thisstaff && !$task->getStaffId() &&
+                $task->getDeptId() == $thisstaff->getDeptId() &&
+                $thisstaff->isTeamMember(teamId: $task->getTeamId())) {
+                $cform = $task->getClaimForm();
+                $task->claim(form: $cform, errors: $errors);
+            }
+
             $info[':placeholder'] = 'Indique el motivo por el cual se cierra la tarea (opcional).';
             if (($m=$task->isCloseable()) !== true)
                 $errors['err'] = $info['error'] = $m;

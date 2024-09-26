@@ -1068,9 +1068,20 @@ class Task extends TaskModel implements RestrictedAccess, Threadable {
             $vars['poster'] = $poster;
         }
 
-        if ($vars['task:status'] == 'closed' && $this->isOpen() && Misc::isCommentEmpty($vars['note'])) {
-            $this->setStatus($vars['task:status']);
-            return true;
+        if ($this->isClosing(newState: $vars['task:status'])) {
+            // Claim if unassigned, in my dept, teams and closing
+            if (!$this->getStaffId() &&
+                $thisstaff && $this->getDeptId() == $thisstaff->getDeptId() &&
+                $thisstaff->isTeamMember(teamId: $this->getTeamId())) {
+                $cform = $this->getClaimForm();
+                if (!$this->claim(form: $cform, errors: $errors));
+                    return null;
+            }
+
+            if (Misc::isCommentEmpty(comment: $vars['note'])) {
+                $this->setStatus(status: $vars['task:status'], errors: $errors);
+                return;
+            }
         }
 
         if (!($note=$this->getThread()->addNote($vars, $errors)))
@@ -1107,9 +1118,20 @@ class Task extends TaskModel implements RestrictedAccess, Threadable {
         if (!$vars['ip_address'] && $_SERVER['REMOTE_ADDR'])
             $vars['ip_address'] = $_SERVER['REMOTE_ADDR'];
 
-        if ($vars['task:status'] == 'closed' && $this->isOpen() && Misc::isCommentEmpty($vars['response'])) {
-            $this->setStatus($vars['task:status']);
-            return true;
+        if ($this->isClosing(newState: $vars['task:status'])) {
+            // Claim if unassigned, in my dept, teams and closing
+            if (!$this->getStaffId() &&
+                $thisstaff && $thisstaff->getDeptId() == $this->getDeptId() &&
+                $thisstaff->isTeamMember(teamId: $this->getTeamId())) {
+                $cform = $this->getClaimForm();
+                if (!$this->claim(form: $cform, errors: $errors));
+                    return null;
+            }
+
+            if (Misc::isCommentEmpty(comment: $vars['response'])) {
+                $this->setStatus(status: $vars['task:status'], errors: $errors);
+                return;
+            }
         }
 
         if (!($response = $this->getThread()->addResponse($vars, $errors)))
@@ -1716,6 +1738,10 @@ class Task extends TaskModel implements RestrictedAccess, Threadable {
 
         return true;
 
+    }
+
+    function isClosing($newState): bool {
+        return $this->isOpen() && $newState == 'closed';
     }
 
     static function __loadDefaultForm() {
