@@ -76,7 +76,7 @@ if ($_POST)
     <tbody>
         <tr>
             <th colspan="2">
-                <em><strong><?php echo __('Solicitantes'); ?></strong>: </em>
+                <em><strong><?php echo __('Con Copia'); ?></strong>: </em>
                 <div class="error"><?php echo $errors['user']; ?></div>
             </th>
         </tr>
@@ -116,11 +116,11 @@ if ($_POST)
             <?php
           } ?>
           <tr id="ccRow">
-            <td width="160"><?php echo __('Cc'); ?>:</td>
+            <td width="160"><?php echo __('CC'); ?>:</td>
             <td>
               <span>
                 <select class="collabSelections" name="ccs[]" id="cc_users_open" multiple="multiple"
-                ref="tags" data-placeholder="<?php echo __('Ingrese los solicitantes'); ?>">
+                ref="tags" data-placeholder="<?php echo __('CC'); ?>">
               </select>
             </span>
 
