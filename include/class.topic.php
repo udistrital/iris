@@ -319,7 +319,7 @@ implements TemplateVariable, Searchable {
             $this->flags &= ~$flag;
     }
 
-    static function getHelpTopics($publicOnly=false, $disabled=false, $localize=true, $whitelist=array(), $allData=false, $dept=0) {
+    static function getHelpTopics($publicOnly=false, $disabled=false, $localize=true, $whitelist=array(), $allData=false, $dept=array()) {
       global $cfg;
       static $topics, $names = array();
 
@@ -327,7 +327,7 @@ implements TemplateVariable, Searchable {
       if (!$names || $localize) {
           $objects = self::objects();
           if ($dept) {
-              $objects->filter(array('dept_id' => $dept));
+              $objects->filter(array('dept_id__in' => $dept));
           }
           $objects->values_flat(
               'topic_id', 'topic_pid', 'ispublic', 'flags', 'topic', 'dept_id'

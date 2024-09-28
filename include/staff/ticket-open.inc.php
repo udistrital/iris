@@ -171,7 +171,7 @@ if ($_POST)
                             }
                           });">
                     <?php
-                    if ($topics=$thisstaff->getTopicNames(false, false)) {
+                    if ($topics=$thisstaff->getTopicNames(false, false, Ticket::PERM_CREATE)) {
                         if (count($topics) == 1)
                             $selected = 'selected="selected"';
                         else { ?>
