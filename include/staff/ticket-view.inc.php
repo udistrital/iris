@@ -240,7 +240,7 @@ if($ticket->isOverdue())
                 <li>
 
                     <?php
-                    $recipients = __(' Manage');
+                    $recipients = __(' CC');
 
                     echo sprintf('<a class="collaborators manage-collaborators"
                             href="#thread/%d/collaborators/1"><i class="icon-group"></i>%s</a>',
@@ -336,6 +336,7 @@ if($ticket->isOverdue())
                           <td><?php echo ($S = $ticket->getStatus()) ? $S->display() : ''; ?></td>
                       <?php } ?>
                 </tr>
+                <?php if (false) {?>
                 <tr>
                     <th><?php echo __('Priority');?>:</th>
                       <?php
@@ -351,8 +352,32 @@ if($ticket->isOverdue())
                            <td><?php echo $ticket->getPriority(); ?></td>
                       <?php } ?>
                 </tr>
+                <?php } ?>
                 <tr>
-                    <th><?php echo 'Dependencia'; //Cambio de nombre ?>:</th>
+                    <th><?php echo __('Create Date');?>:</th>
+                    <td><?php echo Format::datetime($ticket->getCreateDate()); ?></td>
+                </tr>
+                <?php
+                if($ticket->isOpen()){ ?>
+                <tr>
+                    <th nowrap><?php echo __('Last Response');?>:</th>
+                    <td><?php echo Format::datetime($ticket->getLastRespDate()); ?></td>
+                </tr>
+                <?php
+                } else { ?>
+                <tr>
+                    <th><?php echo __('Close Date');?>:</th>
+                    <td><?php echo Format::datetime($ticket->getCloseDate()); ?></td>
+                </tr>
+                <?php
+                }
+                ?>
+            </table>
+        </td>
+        <td width="50%" style="vertical-align:top">
+            <table border="0" cellspacing="0" cellpadding="4" width="100%">
+                <tr>
+                    <th><?php echo 'Dependencia';?>:</th>
                     <?php
                     if ($role->hasPerm(Ticket::PERM_TRANSFER)) {?>
                       <td>
@@ -369,14 +394,73 @@ if($ticket->isOverdue())
                     <td><?php echo Format::htmlchars($ticket->getDeptName()); ?></td>
                   <?php } ?>
                 </tr>
+                <?php
+                if($ticket->isOpen()) { ?>
                 <tr>
-                    <th><?php echo __('Create Date');?>:</th>
-                    <td><?php echo Format::datetime($ticket->getCreateDate()); ?></td>
+                    <th width="100"><?php echo __('Assigned To'); ?>:</th>
+                    <?php
+                    if ($role->hasPerm(Ticket::PERM_ASSIGN)) {?>
+                    <td>
+                        <a class="inline-edit" data-placement="bottom" data-toggle="tooltip" title="<?php echo __('Update'); ?>"
+                            href="#tickets/<?php echo $ticket->getId(); ?>/assign">
+                            <span id="field_assign">
+                                <?php if($ticket->isAssigned())
+                                        echo Format::htmlchars(implode('/', $ticket->getAssignees()));
+                                      else
+                                        echo '<span class="faded">&mdash; '.__('Unassigned').' &mdash;</span>';
+                        ?></span>
+                        </a>
+                    </td>
+                    <?php
+                    } else { ?>
+                    <td>
+                      <?php
+                      if($ticket->isAssigned())
+                          echo Format::htmlchars(implode('/', $ticket->getAssignees()));
+                      else
+                          echo '<span class="faded">&mdash; '.__('Unassigned').' &mdash;</span>';
+                      ?>
+                    </td>
+                    <?php
+                    } ?>
                 </tr>
-            </table>
-        </td>
-        <td width="50%" style="vertical-align:top">
-            <table border="0" cellspacing="0" cellpadding="4" width="100%">
+                <?php
+                } else { ?>
+                <tr>
+                    <th width="100"><?php echo __('Closed By');?>:</th>
+                    <td>
+                        <?php
+                        if(($staff = $ticket->getStaff()))
+                            echo Format::htmlchars($staff->getName());
+                        else
+                            echo '<span class="faded">&mdash; '.__('Unknown').' &mdash;</span>';
+                        ?>
+                    </td>
+                </tr>
+                <?php
+                } ?>
+                <tr>
+                    <th><?php echo __('Con Copia');?>:</th>
+                    <td>
+                    <?php
+                    if ($role->hasPerm(Ticket::PERM_EDIT) && $thread && $ticket->getId() == $thread->getObjectId()) {
+                        if ($thread) {
+                            $numCollaborators = $thread->getNumCollaborators();
+                            if ($thread->getNumCollaborators())
+                                $recipients = sprintf(__('CC (%d)'),
+                                        $numCollaborators);
+                        } else
+                            $recipients = 0;
+
+                        echo sprintf('<span><a class="manage-collaborators preview"
+                            href="#thread/%d/collaborators/1"><span id="t%d-recipients">%s</span></a></span>',
+                            $ticket->getThreadId(),
+                            $ticket->getThreadId(),
+                            $recipients);
+                        }?>
+                    </td>
+                </tr>
+                <?php if (false) {?>
                 <tr>
                     <th width="100"><?php echo __('User'); ?>:</th>
                     <td><a href="#tickets/<?php echo $ticket->getId(); ?>/user"
@@ -421,22 +505,6 @@ if($ticket->isOverdue())
 <?php   } ?>
                                 </ul>
                             </div>
-                            <?php
-                            if ($role->hasPerm(Ticket::PERM_EDIT) && $thread && $ticket->getId() == $thread->getObjectId()) {
-                                if ($thread) {
-                                    $numCollaborators = $thread->getNumCollaborators();
-                                    if ($thread->getNumCollaborators())
-                                        $recipients = sprintf(__('%d'),
-                                                $numCollaborators);
-                                } else
-                                  $recipients = 0;
-
-                             echo sprintf('<span><a class="manage-collaborators preview"
-                                    href="#thread/%d/collaborators/1"><span id="t%d-recipients"><i class="icon-group"></i> (%s)</span></a></span>',
-                                    $ticket->getThreadId(),
-                                    $ticket->getThreadId(),
-                                    $recipients);
-                             }?>
 <?php                   } # end if ($user) ?>
                     </td>
                 </tr>
@@ -508,6 +576,7 @@ if($ticket->isOverdue())
                     ?>
                  </td>
                 </tr>
+                <?php } ?>
             </table>
         </td>
     </tr>
@@ -518,50 +587,7 @@ if($ticket->isOverdue())
         <td width="50%">
             <table cellspacing="0" cellpadding="4" width="100%" border="0">
                 <?php
-                if($ticket->isOpen()) { ?>
-                <tr style="display:none;">
-                    <th width="100"><?php echo __('Assigned To'); ?>:</th>
-                    <?php
-                    if ($role->hasPerm(Ticket::PERM_ASSIGN)) {?>
-                    <td>
-                        <a class="inline-edit" data-placement="bottom" data-toggle="tooltip" title="<?php echo __('Update'); ?>"
-                            href="#tickets/<?php echo $ticket->getId(); ?>/assign">
-                            <span id="field_assign">
-                                <?php if($ticket->isAssigned())
-                                        echo Format::htmlchars(implode('/', $ticket->getAssignees()));
-                                      else
-                                        echo '<span class="faded">&mdash; '.__('Unassigned').' &mdash;</span>';
-                        ?></span>
-                        </a>
-                    </td>
-                    <?php
-                    } else { ?>
-                    <td>
-                      <?php
-                      if($ticket->isAssigned())
-                          echo Format::htmlchars(implode('/', $ticket->getAssignees()));
-                      else
-                          echo '<span class="faded">&mdash; '.__('Unassigned').' &mdash;</span>';
-                      ?>
-                    </td>
-                    <?php
-                    } ?>
-                </tr>
-                <?php
-                } else { ?>
-                <tr>
-                    <th width="100"><?php echo __('Closed By');?>:</th>
-                    <td>
-                        <?php
-                        if(($staff = $ticket->getStaff()))
-                            echo Format::htmlchars($staff->getName());
-                        else
-                            echo '<span class="faded">&mdash; '.__('Unknown').' &mdash;</span>';
-                        ?>
-                    </td>
-                </tr>
-                <?php
-                } ?>
+                if(false){ ?>
                 <tr>
                     <th><?php echo __('SLA Plan');?>:</th>
                     <td>
@@ -608,6 +634,9 @@ if($ticket->isOverdue())
                 <?php
                 }
                 ?>
+                <?php
+                }
+                ?>
             </table>
         </td>
         <td width="50%">
@@ -630,14 +659,15 @@ if($ticket->isOverdue())
                              <td><?php echo Format::htmlchars($ticket->getHelpTopic()); ?></td>
                         <?php } ?>
                 </tr>
+                <?php
+                if(false){ ?>
                 <tr>
                     <th nowrap><?php echo __('Last Message');?>:</th>
                     <td><?php echo Format::datetime($ticket->getLastMsgDate()); ?></td>
                 </tr>
-                <tr>
-                    <th nowrap><?php echo __('Last Response');?>:</th>
-                    <td><?php echo Format::datetime($ticket->getLastRespDate()); ?></td>
-                </tr>
+                <?php
+                }
+                ?>
             </table>
         </td>
     </tr>
@@ -826,6 +856,7 @@ if ($errors['err'] && isset($_POST['a'])) {
             <tr><td width="120">&nbsp;</td><td class="error"><?php echo $errors['reply']; ?>&nbsp;</td></tr>
             <?php
             }?>
+           <?php if (false) {?>
            <tbody id="to_sec">
            <tr>
                <td width="120">
@@ -1000,8 +1031,8 @@ if ($errors['err'] && isset($_POST['a'])) {
                 </td>
              </tr>
             </tbody>
+            <?php }?>
             <tbody id="resp_sec">
-            <tr><td colspan="2">&nbsp;</td></tr>
             <tr>
                 <td width="120" style="vertical-align:top">
                     <label><strong><?php echo __('Response');?>:</strong></label>
@@ -1063,6 +1094,7 @@ if ($errors['err'] && isset($_POST['a'])) {
                 </div>
                 </td>
             </tr>
+            <?php if (false) {?>
             <tr>
                 <td width="120">
                     <label for="signature" class="left"><?php echo __('Signature');?>:</label>
@@ -1087,6 +1119,7 @@ if ($errors['err'] && isset($_POST['a'])) {
                     } ?>
                 </td>
             </tr>
+            <?php } ?>
             <tr>
                 <td width="120" style="vertical-align:top">
                     <label><strong><?php echo __('Ticket Status');?>:</strong></label>
@@ -1157,6 +1190,7 @@ if ($errors['err'] && isset($_POST['a'])) {
                 <td width="120" style="vertical-align:top">
                     <label><strong><?php echo __('Internal Note'); ?>:</strong><span class='error'>&nbsp;*</span></label>
                 </td>
+                <?php if (false) {?>
                 <td>
                     <div>
                         <div class="faded" style="padding-left:0.15em"><?php
@@ -1165,7 +1199,11 @@ if ($errors['err'] && isset($_POST['a'])) {
                         <br/>
                         <span class="error">&nbsp;<?php echo $errors['title']; ?></span>
                     </div>
-                </td></tr>
+                </td>
+                <?php
+                }
+                ?>
+            </tr>
                 <tr><td colspan="2">
                     <div class="error"><?php echo $errors['note']; ?></div>
                     <textarea name="note" id="internal_note" cols="80"
