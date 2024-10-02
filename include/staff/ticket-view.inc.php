@@ -1034,6 +1034,11 @@ if ($errors['err'] && isset($_POST['a'])) {
             <?php }?>
             <tbody id="resp_sec">
             <tr>
+                <td width="120">
+                    <label><strong><?php echo __('Nota'); ?>:</strong><span class='error'>&nbsp;*</span></label>
+                </td>
+            </tr>
+            <tr>
                 <td>
                 <?php
                 if ($errors['response'])
@@ -1119,6 +1124,7 @@ if ($errors['err'] && isset($_POST['a'])) {
             <?php } ?>
             <tr>
                 <td>
+                    <label><?php echo __('Ticket Status');?>:</label>
                     <?php
                     $outstanding = false;
                     if ($role->hasPerm(Ticket::PERM_CLOSE)
