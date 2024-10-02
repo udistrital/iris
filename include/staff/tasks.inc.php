@@ -64,6 +64,7 @@ $queue_columns = array(
 // Queue we're viewing
 $queue_key = sprintf('::Q:%s', ObjectModel::OBJECT_TYPE_TASK);
 $queue_name = $_SESSION[$queue_key] ?: '';
+$staffId = $thisstaff->getId();
 
 switch ($queue_name) {
     case 'closed':
@@ -71,7 +72,7 @@ switch ($queue_name) {
         $results_type = __('Casos cerrados asignados a mí');
         $showassigned = true; //closed by.
         // mis casos cerrados
-        $tasks->filter(array('staff_id' => $thisstaff->getId()));
+        $tasks->filter(array('staff_id' => $staffId));
         setFilter($status, $tasks);
         $queue_sort_options = array('closed', 'updated', 'created', 'number', 'hot');
         break;
@@ -98,7 +99,7 @@ switch ($queue_name) {
     case 'assigned':
         $status = 'open';
         $results_type = __('Casos asignados a mí');
-        $tasks->filter(array('staff_id' => $thisstaff->getId()));
+        $tasks->filter(array('staff_id' => $staffId));
         setFilter($status, $tasks);
         $queue_sort_options = array('created', 'updated', 'number', 'hot');
         break;
@@ -140,11 +141,51 @@ switch ($queue_name) {
         break;
     case 'open_me':
         $results_type = __('Creados por mí (abiertos y cerrados)');
-        $staffId = $thisstaff->getId();
         $tasks->filter(
             array(
                 'thread__events__agent' => $staffId,
                 'thread__events__event__name' => 'created',
+            ),
+        );
+
+        setFilter($status, $tasks);
+        $queue_sort_options = array('created', 'updated', 'number', 'hot');
+        break;
+    case 'created_pairs':
+        $results_type = __('Creados por un miembro de mis equipos');
+        if ($teams = $thisstaff->getTeams()) {
+            $pairs = TeamMember::objects();
+            $pairs->distinct('staff_id');
+            $pairs->filter(
+                array(
+                    'team_id__in' => $teams,
+                    'staff_id__notequal' => $staffId,
+                ),
+            );
+            $pairs->values('staff_id');
+        }
+
+        if (!$teams || !$pairs)
+            $tasks->filter(array('id' => 0));
+        else
+            $tasks->filter(
+                array(
+                    'thread__events__agent__in' => $pairs,
+                    'thread__events__event__name' => 'created',
+                ),
+            );
+
+        setFilter($status, $tasks);
+        $queue_sort_options = array('created', 'updated', 'number', 'hot');
+        break;
+    case 'involved':
+        $results_type = __('Casos en los que he participado y no estoy asignado');
+        $tasks->distinct('id');
+        $tasks->filter(
+            array(
+                'thread__entries__type__in' => array('N', 'R'),
+                'thread__entries__staff__staff_id' => $staffId,
+                'staff_id__notequal' => $staffId,
             ),
         );
 
@@ -160,9 +201,7 @@ switch ($queue_name) {
                 array(
                     'thread__events__dept' => $deptId,
                     'thread__events__event__name__in' => array('transferred', 'created'),
-                ),
-                Q::not(
-                    array('dept' => $deptId),
+                    'dept__notequal' => $deptId,
                 ),
             );
         } else {
@@ -174,17 +213,12 @@ switch ($queue_name) {
         break;
     case 'thread_me':
         $results_type = __('Asignados por mí a otro agente');
-        $staffId = $thisstaff->getId();
         $tasks->distinct('id');
         $tasks->filter(
             array(
                 'thread__events__agent' => $staffId,
                 'thread__events__event__name' => 'assigned',
-            ),
-            Q::not(
-                array(
-                    'thread__events__staff' => $staffId,
-                ),
+                'thread__events__staff__staff_id__notequal' => $staffId,
             ),
         );
 
@@ -250,11 +284,7 @@ switch ($queue_name) {
                 array(
                     'thread__collaborators__user' => $userId,
                     'thread__events__event__name' => 'created',
-                ),
-                Q::not(
-                    array(
-                        'thread__events__agent' => $thisstaff->getId(),
-                    ),
+                    'thread__events__agent__notequal' => $staffId,
                 ),
             );
         } else {
@@ -329,12 +359,12 @@ if ($filters)
 // ------------------------------------------------------------
 // -- Open and assigned to me
 $visibility = Q::any(
-    new Q(array('flags__hasbit' => TaskModel::ISOPEN, 'staff_id' => $thisstaff->getId()))
+    new Q(array('flags__hasbit' => TaskModel::ISOPEN, 'staff_id' => $staffId))
 );
 // -- Task for tickets assigned to me
 $visibility->add(
     new Q(array(
-        'ticket__staff_id' => $thisstaff->getId(),
+        'ticket__staff_id' => $staffId,
         'ticket__status__state' => 'open'
     ))
 );
@@ -362,6 +392,16 @@ $tasks->annotate(array(
         SqlCase::N()
             ->when(
                 new Q(array('thread__entries__flags__hasbit' => ThreadEntry::FLAG_HIDDEN)),
+                null
+            )
+            ->otherwise(new SqlField('thread__entries__id')),
+        true
+    ),
+    'participaciones' => SqlAggregate::COUNT(
+        SqlCase::N()
+            ->when(
+                Q::any(array('thread__entries__staff__staff_id__notequal' => $staffId))
+                    ->add(array('thread__entries__type' => 'M')),
                 null
             )
             ->otherwise(new SqlField('thread__entries__id')),
@@ -607,7 +647,7 @@ if ($thisstaff->hasPerm(Task::PERM_DELETE, false)) {
                     $total += 1;
                     $tag = $T['staff_id'] ? 'assigned' : 'openticket';
                     $flag = null;
-                    if ($T['lock__staff_id'] && $T['lock__staff_id'] != $thisstaff->getId())
+                    if ($T['lock__staff_id'] && $T['lock__staff_id'] != $staffId)
                         $flag = 'locked';
                     elseif ($T['isoverdue'])
                         $flag = 'overdue';

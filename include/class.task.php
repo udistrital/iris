@@ -931,7 +931,7 @@ class Task extends TaskModel implements RestrictedAccess, Threadable {
             if ($cfg->alertStaffONTaskAssignment())
                 $recipients[] = $assignee;
         } elseif (($assignee instanceof Team) && $assignee->alertsEnabled()) {
-            if ($cfg->alertTeamMembersONTaskAssignment() && ($members=$assignee->getMembersForAlerts()))
+            if (($cfg->alertTeamMembersONTaskAssignment() || $assignee->alertAll()) && ($members=$assignee->getMembersForAlerts()))
                 $recipients = array_merge($recipients, $members);
             elseif ($cfg->alertTeamLeadONTaskAssignment() && ($lead=$assignee->getTeamLead()))
                 $recipients[] = $lead;
@@ -1068,6 +1068,22 @@ class Task extends TaskModel implements RestrictedAccess, Threadable {
             $vars['poster'] = $poster;
         }
 
+        if ($this->isClosing(newState: $vars['task:status'])) {
+            // Claim if unassigned, in my dept, teams and closing
+            if (!$this->getStaffId() &&
+                $thisstaff && $this->getDeptId() == $thisstaff->getDeptId() &&
+                $thisstaff->isTeamMember(teamId: $this->getTeamId())) {
+                $cform = $this->getClaimForm();
+                if (!$this->claim(form: $cform, errors: $errors));
+                    return null;
+            }
+
+            if (Misc::isCommentEmpty(comment: $vars['note'])) {
+                $this->setStatus(status: $vars['task:status'], errors: $errors);
+                return;
+            }
+        }
+
         if (!($note=$this->getThread()->addNote($vars, $errors)))
             return null;
 
@@ -1101,6 +1117,22 @@ class Task extends TaskModel implements RestrictedAccess, Threadable {
 
         if (!$vars['ip_address'] && $_SERVER['REMOTE_ADDR'])
             $vars['ip_address'] = $_SERVER['REMOTE_ADDR'];
+
+        if ($this->isClosing(newState: $vars['task:status'])) {
+            // Claim if unassigned, in my dept, teams and closing
+            if (!$this->getStaffId() &&
+                $thisstaff && $thisstaff->getDeptId() == $this->getDeptId() &&
+                $thisstaff->isTeamMember(teamId: $this->getTeamId())) {
+                $cform = $this->getClaimForm();
+                if (!$this->claim(form: $cform, errors: $errors));
+                    return null;
+            }
+
+            if (Misc::isCommentEmpty(comment: $vars['response'])) {
+                $this->setStatus(status: $vars['task:status'], errors: $errors);
+                return;
+            }
+        }
 
         if (!($response = $this->getThread()->addResponse($vars, $errors)))
             return null;
@@ -1563,8 +1595,11 @@ class Task extends TaskModel implements RestrictedAccess, Threadable {
         if ($vars['internal_formdata']['dept_id'])
             $task->dept_id = $vars['internal_formdata']['dept_id'];
 
-        if ($vars['internal_formdata']['duedate'])
-	    $task->duedate = date('Y-m-d G:i', Misc::dbtime($vars['internal_formdata']['duedate']));
+        if ($vars['internal_formdata']['duedate']) {
+            $time = new DateTime($vars['internal_formdata']['duedate']);
+            $time->setTime(23, 59, 59);
+	        $task->duedate = date('Y-m-d G:i:s', $time->getTimestamp());
+        }
 
         if (!$task->save(true))
             return false;
@@ -1703,6 +1738,10 @@ class Task extends TaskModel implements RestrictedAccess, Threadable {
 
         return true;
 
+    }
+
+    function isClosing($newState): bool {
+        return $this->isOpen() && $newState == 'closed';
     }
 
     static function __loadDefaultForm() {
@@ -1867,21 +1906,16 @@ extends AbstractForm {
                     'required' => true,
                     'layout' => new GridFluidCell(6),
                     )),
-                /* 'assignee' => new AssigneeField(array(
-                    'id'=>2,
-                    'label' => __('Assignee'),
-                    'required' => false,
-                    'layout' => new GridFluidCell(6),
-                    )), */
                 'duedate'  =>  new DatetimeField(array(
                     'id' => 3,
                     'label' => __('Due Date'),
                     'required' => true,
                     'configuration' => array(
-                        'min' => Misc::gmtime(),
-                        'time' => true,
+                        'min' => Misc::bogTimeStartToday(),
+                        'time' => false,
                         'gmt' => false,
                         'future' => true,
+                        'timezone' => 'America/Bogota',
                         ),
                     )),
 

@@ -50,6 +50,8 @@ if (!$ticket) {
     // Search for user
     if (isset($_REQUEST['uid']))
         $user = User::lookup($_REQUEST['uid']);
+    elseif ($userId = $thisstaff->getUserIdStaff())
+        $user = User::lookup($userId);
 
     if (isset($_REQUEST['email']))
         $user = User::lookupByEmail($_REQUEST['email']);

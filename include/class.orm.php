@@ -2290,7 +2290,7 @@ class SqlCompiler {
      */
     static function splitCriteria($criteria) {
         static $operators = array(
-            'exact' => 1, 'isnull' => 1,
+            'exact' => 1, 'notequal' => 1, 'isnull' => 1,
             'gt' => 1, 'lt' => 1, 'gte' => 1, 'lte' => 1, 'range' => 1,
             'contains' => 1, 'like' => 1, 'startswith' => 1, 'endswith' => 1, 'regex' => 1,
             'in' => 1, 'intersect' => 1,
@@ -2327,6 +2327,7 @@ class SqlCompiler {
     static function evaluate($record, $check, $field) {
         static $ops; if (!isset($ops)) { $ops = array(
             'exact' => function($a, $b) { return is_string($a) ? strcasecmp($a, $b) == 0 : $a == $b; },
+            'notequal' => function($a, $b) { return $a <> $b; },
             'isnull' => function($a, $b) { return is_null($a) == $b; },
             'gt' => function($a, $b) { return $a > $b; },
             'gte' => function($a, $b) { return $a >= $b; },
@@ -2382,6 +2383,7 @@ class SqlCompiler {
      *      function    a__function => b
      *      ----------+------------------------------------------------
      *      exact     | a is exactly equal to b
+     *      notequal  | a is not equal to b
      *      gt        | a is greater than b
      *      lte       | b is greater than a
      *      lt        | a is less than b
@@ -2734,6 +2736,7 @@ class MySqlCompiler extends SqlCompiler {
 
     static $operators = array(
         'exact' => '%1$s = %2$s',
+        'notequal' => '%1$s <> %2$s',
         'contains' => array('self', '__contains'),
         'startswith' => array('self', '__startswith'),
         'endswith' => array('self', '__endswith'),

@@ -493,9 +493,20 @@ implements AuthenticatedUser, EmailContact, TemplateVariable, Searchable {
         return $depts;
     }
 
-    function getTopicNames($publicOnly=false, $disabled=false) {
+    function getTopicNames($publicOnly=false, $disabled=false, $permission = null) {
+        $depts = array();
+        if ($permission) {
+            $depts_ = $this->getDeptsByPermission($permission);
+            if (!$depts_)
+                $depts = array(0);
+            else {
+                foreach ($depts_ as $dept)
+                    $depts[] = (int) $dept['id'];
+            }
+        }
+
         $allInfo = !$this->hasPerm(Dept::PERM_DEPT) ? true : false;
-        $topics = Topic::getHelpTopics($publicOnly, $disabled, true, array(), $allInfo, $this->getDeptId());
+        $topics = Topic::getHelpTopics($publicOnly, $disabled, true, array(), $allInfo, $depts);
         $topicsClean = array();
 
         if (!$this->hasPerm(Dept::PERM_DEPT) && $staffDepts = $this->getDepts()) {
@@ -524,6 +535,28 @@ implements AuthenticatedUser, EmailContact, TemplateVariable, Searchable {
         }
 
         return $topics;
+    }
+
+    function getDeptsByPermission($permission) {
+        $member = Dept::objects()
+            ->filter(
+                array(
+                    'members__role__permissions__contains' => $permission,
+                    'members__staff_id' => $this->getId(),
+                )
+            )
+            ->values('id');
+
+        $extended = Dept::objects()
+            ->filter(
+                array(
+                    'extended__role__permissions__contains' => $permission,
+                    'extended__staff_id' => $this->getId(),
+                )
+            )
+            ->values('id');
+
+        return $member->union($extended);
     }
 
     function getManagedDepartments() {

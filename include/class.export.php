@@ -152,7 +152,7 @@ class Export {
                 '::getDueDateExport' =>        __('Due Date'),
                 'staff::getName' => __('Agent Assigned'),
                 'team::getName' =>  __('Team Assigned'),
-                'thread_count' =>   __('Thread Count'),
+                'participaciones' => ('Participaciones'),
                 'attachment_count' => __('Attachment Count'),
             ) + $cdata,
             $how,
