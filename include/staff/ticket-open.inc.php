@@ -80,11 +80,44 @@ if ($_POST)
                 <div class="error"><?php echo $errors['user']; ?></div>
             </th>
         </tr>
-              <?php
-              if ($user) { ?>
+              <?php if ($user) { ?>
+              <input type="hidden" name="uid" id="uid" value="<?php echo $user->getId(); ?>" />
+              <?php if (false) {?>
+                  <tr><td><?php echo __('User'); ?>:</td><td>
+                    <div id="user-info">
                       <input type="hidden" name="uid" id="uid" value="<?php echo $user->getId(); ?>" />
+                      <?php if ($thisstaff->hasPerm(User::PERM_EDIT)) { ?>
+                      <a href="#" onclick="javascript:
+                      $.userLookup('ajax.php/users/<?php echo $user->getId(); ?>/edit',
+                      function (user) {
+                        $('#user-name').text(user.name);
+                        $('#user-email').text(user.email);
+                      });
+                      return false;
+                      ">
+                      <?php } else { ?>
+                      <a href="#">
+                      <?php } ?>
+                      <i class="icon-user"></i>
+                      <span id="user-name"><?php echo Format::htmlchars($user->getName()); ?></span>
+                      &lt;<span id="user-email"><?php echo $user->getEmail(); ?></span>&gt;
+                    </a>
+                    <a class="inline button" style="overflow:inherit" href="#"
+                    onclick="javascript:
+                    $.userLookup('ajax.php/users/select/'+$('input#uid').val(),
+                    function(user) {
+                      $('input#uid').val(user.id);
+                      $('#user-name').text(user.name);
+                      $('#user-email').text('<'+user.email+'>');
+                    });
+                    return false;
+                    "><i class="icon-retweet"></i> <?php echo __('Change'); ?></a>
+                  </div>
+                </td>
+                <?php }?>
+              </tr>
               <?php
-            } else { //Fallback: Just ask for email and name
+            } elseif (false) { //Fallback: Just ask for email and name
               ?>
               <tr id="userRow">
                 <td width="120"><?php echo __('User'); ?>:</td>
@@ -141,6 +174,18 @@ if ($_POST)
          ?>
         <tr class="no_border">
           <input id="reply-to"  type="hidden" name="reply-to" value="none">
+          <?php if (false) {?>
+          <td>
+            <?php echo __('Ticket Notice');?>:
+          </td>
+          <td>
+            <select id="reply-to" name="reply-to">
+              <option value="all"><?php echo __('Alert All'); ?></option>
+              <option value="user"><?php echo __('Alert to User'); ?></option>
+              <option value="none">&mdash; <?php echo __('Do Not Send Alert'); ?> &mdash;</option>
+            </select>
+          </td>
+          <?php }?>
         </tr>
       <?php } ?>
     </tbody>
@@ -151,7 +196,27 @@ if ($_POST)
             </th>
         </tr>
         <tr>
-          <input type="hidden" name="source" value="Email">
+            <input type="hidden" name="source" value="Email">
+            <?php if (false) {?>
+            <td width="160" class="required">
+                <?php echo __('Ticket Source');?>:
+            </td>
+            <td>
+                <select name="source">
+                    <?php
+                    $source = $info['source'] ?: 'Email'; //Se cambia phone por email
+                    $sources = Ticket::getSources();
+                    unset($sources['Web'], $sources['API']);
+                    foreach ($sources as $k => $v)
+                        echo sprintf('<option value="%s" %s>%s</option>',
+                                $k,
+                                ($source == $k ) ? 'selected="selected"' : '',
+                                $v);
+                    ?>
+                </select>
+                &nbsp;<font class="error"><b>*</b>&nbsp;<?php echo $errors['source']; ?></font>
+            </td>
+            <?php }?>
         </tr>
         <tr>
             <td width="160" class="required">
@@ -190,7 +255,7 @@ if ($_POST)
                     ?>
                 </select>
                 &nbsp;<font class="error"><b>*</b>&nbsp;<?php echo $errors['topicId']; ?></font>
-                <em><?php echo 'Recuerde poner su dependencia'; ?>&nbsp;(<?php echo $thisstaff->getDept(); ?>)</em>
+                <em><?php echo 'Seleccione la dependencia que está a cargo del proceso'; ?></em>
             </td>
         </tr>
         <tr style="display:none;"> 
@@ -224,10 +289,42 @@ if ($_POST)
 
          <tr>
             <input type="hidden" name="slaId" value="-1">
+            <?php if (false) {?>
+            <td width="160">
+                <?php echo __('SLA Plan');?>:
+            </td>
+            <td>
+                <select name="slaId">
+                    <option value="0" selected="selected" >&mdash; <?php echo __('System Default');?> &mdash;</option>
+                    <?php
+                    if($slas=SLA::getSLAs()) {
+                        foreach($slas as $id =>$name) {
+                            echo sprintf('<option value="%d" %s>%s</option>',
+                                    $id, ($info['slaId']==$id)?'selected="selected"':'',$name);
+                        }
+                    }
+                    ?>
+                </select>
+                &nbsp;<font class="error">&nbsp;<?php echo $errors['slaId']; ?></font>
+            </td>
+            <?php }?>
          </tr>
 
          <tr>
-          <input type="hidden" name="duedate" value="">
+            <input type="hidden" name="duedate" value="">
+            <?php if (false) {?>
+            <td width="160">
+                <?php echo __('Due Date');?>:
+            </td>
+            <td>
+                <?php
+                $duedateField = Ticket::duedateField('duedate', $info['duedate']);
+                $duedateField->render();
+                ?>
+                &nbsp;<font class="error">&nbsp;<?php echo $errors['duedate']; ?> &nbsp; <?php echo $errors['time']; ?></font>
+                <em><?php echo 'Hora basada en su zona horaria'; ?>&nbsp;(<?php echo $cfg->getTimezone($thisstaff); ?>)</em>
+            </td>
+            <?php }?>
         </tr>
 
         <?php
@@ -280,10 +377,123 @@ if ($_POST)
         ?>
         </tbody>
         <tbody>
-          <input type="hidden" name="response" id="response" value="">
-          <input type="hidden" name="statusId" id="statusId" value="1">
-          <input type="hidden" name="signature" value="none">
-          <input type="hidden" name="note" value="">
+        <input type="hidden" name="response" id="response" value="">
+        <input type="hidden" name="statusId" id="statusId" value="1">
+        <?php
+        //is the user allowed to post replies??
+        if (false && $thisstaff->getRole()->hasPerm(Ticket::PERM_REPLY)) { ?>
+        <tr>
+            <th colspan="2">
+                <em><strong><?php echo __('Response');?></strong>: <?php echo __('Optional response to the above issue.');?></em>
+            </th>
+        </tr>
+        <tr>
+            <td colspan=2>
+            <?php
+            if($cfg->isCannedResponseEnabled() && ($cannedResponses=Canned::getCannedResponses())) {
+                ?>
+                <div style="margin-top:0.3em;margin-bottom:0.5em">
+                    <?php echo __('Canned Response');?>:&nbsp;
+                    <select id="cannedResp" name="cannedResp">
+                        <option value="0" selected="selected">&mdash; <?php echo __('Select a canned response');?> &mdash;</option>
+                        <?php
+                        foreach($cannedResponses as $id =>$title) {
+                            echo sprintf('<option value="%d">%s</option>',$id,$title);
+                        }
+                        ?>
+                    </select>
+                    &nbsp;&nbsp;
+                    <label class="checkbox inline"><input type='checkbox' value='1' name="append" id="append" checked="checked"><?php echo __('Append');?></label>
+                </div>
+            <?php
+            }
+                $signature = '';
+                if ($thisstaff->getDefaultSignatureType() == 'mine')
+                    $signature = $thisstaff->getSignature(); ?>
+                <textarea
+                    class="<?php if ($cfg->isRichTextEnabled()) echo 'richtext';
+                        ?> draft draft-delete" data-signature="<?php
+                        echo Format::viewableImages(Format::htmlchars($signature, true)); ?>"
+                    data-signature-field="signature" data-dept-field="deptId"
+                    placeholder="<?php echo __('Initial response for the ticket'); ?>"
+                    name="response" id="response" cols="21" rows="8"
+                    style="width:80%;" <?php
+    list($draft, $attrs) = Draft::getDraftAndDataAttrs('ticket.staff.response', false, $info['response']);
+    echo $attrs; ?>><?php echo ThreadEntryBody::clean($_POST ? $info['response'] : $draft);
+                ?></textarea>
+                    <div class="attachments">
+<?php
+print $response_form->getField('attachments')->render();
+?>
+                    </div>
+
+                <table border="0" cellspacing="0" cellpadding="2" width="100%">
+            <tr>
+                <td width="100"><?php echo __('Ticket Status');?>:</td>
+                <td>
+                    <select name="statusId">
+                    <?php
+                    $statusId = $info['statusId'] ?: $cfg->getDefaultTicketStatusId();
+                    $states = array('open');
+                    if ($thisstaff->hasPerm(Ticket::PERM_CLOSE, false))
+                        $states = array_merge($states, array('closed'));
+                    foreach (TicketStatusList::getStatuses(
+                                array('states' => $states)) as $s) {
+                        if (!$s->isEnabled()) continue;
+                        $selected = ($statusId == $s->getId());
+                        echo sprintf('<option value="%d" %s>%s</option>',
+                                $s->getId(),
+                                $selected
+                                 ? 'selected="selected"' : '',
+                                __($s->getName()));
+                    }
+                    ?>
+                    </select>
+                </td>
+            </tr>
+             <tr>
+                <td width="100"><?php echo __('Signature');?>:</td>
+                <td>
+                    <?php
+                    $info['signature']=$info['signature']?$info['signature']:$thisstaff->getDefaultSignatureType();
+                    ?>
+                    <label><input type="radio" name="signature" value="none" checked="checked"> <?php echo __('None');?></label>
+                    <?php
+                    if($thisstaff->getSignature()) { ?>
+                        <label><input type="radio" name="signature" value="mine"
+                            <?php echo ($info['signature']=='mine')?'checked="checked"':''; ?>> <?php echo __('My Signature');?></label>
+                    <?php
+                    } ?>
+                    <label><input type="radio" name="signature" value="dept"
+                        <?php echo ($info['signature']=='dept')?'checked="checked"':''; ?>> <?php echo sprintf(__('Department Signature (%s)'), __('if set')); ?></label>
+                </td>
+             </tr>
+            </table>
+            </td>
+        </tr>
+        <?php
+        } //end canPostReply
+        ?>
+        <?php if (false) {?>
+        <tr>
+            <th colspan="2">
+                <em><strong><?php echo __('Internal Note');?></strong>
+                <font class="error">&nbsp;<?php echo $errors['note']; ?></font></em>
+            </th>
+        </tr>
+        <tr>
+            <td colspan=2>
+                <textarea
+                    class="<?php if ($cfg->isRichTextEnabled()) echo 'richtext';
+                        ?> draft draft-delete"
+                    placeholder="<?php echo __('Optional internal note (recommended on assignment)'); ?>"
+                    name="note" cols="21" rows="6" style="width:80%;" <?php
+    list($draft, $attrs) = Draft::getDraftAndDataAttrs('ticket.staff.note', false, $info['note']);
+    echo $attrs; ?>><?php echo ThreadEntryBody::clean($_POST ? $info['note'] : $draft);
+                ?></textarea>
+            </td>
+        </tr>
+        <?php }?>
     </tbody>
 </table>
 <p style="text-align:center;">
