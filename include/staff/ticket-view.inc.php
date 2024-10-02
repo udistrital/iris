@@ -1034,9 +1034,6 @@ if ($errors['err'] && isset($_POST['a'])) {
             <?php }?>
             <tbody id="resp_sec">
             <tr>
-                <td width="120" style="vertical-align:top">
-                    <label><strong><?php echo __('Response');?>:</strong></label>
-                </td>
                 <td>
                 <?php
                 if ($errors['response'])
@@ -1121,9 +1118,6 @@ if ($errors['err'] && isset($_POST['a'])) {
             </tr>
             <?php } ?>
             <tr>
-                <td width="120" style="vertical-align:top">
-                    <label><strong><?php echo __('Ticket Status');?>:</strong></label>
-                </td>
                 <td>
                     <?php
                     $outstanding = false;
