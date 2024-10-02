@@ -11,7 +11,7 @@ if (!isset($info['lookup']) || $info['lookup'] !== false) { ?>
 ?></p></div>
 <div style="margin-bottom:10px;">
     <input type="text" class="search-input" style="width:100%;"
-    placeholder="<?php echo 'Buscar por mi correo, nombre o teléfono'; ?>" id="user-search"
+    placeholder="<?php echo 'Buscar por correo institucional o nombre'; ?>" id="user-search"
     autofocus autocorrect="off" autocomplete="off"/>
 </div>
 <?php
