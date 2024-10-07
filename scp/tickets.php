@@ -50,8 +50,6 @@ if (!$ticket) {
     // Search for user
     if (isset($_REQUEST['uid']))
         $user = User::lookup($_REQUEST['uid']);
-    elseif ($userId = $thisstaff->getUserIdStaff())
-        $user = User::lookup($userId);
 
     if (isset($_REQUEST['email']))
         $user = User::lookupByEmail($_REQUEST['email']);
@@ -553,6 +551,8 @@ if($ticket) {
     if ((isset($_REQUEST['a']) && $_REQUEST['a']=='open') &&
             $thisstaff->hasPerm(Ticket::PERM_CREATE, false)) {
         $inc = 'ticket-open.inc.php';
+        if (!$user && $userId = $thisstaff->getUserIdStaff())
+            $user = User::lookup($userId);
     } elseif ($queue) {
         // XXX: Check staff access?
         $quick_filter = @$_REQUEST['filter'];
