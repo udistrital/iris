@@ -176,6 +176,10 @@ class TaskModel extends VerySimpleModel {
         return $this->isClosed() ? $this->closed : '';
     }
 
+    function getSubmitter() {
+        return $this->submitter;
+    }
+
     function isOpen() {
         return $this->hasFlag(self::ISOPEN);
     }
