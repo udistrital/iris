@@ -152,6 +152,7 @@ class Export {
                 '::getDueDateExport' =>        __('Due Date'),
                 'staff::getName' => __('Agent Assigned'),
                 'team::getName' =>  __('Team Assigned'),
+                '::getSubmitter' =>  'Dependencia Creadora',
                 'participaciones' => ('Participaciones'),
                 'attachment_count' => __('Attachment Count'),
             ) + $cdata,
