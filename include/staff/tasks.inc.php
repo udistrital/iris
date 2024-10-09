@@ -566,7 +566,7 @@ if ($thisstaff->hasPerm(Task::PERM_DELETE, false)) {
 
 ?>
 <div class="clear"></div>
-<div style="margin-bottom:20px; padding-top:5px; overflow-x: scroll">
+<div style="margin-bottom:20px; padding-top:5px;">
     <div class="sticky bar opaque">
         <div class="content">
             <div class="pull-left flush-left">
