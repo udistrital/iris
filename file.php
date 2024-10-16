@@ -29,7 +29,9 @@ if (!$_GET['key']
 // Get the object type the file is attached to
 $type = '';
 $attachment = null;
-if ($_GET['id']
+if ($_GET['entry_id']) {
+
+} else if ($_GET['id']
         && ($attachment=$file->attachments->findFirst(array(
                     'id' => $_GET['id']))))
     $type = $attachment->type;
