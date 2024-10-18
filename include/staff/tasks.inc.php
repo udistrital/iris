@@ -667,7 +667,7 @@ if ($thisstaff->hasPerm(Task::PERM_DELETE, false)) {
                     $dept = Dept::getLocalById($T['dept_id'], 'name', $T['dept__name']);
                     $assinee = '';
                     $created = explode(' ', Format::datetime($T[$date_col ?: 'created']), 2);
-                    $lastEntry = explode(' ', Format::datetime($T[$date_col ?: 'last_entry']), 2);
+                    $lastEntry = explode(' ', Format::datetime($T['last_entry']), 2);
                     if ($T['staff_id'] && $T['team_id']) {
                         $staff =  new AgentsName($T['staff__firstname'] . ' ' . $T['staff__lastname']);
                         $team = Team::getLocalById($T['team_id'], 'name', $T['team__name']);
