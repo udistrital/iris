@@ -24,38 +24,43 @@ $sort_options = array(
 $queue_columns = array(
     'number' => array(
         'width' => '10%',
-        'heading' => __('Number'),
+        'heading' => __('Number') . '<br>&nbsp;',
         'sort_col'  => 'number',
     ),
     'ticket' => array(
         'width' => '10%',
-        'heading' => __('Expediente'),
+        'heading' => __('Expediente') . '<br>&nbsp;',
         'sort_col'  => 'ticket__number',
     ),
     'date' => array(
-        'width' => '12%',
-        'heading' => __('Date Created'),
+        'width' => '10%',
+        'heading' => 'Fecha de<br>Creación',
         'filter_type' => 'date',
     ),
     'last_entry' => array(
         'width' => '10%',
-        'heading' => __('Última Actividad'),
+        'heading' => 'Última<br>Actividad',
         'filter_type' => 'date',
         'disabled' => true,
     ),
     'title' => array(
-        'width' => '19%',
-        'heading' => __('Title'),
+        'width' => '16%',
+        'heading' => __('Title') . '<br>&nbsp;',
         'sort_col' => 'cdata__title',
     ),
     'dept' => array(
-        'width' => '15%',
-        'heading' => __('Dependencia'),
+        'width' => '14%',
+        'heading' => 'Dependencia<br>Asignada',
         'sort_col'  => 'dept__name',
     ),
     'assignee' => array(
-        'width' => '20%',
-        'heading' => __('Assigned To'),
+        'width' => '12%',
+        'heading' => __('Assigned To') . '<br>&nbsp;',
+    ),
+    'submitter' => array(
+        'width' => '14%',
+        'heading' => 'Dependencia<br>Creadora',
+        'disabled' => true,
     ),
 );
 
@@ -388,6 +393,12 @@ $tasks->annotate(array(
             ->otherwise(new SqlField('thread__entries__attachments')),
         true
     ),
+    'submitter' => SqlCase::N()
+        ->when(
+            Q::any(array('thread__events__event__name' => 'created')),
+            new SqlField('thread__events__agent__dept__name')
+        )
+        ->otherwise(null),
     'thread_count' => SqlAggregate::COUNT(
         SqlCase::N()
             ->when(
@@ -498,7 +509,7 @@ switch ($sort_cols) {
             break;
         }
     case 'created':
-        $queue_columns['date']['heading'] = __('Date Created');
+        $queue_columns['date']['heading'] = 'Fecha de<br>Creación';
         $queue_columns['date']['sort'] = 'created';
         $queue_columns['date']['sort_col'] = $date_col = 'created';
         $tasks->order_by($sort_dir ? 'created' : '-created');
@@ -655,6 +666,8 @@ if ($thisstaff->hasPerm(Task::PERM_DELETE, false)) {
                     $assignee = '';
                     $dept = Dept::getLocalById($T['dept_id'], 'name', $T['dept__name']);
                     $assinee = '';
+                    $created = explode(' ', Format::datetime($T[$date_col ?: 'created']), 2);
+                    $lastEntry = explode(' ', Format::datetime($T['last_entry']), 2);
                     if ($T['staff_id'] && $T['team_id']) {
                         $staff =  new AgentsName($T['staff__firstname'] . ' ' . $T['staff__lastname']);
                         $team = Team::getLocalById($T['team_id'], 'name', $T['team__name']);
@@ -701,9 +714,9 @@ if ($thisstaff->hasPerm(Task::PERM_DELETE, false)) {
                             <a class="preview" href="tickets.php?id=<?php echo $T['ticket__ticket_id']; ?>" data-preview="#tickets/<?php echo $T['ticket__ticket_id']; ?>/preview"><?php echo $T['ticket__number']; ?></a>
                         </td>
                         <td nowrap><?php echo
-                                    Format::datetime($T[$date_col ?: 'created']); ?></td>
+                                    implode('<br>', $created); ?></td>
                         <td nowrap><?php echo
-                                    Format::datetime($T['last_entry']); ?></td>
+                                    implode('<br>', $lastEntry); ?></td>
                         <td><a <?php if ($flag) { ?> class="Icon <?php echo $flag; ?>Ticket" title="<?php echo ucfirst($flag); ?> Ticket" <?php } ?> href="tasks.php?id=<?php echo $T['id']; ?>"><?php
                                                                                                                                                                                                     echo $title; ?></a>
                             <?php
@@ -718,6 +731,7 @@ if ($thisstaff->hasPerm(Task::PERM_DELETE, false)) {
                         </td>
                         <td><?php echo $dept; ?></td>
                         <td><?php echo $assignee; ?></td>
+                        <td><?php echo $T['submitter']; ?></td>
                     </tr>
                 <?php
                 } //end of foreach
@@ -727,7 +741,7 @@ if ($thisstaff->hasPerm(Task::PERM_DELETE, false)) {
             </tbody>
             <tfoot>
                 <tr>
-                    <td colspan="8">
+                    <td colspan="9">
                         <?php if ($total && $thisstaff->canManageTickets()) { ?>
                             <?php echo __('Select'); ?>:&nbsp;
                             <a id="selectAll" href="#ckb"><?php echo __('All'); ?></a>&nbsp;&nbsp;
