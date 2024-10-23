@@ -35,9 +35,9 @@ if ($user && $cfg->isAvatarsEnabled())
         <span class="muted-button pull-right" data-dropdown="#entry-action-more-<?php echo $entry->getId(); ?>">
             <i class="icon-caret-down"></i>
         </span>
-<?php   if (count($entry->attachments) > 1) { ?>
+<?php   if (extension_loaded('zip') && count($entry->attachments) > 1) { ?>
         <span class="muted-button pull-right">
-            <a class="" href="file?entry_id=<?php echo $entry->getId(); ?>" target="_blank">
+            <a class="no-pjax" href="<?php echo $entry->generateDownloadUrl(); ?>" target="_blank">
                 <i class="icon-cloud-download"></i>
             </a>
         </span>

@@ -18,20 +18,20 @@ require('client.inc.php');
 require_once(INCLUDE_DIR.'class.file.php');
 
 //Basic checks
-if (!$_GET['key']
+if ((!$_GET['key']
     || !$_GET['signature']
     || !$_GET['expires']
     || !($file = AttachmentFile::lookupByHash($_GET['key']))
-) {
+) && (!$_GET['entry_id']
+    || !($entry = ThreadEntry::lookup($_GET['entry_id']))
+)) {
     Http::response(404, __('Unknown or invalid file'));
 }
 
 // Get the object type the file is attached to
 $type = '';
 $attachment = null;
-if ($_GET['entry_id']) {
-
-} else if ($_GET['id']
+if ($_GET['id']
         && ($attachment=$file->attachments->findFirst(array(
                     'id' => $_GET['id']))))
     $type = $attachment->type;
@@ -58,7 +58,7 @@ if ($cfg->isAuthRequiredForFiles()
 
 // Validate session access hash - we want to make sure the link is FRESH!
 // and the user has access to the parent ticket!!
-if ($file->verifySignature($_GET['signature'], $_GET['expires'])) {
+if ($file && $file->verifySignature($_GET['signature'], $_GET['expires'])) {
     try {
         if (($s = @$_GET['s']) && strpos($file->getType(), 'image/') === 0)
             return $file->display($s);
@@ -71,6 +71,8 @@ if ($file->verifySignature($_GET['signature'], $_GET['expires'])) {
     catch (Exception $ex) {
         Http::response(500, 'Unable to find that file: '.$ex->getMessage());
     }
+} else if ($_GET['entry_id'] && Misc::gmtime() < $_GET['expires']) {
+    $entry->zipExport();
 }
 // else
 Http::response(404, __('Unknown or invalid file'));
