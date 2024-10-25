@@ -198,7 +198,7 @@ switch ($queue_name) {
         $queue_sort_options = array('created', 'updated', 'number', 'hot');
         break;
     case 'transferred':
-        $results_type = __('Transferidos a otra dependencia');
+        $results_type = __('Transferidos por mi dependencia');
         $deptId = $thisstaff->getDept()->getID();
         if ($thisstaff->getManagedDepartments()) {
             $tasks->distinct('id');
@@ -212,6 +212,21 @@ switch ($queue_name) {
         } else {
             $tasks->filter(array('id' => 0));
         }
+
+        setFilter($status, $tasks);
+        $queue_sort_options = array('created', 'updated', 'number', 'hot');
+        break;
+
+        case 'transferred_me':
+            $results_type = __('Transferidos por mí');
+            $deptId = $thisstaff->getDept()->getID();
+            $tasks->distinct('id');
+            $tasks->filter(
+                array(
+                    'thread__events__event__name' => 'transferred',
+                    'thread__events__agent' => $staffId,
+                ),
+            );
 
         setFilter($status, $tasks);
         $queue_sort_options = array('created', 'updated', 'number', 'hot');

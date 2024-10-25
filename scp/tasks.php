@@ -184,15 +184,6 @@ $nav->addSubMenu(
     ),
     ($_REQUEST['status'] == 'assigned')
 );
-// $nav->addSubMenu(
-//     array(
-//         'desc' => $open_name . ' (' . number_format($stats['open']) . ')',
-//         'title' => __('Creadas por mí'),
-//         'href' => 'tasks.php?status=open',
-//         'iconclass' => 'Ticket'
-//     ),
-//     ((!$_REQUEST['status'] && !isset($_SESSION['advsearch:tasks'])) || $_REQUEST['status'] == 'open')
-// );
 
 $nav->addSubMenu(
     array(
@@ -234,6 +225,16 @@ $nav->addSubMenu(
     ($_REQUEST['status'] == 'closed')
 );
 
+$nav->addSubMenu(
+    array(
+        'desc' => __('Transferidos por mí'),
+        'title' => __('Transferidos por mí'),
+        'href' => 'tasks.php?status=transferred_me',
+        'iconclass' => 'departments'
+    ),
+    ($_REQUEST['status'] == 'transferred_me')
+);
+
 if ($thisstaff->getManagedDepartments()) {
     $nav->addSubMenu(
         array(
@@ -247,8 +248,8 @@ if ($thisstaff->getManagedDepartments()) {
 
     $nav->addSubMenu(
         array(
-            'desc' => __('Transferidos'),
-            'title' => __('Transferidos a otra dependencia'),
+            'desc' => __('Transferidos dependencia'),
+            'title' => __('Transferidos por mi dependencia'),
             'href' => 'tasks.php?status=transferred',
             'iconclass' => 'departments'
         ),
