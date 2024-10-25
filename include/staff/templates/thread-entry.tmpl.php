@@ -37,7 +37,7 @@ if ($user && $cfg->isAvatarsEnabled())
         </span>
 <?php   if (extension_loaded('zip') && count($entry->attachments) > 1) { ?>
         <span class="muted-button pull-right">
-            <a class="no-pjax" href="<?php echo $entry->generateDownloadUrl(); ?>" target="_blank">
+            <a class="no-pjax" href="<?php echo $entry->generateDownloadUrl(); ?>" target="_blank" title="Descargar adjuntos en .zip">
                 <i class="icon-cloud-download"></i>
             </a>
         </span>
