@@ -10,17 +10,7 @@ if ($_REQUEST['a']=='add'){
         ));
         // Set some default permissions
         $staff->updatePerms(array(
-            User::PERM_CREATE,
-            User::PERM_EDIT,
-            User::PERM_DELETE,
-            User::PERM_MANAGE,
-            User::PERM_DIRECTORY,
-            Organization::PERM_CREATE,
-            Organization::PERM_EDIT,
-            Organization::PERM_DELETE,
             FAQ::PERM_MANAGE,
-            Dept::PERM_DEPT,
-            Staff::PERM_STAFF,
         ));
     }
     $title=__('Add New Agent');
