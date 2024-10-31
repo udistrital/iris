@@ -1374,6 +1374,13 @@ implements AuthenticatedUser, EmailContact, TemplateVariable, Searchable {
                         @$vars['dept_access_alerts'][$dept_id]);
                 }
             }
+
+            $user = UserForm::getUserForm()->getForm(array(
+                'name' => $this->firstname . ' ' . $this->lastname,
+                'email' => $this->email,
+            ));
+            User::fromForm($user);
+
             $this->updateAccess($access, $errors);
             $this->setExtraAttr('def_assn_role',
                 isset($vars['assign_use_pri_role']), true);
