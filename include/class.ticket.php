@@ -715,7 +715,7 @@ implements RestrictedAccess, Threadable, Searchable {
         if (!$lock->delete())
             return false;
 
-        $this->lock = null;
+        $this->lock = 0;
         return $this->save();
     }
 
