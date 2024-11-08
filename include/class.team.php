@@ -404,6 +404,14 @@ implements TemplateVariable {
         return $teams;
     }
 
+    function canAgentsBeTeamMember($agents) {
+        $dept = Staff::objects()
+            ->filter(array('staff_id__in' => $agents))
+            ->values_flat('dept')
+            ->distinct('dept');
+        return count($dept) == 1;
+    }
+
     static function create($vars=false) {
         $team = new static($vars);
         $team->created = SqlFunction::NOW();

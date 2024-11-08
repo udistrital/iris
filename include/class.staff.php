@@ -722,11 +722,9 @@ implements AuthenticatedUser, EmailContact, TemplateVariable, Searchable {
 
     function canBeTeamMember($teamId) {
         $dept = TeamMember::objects()
-            ->filter(array('team_id' => $teamId))
-            ->values_flat('staff__dept_id')
-            ->distinct('staff__dept_id')
-            ->first();
-        return !count(value: $dept) || $dept[0] == $this->dept_id;
+            ->filter(array('team_id' => $teamId, 'staff__dept_id__notequal' => $this->dept_id))
+            ->count();
+        return !$dept;
     }
 
     function isTeamMember($teamId) {
@@ -969,8 +967,11 @@ implements AuthenticatedUser, EmailContact, TemplateVariable, Searchable {
         reset($membership);
         foreach ($membership as $mem) {
             list($team_id, $alerts) = $mem;
+            if (!$this->canBeTeamMember($team_id)) {
+                continue;
+            }
             $member = $this->teams->findFirst(array('team_id' => $team_id));
-            if (!$member && $this->canBeTeamMember($team_id)) {
+            if (!$member) {
                 $this->teams->add($member = new TeamMember(array(
                     'team_id' => $team_id,
                 )));
