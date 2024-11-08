@@ -285,8 +285,25 @@ switch ($queue_name) {
         if ($thisstaff->getManagedDepartments()) {
             $tasks->filter(
                 array(
-                    'thread__events__agent__dept' => $thisstaff->getDept()->getID(),
+                    'thread__events__agent__dept_id' => $thisstaff->getDept()->getID(),
                     'thread__events__event__name' => 'created',
+                ),
+            );
+        } else {
+            $tasks->filter(array('id' => 0));
+        }
+
+        setFilter($status, $tasks);
+        $queue_sort_options = array('created', 'updated', 'number', 'hot');
+        break;
+    case 'requested_dep':
+        $results_type = __('Casos solicitados por mi dependencia');
+        if ($thisstaff->getManagedDepartments()) {
+            $tasks->filter(
+                array(
+                    'thread__events__agent__dept_id' => $thisstaff->getDept()->getID(),
+                    'thread__events__event__name' => 'created',
+                    'dept_id__notequal' => $thisstaff->getDept()->getID(),
                 ),
             );
         } else {

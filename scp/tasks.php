@@ -238,22 +238,22 @@ $nav->addSubMenu(
 if ($thisstaff->getManagedDepartments()) {
     $nav->addSubMenu(
         array(
+            'desc' => __('Todo dependencia'),
+            'title' => __('Todos los casos en Mi Dependencia'),
+            'href' => 'tasks.php?status=dept',
+            'iconclass' => 'assignedTickets'
+        ),
+        ($_REQUEST['status'] == 'dept')
+    );
+
+    $nav->addSubMenu(
+        array(
             'desc' => __('Mi dependencia'),
             'title' => __('Casos asignados a Mi Dependencia'),
             'href' => 'tasks.php?status=assigned_dept',
             'iconclass' => 'departments'
         ),
         ($_REQUEST['status'] == 'assigned_dept')
-    );
-
-    $nav->addSubMenu(
-        array(
-            'desc' => __('Transferidos dependencia'),
-            'title' => __('Transferidos por mi dependencia'),
-            'href' => 'tasks.php?status=transferred',
-            'iconclass' => 'departments'
-        ),
-        ($_REQUEST['status'] == 'transferred')
     );
 
     $nav->addSubMenu(
@@ -278,12 +278,22 @@ if ($thisstaff->getManagedDepartments()) {
 
     $nav->addSubMenu(
         array(
-            'desc' => __('Todo dependencia'),
-            'title' => __('Todos los casos en Mi Dependencia'),
-            'href' => 'tasks.php?status=dept',
+            'desc' => __('Solicitados dependencia'),
+            'title' => __('Casos creados por mi dependencia y asignados a otra dependencia'),
+            'href' => 'tasks.php?status=requested_dep',
             'iconclass' => 'assignedTickets'
         ),
-        ($_REQUEST['status'] == 'dept')
+        ($_REQUEST['status'] == 'requested_dep')
+    );
+
+    $nav->addSubMenu(
+        array(
+            'desc' => __('Transferidos dependencia'),
+            'title' => __('Transferidos por mi dependencia'),
+            'href' => 'tasks.php?status=transferred',
+            'iconclass' => 'departments'
+        ),
+        ($_REQUEST['status'] == 'transferred')
     );
 }
 
