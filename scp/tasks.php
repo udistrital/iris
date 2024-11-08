@@ -415,7 +415,9 @@ if ($task) {
     )
         $inc = 'task-open.inc.php';
     elseif ($_REQUEST['a'] == 'export') {
-        $ts = date('Ymd');
+        $timezone = new DateTimeZone('America/Bogota');
+        $date = new DateTime('now', $timezone);
+        $ts = join('-', array_filter(array($_REQUEST['status'], $date->format('YmdHis'))));
         if (!($query = $_SESSION[':Q:tasks']))
             $errors['err'] = __('Query token not found');
         elseif (!Export::saveTasks($query, "tasks-$ts.csv", 'csv'))
