@@ -99,6 +99,12 @@ class UsersAjaxAPI extends AjaxController {
 
             foreach ($users as $U) {
                 list($id, $name, $email) = $U;
+                // do not allow users related to blocked agents
+                $blocked = Staff::objects()
+                    ->filter(array('email' => $email, 'isactive' => 0))
+                    ->count();
+                if ($blocked)
+                    continue;
                 foreach ($matches as $i=>$u) {
                     if ($u['email'] == $email) {
                         unset($matches[$i]);
