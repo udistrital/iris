@@ -27,9 +27,8 @@ class osTicketSession {
         // session name/ssid
         if ($name && strcmp($this->name, $name))
             $this->name = $name;
-        // Session ttl cannot exceed php.ini maxlifetime setting
         $maxlife =  ini_get('session.gc_maxlifetime');
-        $this->ttl = min($ttl ?: ($maxlife ?: SESSION_TTL), $maxlife);
+        $this->ttl = $ttl ?: ($maxlife ?: SESSION_TTL);
         // Set osTicket specific session name/sessid
         session_name($this->name);
         // Set Default cookie Params before we start the session
