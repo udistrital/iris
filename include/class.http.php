@@ -152,6 +152,24 @@ class Http {
         return http_build_query($vars, '', $separator);
     }
 
+    static function build_clean_query($vars, $unsetDir, $unsetSort, $unsetPage) {
+
+        if (!$vars)
+            return '';
+        if ($unsetDir)
+            unset($vars['dir']);
+        if ($unsetSort)
+            unset($vars['sort']);
+        if ($unsetPage)
+            unset($vars['p']);
+
+        $filteredParams = array_filter($vars, function($value) {
+            return !empty($value);
+        });
+
+       return self::build_query($filteredParams);
+    }
+
     static function domain() {
         $domain = null;
         if (isset($_SERVER['HTTP_HOST'])

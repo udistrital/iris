@@ -967,9 +967,9 @@ implements AuthenticatedUser, EmailContact, TemplateVariable, Searchable {
         reset($membership);
         foreach ($membership as $mem) {
             list($team_id, $alerts) = $mem;
-            if (!$this->canBeTeamMember($team_id)) {
+            if (!$this->canBeTeamMember($team_id))
                 continue;
-            }
+
             $member = $this->teams->findFirst(array('team_id' => $team_id));
             if (!$member) {
                 $this->teams->add($member = new TeamMember(array(
