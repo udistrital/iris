@@ -256,6 +256,15 @@ implements TemplateVariable {
       $dropped = array();
       foreach ($this->members as $member)
           $dropped[$member->staff_id] = 1;
+
+      $agents = array();
+      foreach ($access as $acc)
+          $agents[] = $acc[0];
+      if ($agents && !$this->canAgentsBeTeamMember($agents)) {
+          $errors['err'] = 'Todos los agentes deben pertenecer a la misma dependencia.';
+          return false;
+      }
+
       foreach ($access as $acc) {
           list($staff_id, $alerts) = $acc;
           unset($dropped[$staff_id]);
