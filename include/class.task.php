@@ -1134,7 +1134,7 @@ class Task extends TaskModel implements RestrictedAccess, Threadable {
 
             if (Misc::isCommentEmpty(comment: $vars['response'])) {
                 $this->setStatus(status: $vars['task:status'], errors: $errors);
-                return;
+                return true;
             }
         }
 
