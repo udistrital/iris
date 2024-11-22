@@ -27,19 +27,17 @@ ticket_activity:
         </span> table.
 
 report_timeframe:
-    title: Report timeframe
+    title: Rango del Reporte
     content: >
-        Choose a start date for the desired data sample using the date picker.
-        Then, choose the length of time from that date to
-        define the end date for your data sample.
+        Seleccione una fecha de inicio.
+        Luego, seleccione el periodo de tiempo de la consulta
+        el cual se contará a partir de la fecha de inicio.
 
 statistics:
-    title: Statistics
+    title: Estadísticas
     content: >
-        Navigate to the subject of interest by clicking on the appropriate tab in
-        order to view the specific sample of data. Within the table, the circles
-        represent the size of the nominal data. Therefore, the larger the number in
-        a particular cell, the larger the adjacent circle will be.
+        A continuación podrá ver las estadísticas de las tareas
+        agrupadas por dependencia, equipos y agentes según sus permisos.
 
 opened:
     title: Opened

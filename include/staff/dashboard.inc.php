@@ -37,19 +37,19 @@ $plots = $report->getPlotData();
             <i class="help-tip icon-question-sign" href="#report_timeframe"></i>
     </div>
 </div>
-<div class="clear"></div>
+<!-- <div class="clear"></div>
 <div style="margin-bottom:20px; padding-top:5px;">
     <div class="pull-left flush-left">
         <h2><?php echo __('Actividad de Tareas');
             ?>&nbsp;<i class="help-tip icon-question-sign" href="#ticket_activity"></i></h2>
     </div>
-</div>
+</div> -->
 <div class="clear"></div>
 <!-- Create a graph and fetch some data to create pretty dashboard -->
-<div style="position:relative">
+<!-- <div style="position:relative">
     <div id="line-chart-here" style="height:300px"></div>
     <div style="position:absolute;right:0;top:0" id="line-chart-legend"></div>
-</div>
+</div> -->
 
 <hr/>
 <h2><?php echo __('Statistics'); ?>&nbsp;<i class="help-tip icon-question-sign" href="#statistics"></i></h2>
