@@ -76,6 +76,7 @@ implements TemplateVariable, Searchable {
     const FLAG_ARCHIVED = 0x0008;
     const FLAG_ASSIGN_PRIMARY_ONLY = 0x0010;
     const FLAG_DISABLE_REOPEN_AUTO_ASSIGN = 0x0020;
+    const FLAG_AUTO_ASSIGN_TEAM = 0x0040;
 
     const PERM_DEPT = 'visibility.departments';
 
@@ -459,6 +460,10 @@ implements TemplateVariable, Searchable {
         return $this->flags & self::FLAG_ASSIGN_PRIMARY_ONLY;
     }
 
+    function autoAssignTeam() {
+        return $this->flags & self::FLAG_AUTO_ASSIGN_TEAM;
+    }
+
     function getAssignmentFlag() {
         if($this->flags & self::FLAG_ASSIGN_MEMBERS_ONLY)
           return 'members';
@@ -490,6 +495,7 @@ implements TemplateVariable, Searchable {
         $ht['status'] = $this->getStatus();
         $ht['assignment_flag'] = $this->getAssignmentFlag();
         $ht['disable_reopen_auto_assign'] =  $this->disableReopenAutoAssign();
+        $ht['auto_assign_team'] = $this->autoAssignTeam();
         return $ht;
     }
 
@@ -843,10 +849,12 @@ implements TemplateVariable, Searchable {
             return false;
 
         $vars['disable_auto_claim'] = isset($vars['disable_auto_claim']) ? 1 : 0;
+        $vars['auto_assign_team'] = isset($vars['auto_assign_team']) ? 1 : 0;
         if ($this->getId()) {
             //flags
             $disableAutoClaim = $this->flagChanged(self::FLAG_DISABLE_AUTO_CLAIM, $vars['disable_auto_claim']);
             $disableAutoAssign = $this->flagChanged(self::FLAG_DISABLE_REOPEN_AUTO_ASSIGN, $vars['disable_reopen_auto_assign']);
+            $autoAssignTeam = $this->flagChanged(self::FLAG_AUTO_ASSIGN_TEAM, $vars['auto_assign_team']);
             $ticketAssignment = ($this->getAssignmentFlag() != $vars['assignment_flag']);
             foreach ($vars as $key => $value) {
                 if ($key == 'status' && $this->getStatus() && strtolower($this->getStatus()) != $value) {
@@ -854,6 +862,7 @@ implements TemplateVariable, Searchable {
                     Signal::send('object.edited', $this, $type);
                 } elseif ((isset($this->$key) && ($this->$key != $value) && $key != 'members') ||
                          ($disableAutoClaim && $key == 'disable_auto_claim') ||
+                         ($autoAssignTeam && $key == 'auto_assign_team') ||
                           $ticketAssignment && $key == 'assignment_flag' ||
                           $disableAutoAssign && $key == 'disable_reopen_auto_assign') {
                     $type = array('type' => 'edited', 'key' => $key);
@@ -863,6 +872,8 @@ implements TemplateVariable, Searchable {
         }
         if ($vars['disable_auto_claim'] !== 1)
             unset($vars['disable_auto_claim']);
+        if ($vars['auto_assign_team'] !== 1)
+            unset($vars['auto_assign_team']);
 
         $this->pid = $vars['pid'] ?: null;
         $this->ispublic = isset($vars['ispublic']) ? (int) $vars['ispublic'] : 0;
@@ -882,6 +893,7 @@ implements TemplateVariable, Searchable {
         $this->setFlag(self::FLAG_ASSIGN_MEMBERS_ONLY, isset($vars['assign_members_only']));
         $this->setFlag(self::FLAG_DISABLE_AUTO_CLAIM, isset($vars['disable_auto_claim']));
         $this->setFlag(self::FLAG_DISABLE_REOPEN_AUTO_ASSIGN, isset($vars['disable_reopen_auto_assign']));
+        $this->setFlag(self::FLAG_AUTO_ASSIGN_TEAM, isset($vars['auto_assign_team']));
 
         $filter_actions = FilterAction::objects()->filter(array('type' => 'dept', 'configuration' => '{"dept_id":'. $this->getId().'}'));
         if ($filter_actions && $vars['status'] == 'active')

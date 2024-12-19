@@ -858,6 +858,10 @@ class Task extends TaskModel implements RestrictedAccess, Threadable {
             }
             else {
                 $this->staff_id = $assignee->getId();
+                if ($dept->autoAssignTeam() && ($teams = $assignee->getTeams()) && count($teams) == 1 && $this->team_id != $teams[0]) {
+                    $teamForm = AssignmentForm::instantiate(array('assignee' => array(sprintf('t%s', $teams[0]))));
+                    $this->assign($teamForm, $errors);
+                }
                 if ($thisstaff && $thisstaff->getId() == $assignee->getId())
                     $evd['claim'] = true;
                 else
