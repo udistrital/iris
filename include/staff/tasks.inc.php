@@ -70,13 +70,13 @@ $queue_columns = array(
 $queue_key = sprintf('::Q:%s', ObjectModel::OBJECT_TYPE_TASK);
 $queue_name = $_SESSION[$queue_key] ?: '';
 $staffId = $thisstaff->getId();
+$deptId = $thisstaff->getDept()->getID();
 
 switch ($queue_name) {
     case 'closed':
         $status = 'closed';
         $results_type = __('Casos cerrados asignados a mí');
         $showassigned = true; //closed by.
-        // mis casos cerrados
         $tasks->filter(array('staff_id' => $staffId));
         $queue_sort_options = array('closed', 'updated', 'created', 'number', 'hot');
         break;
@@ -85,7 +85,7 @@ switch ($queue_name) {
         $results_type = __('Casos cerrados asignados a Mi Dependencia');
         $showassigned = true; //closed by.
         if ($thisstaff->getManagedDepartments()) {
-            $tasks->filter(array('dept_id' => $thisstaff->getDept()->getID()));
+            $tasks->filter(array('dept_id' => $deptId));
         } else {
             $tasks->filter(array('id' => 0));
         }
@@ -108,7 +108,7 @@ switch ($queue_name) {
         $status = 'open';
         $results_type = __('Casos abiertos asignados a Mi Dependencia');
         if ($thisstaff->getManagedDepartments()) {
-            $tasks->filter(array('dept_id' => $thisstaff->getDept()->getID()));
+            $tasks->filter(array('dept_id' => $deptId));
         } else {
             $tasks->filter(array('id' => 0));
         }
@@ -117,11 +117,13 @@ switch ($queue_name) {
     case 'unassigned_dept':
         $status = 'open';
         $results_type = __('Casos sin asignar en Mi Dependencia');
+        $tasks->filter(array(
+            'staff_id' => 0,
+            'team_id' => 0,
+        ));
         if ($thisstaff->getManagedDepartments() || $thisstaff->getLeadedTeams()) {
             $tasks->filter(array(
-                'dept_id' => $thisstaff->getDept()->getID(),
-                'staff_id' => 0,
-                'team_id' => 0
+                'dept_id' => $deptId,
             ));
         } else {
             $tasks->filter(array('id' => 0));
@@ -131,7 +133,7 @@ switch ($queue_name) {
     case 'dept':
         $results_type = __('Todos los casos en Mi Dependencia');
         if ($thisstaff->getManagedDepartments()) {
-            $tasks->filter(array('dept_id' => $thisstaff->getDept()->getID()));
+            $tasks->filter(array('dept_id' => $deptId));
         } else {
             $tasks->filter(array('id' => 0));
         }
@@ -185,7 +187,6 @@ switch ($queue_name) {
         break;
     case 'transferred':
         $results_type = __('Transferidos por mi dependencia');
-        $deptId = $thisstaff->getDept()->getID();
         if ($thisstaff->getManagedDepartments()) {
             $tasks->distinct('id');
             $tasks->filter(
@@ -203,7 +204,6 @@ switch ($queue_name) {
 
         case 'transferred_me':
             $results_type = __('Transferidos por mí');
-            $deptId = $thisstaff->getDept()->getID();
             $tasks->distinct('id');
             $tasks->filter(
                 array(
@@ -234,17 +234,14 @@ switch ($queue_name) {
     case 'unassigned':
         $status = 'open';
         $results_type = __('Casos sin asignar a un agente');
+        $tasks->filter(array('staff_id' => 0));
         if ($thisstaff->getManagedDepartments()) {
             $tasks->filter(array(
-                'dept_id' => $thisstaff->getDept()->getID(),
-                'staff_id' => 0,
+                'dept_id' => $deptId,
                 'team_id__gt' => 0
             ));
         } else if ($thisstaff->getLeadedTeams()) {
-            $tasks->filter(array(
-                'team_id__in' => $thisstaff->teams->values_flat('team_id'),
-                'staff_id' => 0
-            ));
+            $tasks->filter(array('team_id__in' => $thisstaff->teams->values_flat('team_id')));
         } else {
             $tasks->filter(array('id' => 0));
         }
@@ -262,7 +259,7 @@ switch ($queue_name) {
         if ($thisstaff->getManagedDepartments()) {
             $tasks->filter(
                 array(
-                    'thread__events__agent__dept_id' => $thisstaff->getDept()->getID(),
+                    'thread__events__agent__dept_id' => $deptId,
                     'thread__events__event__name' => 'created',
                 ),
             );
@@ -276,9 +273,9 @@ switch ($queue_name) {
         if ($thisstaff->getManagedDepartments()) {
             $tasks->filter(
                 array(
-                    'thread__events__agent__dept_id' => $thisstaff->getDept()->getID(),
+                    'thread__events__agent__dept_id' => $deptId,
                     'thread__events__event__name' => 'created',
-                    'dept_id__notequal' => $thisstaff->getDept()->getID(),
+                    'dept_id__notequal' => $deptId,
                 ),
             );
         } else {
