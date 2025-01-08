@@ -73,6 +73,7 @@ class TaskModel extends VerySimpleModel {
     const PERM_REPLY    = 'task.reply';
     const PERM_CLOSE    = 'task.close';
     const PERM_DELETE   = 'task.delete';
+    const PERM_VIEW_ALL = 'task.viewAll';
 
     static protected $perms = array(
             self::PERM_CREATE    => array(
@@ -110,6 +111,11 @@ class TaskModel extends VerySimpleModel {
                 /* @trans */ 'Delete',
                 'desc'  =>
                 /* @trans */ 'Ability to delete tasks'),
+            self::PERM_VIEW_ALL    => array(
+                'title' =>
+                /* @trans */ 'Ver todas',
+                'desc'  =>
+                /* @trans */ 'Permiso para ver todas las tareas de la dependencia'),
             );
 
     const ISOPEN    = 0x0001;

@@ -556,7 +556,7 @@ implements AuthenticatedUser, EmailContact, TemplateVariable, Searchable {
             )
             ->values('id');
 
-        return $member->union($extended);
+        return $member->union($extended, false);
     }
 
     function getManagedDepartments() {
@@ -564,6 +564,19 @@ implements AuthenticatedUser, EmailContact, TemplateVariable, Searchable {
         return ($depts=Dept::getDepartments(
                     array('manager' => $this->getId())
                     ))?array_keys($depts):array();
+    }
+
+    function getRawManagedDepartments() {
+        return Dept::objects()
+            ->filter(array('manager_id' => $this->getId()))
+            ->values('id');
+    }
+
+    // Retrieves managed depts and depts with PERM_VIEW_ALL permission
+    function getAdminDepartments() {
+        return $this->getDeptsByPermission(Task::PERM_VIEW_ALL)
+            ->union($this->getRawManagedDepartments(), false)
+            ->values('id');
     }
 
     function getLeadedTeams() {
