@@ -235,7 +235,7 @@ $nav->addSubMenu(
     ($_REQUEST['status'] == 'transferred_me')
 );
 
-if ($thisstaff->getManagedDepartments()) {
+if (count($thisstaff->getAdminDepartments())) {
     $nav->addSubMenu(
         array(
             'desc' => __('Todo dependencia'),
@@ -275,7 +275,9 @@ if ($thisstaff->getManagedDepartments()) {
         ),
         ($_REQUEST['status'] == 'created_dep')
     );
+}
 
+if ($thisstaff->getManagedDepartments()) {
     $nav->addSubMenu(
         array(
             'desc' => __('Solicitados dependencia'),
@@ -330,7 +332,7 @@ if ($thisstaff->getTeams()) {
     );
 }
 
-if ($thisstaff->getManagedDepartments() || $thisstaff->getLeadedTeams()) {
+if (count($thisstaff->getAdminDepartments()) || $thisstaff->getLeadedTeams()) {
     $nav->addSubMenu(
         array(
             'desc' => __('Sin Revisar'),

@@ -71,6 +71,7 @@ $queue_key = sprintf('::Q:%s', ObjectModel::OBJECT_TYPE_TASK);
 $queue_name = $_SESSION[$queue_key] ?: '';
 $staffId = $thisstaff->getId();
 $deptId = $thisstaff->getDept()->getID();
+$adminDeptIds = $thisstaff->getAdminDepartments();
 
 switch ($queue_name) {
     case 'closed':
@@ -84,11 +85,7 @@ switch ($queue_name) {
         $status = 'closed';
         $results_type = __('Casos cerrados asignados a Mi Dependencia');
         $showassigned = true; //closed by.
-        if ($thisstaff->getManagedDepartments()) {
-            $tasks->filter(array('dept_id' => $deptId));
-        } else {
-            $tasks->filter(array('id' => 0));
-        }
+        $tasks->filter(array('dept_id__in' => array($adminDeptIds)));
         $queue_sort_options = array('closed', 'updated', 'created', 'number', 'hot');
         break;
     case 'overdue':
@@ -107,11 +104,7 @@ switch ($queue_name) {
     case 'assigned_dept':
         $status = 'open';
         $results_type = __('Casos abiertos asignados a Mi Dependencia');
-        if ($thisstaff->getManagedDepartments()) {
-            $tasks->filter(array('dept_id' => $deptId));
-        } else {
-            $tasks->filter(array('id' => 0));
-        }
+        $tasks->filter(array('dept_id__in' => array($adminDeptIds)));
         $queue_sort_options = array('created', 'updated', 'number', 'hot');
         break;
     case 'unassigned_dept':
@@ -121,10 +114,10 @@ switch ($queue_name) {
             'staff_id' => 0,
             'team_id' => 0,
         ));
-        if ($thisstaff->getManagedDepartments() || $thisstaff->getLeadedTeams()) {
-            $tasks->filter(array(
-                'dept_id' => $deptId,
-            ));
+        if (count($adminDeptIds)) {
+            $tasks->filter(array('dept_id__in' => array($adminDeptIds)));
+        } else if ($thisstaff->getLeadedTeams()) {
+            $tasks->filter(array('dept_id' => $deptId));
         } else {
             $tasks->filter(array('id' => 0));
         }
@@ -132,11 +125,7 @@ switch ($queue_name) {
         break;
     case 'dept':
         $results_type = __('Todos los casos en Mi Dependencia');
-        if ($thisstaff->getManagedDepartments()) {
-            $tasks->filter(array('dept_id' => $deptId));
-        } else {
-            $tasks->filter(array('id' => 0));
-        }
+        $tasks->filter(array('dept_id__in' => array($adminDeptIds)));
         $queue_sort_options = array('created', 'updated', 'number', 'hot');
         break;
     case 'open_me':
@@ -233,11 +222,11 @@ switch ($queue_name) {
         break;
     case 'unassigned':
         $status = 'open';
-        $results_type = __('Casos sin asignar a un agente');
+        $results_type = __('Casos en mis equipos sin asignar a un agente');
         $tasks->filter(array('staff_id' => 0));
-        if ($thisstaff->getManagedDepartments()) {
+        if (count($adminDeptIds)) {
             $tasks->filter(array(
-                'dept_id' => $deptId,
+                'dept_id__in' => array($adminDeptIds),
                 'team_id__gt' => 0
             ));
         } else if ($thisstaff->getLeadedTeams()) {
@@ -256,16 +245,12 @@ switch ($queue_name) {
         break;
     case 'created_dep':
         $results_type = __('Casos creados por alguien de mi dependencia');
-        if ($thisstaff->getManagedDepartments()) {
-            $tasks->filter(
-                array(
-                    'thread__events__agent__dept_id' => $deptId,
-                    'thread__events__event__name' => 'created',
-                ),
-            );
-        } else {
-            $tasks->filter(array('id' => 0));
-        }
+        $tasks->filter(
+            array(
+                'thread__events__agent__dept_id__in' => array($adminDeptIds),
+                'thread__events__event__name' => 'created',
+            ),
+        );
         $queue_sort_options = array('created', 'updated', 'number', 'hot');
         break;
     case 'requested_dep':
@@ -394,7 +379,7 @@ $tasks->annotate(array(
     ),
     'submitter' => SqlCase::N()
         ->when(
-            Q::any(array('thread__events__event__name' => 'created')),
+            new Q(array('thread__events__event__name' => 'created')),
             new SqlField('thread__events__agent__dept__name')
         )
         ->otherwise(null),
