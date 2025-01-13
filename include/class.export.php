@@ -620,7 +620,7 @@ class CsvExporter extends Exporter {
     }
 
     function write($data) {
-        fputcsv($this->fp, $this->escape($data), $this->getDelimiter());
+        fputcsv($this->fp, $this->escape($data), $this->getDelimiter(), "\"", "");
     }
 
 }
@@ -725,7 +725,7 @@ class CsvResultsExporter extends ResultSetExporter {
         $delimiter = $this->getDelimiter();
         // Output a UTF-8 BOM (byte order mark)
         fputs($this->output, chr(0xEF) . chr(0xBB) . chr(0xBF));
-        fputcsv($this->output, $this->getHeaders(), $delimiter);
+        fputcsv($this->output, $this->getHeaders(), $delimiter, "\"", "");
         while ($row=$this->next())
             fputcsv($this->output, array_map(
                 function($v){
@@ -733,7 +733,7 @@ class CsvResultsExporter extends ResultSetExporter {
                         return "'".$v;
                     return $v;
                 }, $row),
-            $delimiter);
+            $delimiter, "\"", "");
 
         if (!$tmp)
             fclose($this->output);
