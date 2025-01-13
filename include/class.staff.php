@@ -738,7 +738,7 @@ implements AuthenticatedUser, EmailContact, TemplateVariable, Searchable {
     }
 
     function applyVisibility($query, $exclude_archived=false) {
-        return $query->filter($this->getTicketsVisibility($exclude_archived));
+        return $query->filter($this->getTicketsVisibility($exclude_archived))->distinct('ticket_id');
     }
 
     function applyDeptVisibility($qs) {
