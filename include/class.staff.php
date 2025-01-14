@@ -556,7 +556,7 @@ implements AuthenticatedUser, EmailContact, TemplateVariable, Searchable {
             )
             ->values('id');
 
-        return $member->union($extended);
+        return $member->union($extended, false);
     }
 
     function getManagedDepartments() {
@@ -564,6 +564,19 @@ implements AuthenticatedUser, EmailContact, TemplateVariable, Searchable {
         return ($depts=Dept::getDepartments(
                     array('manager' => $this->getId())
                     ))?array_keys($depts):array();
+    }
+
+    function getRawManagedDepartments() {
+        return Dept::objects()
+            ->filter(array('manager_id' => $this->getId()))
+            ->values('id');
+    }
+
+    // Retrieves managed depts and depts with PERM_VIEW_ALL permission
+    function getAdminDepartments() {
+        return $this->getDeptsByPermission(Task::PERM_VIEW_ALL)
+            ->union($this->getRawManagedDepartments(), false)
+            ->values('id');
     }
 
     function getLeadedTeams() {
@@ -1374,9 +1387,13 @@ implements AuthenticatedUser, EmailContact, TemplateVariable, Searchable {
             $access = array();
             if ($vars['submit'] == 'Dar Acceso Global') {
                 $depts = Dept::getDepartments();
-                foreach ($depts as $id => $_) {
+                foreach (array_diff(array_keys($depts), @$vars['dept_access']) as $id) {
                     if ($vars['dept_id'] != $id)
                         $access[] = array($id, 4, 1);
+                }
+                foreach (array_intersect(array_keys($depts), @$vars['dept_access']) as $dept_id) {
+                    $access[] = array($dept_id, $vars['dept_access_role'][$dept_id],
+                        @$vars['dept_access_alerts'][$dept_id]);
                 }
             } else if (isset($vars['dept_access'])) {
                 foreach (@$vars['dept_access'] as $dept_id) {

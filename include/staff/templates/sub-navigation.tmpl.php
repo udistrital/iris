@@ -36,8 +36,8 @@ $info = $nav->getSubNavInfo();
             foreach ($item['attr'] as $name => $value)
                 $attr.=  sprintf("%s='%s' ", $name, $value);
 
-        echo sprintf('<li><a class="%s" href="%s" title="%s" id="%s" %s>%s</a></li>',
-                $class, $item['href'], $item['title'], $id, $attr, $item['desc']);
+        echo sprintf('<li class="%s"><a class="%s" href="%s" title="%s" id="%s" %s>%s</a></li>',
+        $item['class'], $class, $item['href'], $item['title'], $id, $attr, $item['desc']);
     }
 ?>
   </ul>
