@@ -1387,9 +1387,13 @@ implements AuthenticatedUser, EmailContact, TemplateVariable, Searchable {
             $access = array();
             if ($vars['submit'] == 'Dar Acceso Global') {
                 $depts = Dept::getDepartments();
-                foreach ($depts as $id => $_) {
+                foreach (array_diff(array_keys($depts), @$vars['dept_access']) as $id) {
                     if ($vars['dept_id'] != $id)
                         $access[] = array($id, 4, 1);
+                }
+                foreach (array_intersect(array_keys($depts), @$vars['dept_access']) as $dept_id) {
+                    $access[] = array($dept_id, $vars['dept_access_role'][$dept_id],
+                        @$vars['dept_access_alerts'][$dept_id]);
                 }
             } else if (isset($vars['dept_access'])) {
                 foreach (@$vars['dept_access'] as $dept_id) {
