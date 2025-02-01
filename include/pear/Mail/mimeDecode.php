@@ -91,14 +91,6 @@ require_once 'PEAR.php';
 class Mail_mimeDecode extends PEAR
 {
     /**
-     * The raw email to decode
-     *
-     * @var    string
-     * @access private
-     */
-    var $_input;
-
-    /**
      * The header part of the input
      *
      * @var    string
@@ -166,23 +158,18 @@ class Mail_mimeDecode extends PEAR
      * @param string The input to decode
      * @access public
      */
-    function __construct($input)
+    function __construct(&$input)
     {
         list($header, $body)   = $this->_splitBodyHeader($input);
 
-        $this->_input          = $input;
-        $this->_header         = $header;
-        $this->_body           = $body;
+        $this->_input          = &$input;
+        $this->_header         = &$header;
+        $this->_body           = &$body;
         $this->_decode_bodies  = false;
         $this->_include_bodies = true;
         $this->_rfc822_bodies  = false;
     }
-    // BC
-    function Mail_mimeDecode($input)
-    {
-        $this->__construct($input);
-    }
-    
+
     /* Return raw header...added 10/23/07 by kip.
      *
      */
@@ -259,7 +246,7 @@ class Mail_mimeDecode extends PEAR
      * @return object Results of decoding process
      * @access private
      */
-    function _decode($headers, $body, $default_ctype = 'text/plain')
+    function _decode(&$headers, &$body, $default_ctype = 'text/plain')
     {
         $return = new stdClass;
         $return->headers = array();
@@ -353,8 +340,9 @@ class Mail_mimeDecode extends PEAR
                     $default_ctype = (strtolower($content_type['value']) === 'multipart/digest') ? 'message/rfc822' : 'text/plain';
 
                     $parts = $this->_boundarySplit($body, $content_type['other']['boundary']);
-                    for ($i = 0; $i < count($parts); $i++) {
-                        list($part_header, $part_body) = $this->_splitBodyHeader($parts[$i]);
+                    while (count($parts)) {
+                        $part = array_shift($parts);
+                        list($part_header, $part_body) = $this->_splitBodyHeader($part);
                         $part = $this->_decode($part_header, $part_body, $default_ctype);
                         if($part === false)
                             $part = $this->raiseError($this->_error);
@@ -443,10 +431,18 @@ class Mail_mimeDecode extends PEAR
      * @return array Contains header and body section
      * @access private
      */
-    function _splitBodyHeader($input)
+    function _splitBodyHeader(&$input)
     {
-        if (preg_match("/^(.*?)\r?\n\r?\n(.*)/s", $input, $match)) {
-            return array($match[1], $match[2]);
+        if ($input instanceof StringView)
+            $check = $input->substr(0, 64<<10);
+        else
+            $check = &$input;
+        if (preg_match("/^.*?(\r?\n\r?\n)(.)/s", $check, $match, PREG_OFFSET_CAPTURE)) {
+            $headers = ($input instanceof StringView)
+                ? (string) $input->substr(0, $match[1][1]) : substr($input, 0, $match[1][1]);
+            $body = ($input instanceof StringView)
+                ? $input->substr($match[2][1]) : new StringView($input, $match[2][1]);
+            return array($headers, $body);
         }
         // bug #17325 - empty bodies are allowed. - we just check that at least one line 
         // of headers exist..
@@ -724,6 +720,22 @@ class Mail_mimeDecode extends PEAR
         if ($boundary == $bs_check) {
             $boundary = $bs_possible;
         }
+
+        if ($input instanceof StringView) {
+            $parts = $input->split('--' . $boundary);
+            array_shift($parts);
+
+            if (count($parts) > 0
+                && $parts[count($parts)-1]->substr(0, 2)->__toString() == '--'
+            ) {
+                // Drop the last part if it starts with '--' as such would
+                // be past the end of a multipart section
+                array_pop($parts);
+            }
+
+            return $parts;
+        }
+
         // eatline is used by multipart/signed.
         $tmp = $eatline ?
             preg_split("/\r?\n--".preg_quote($boundary, '/')."(|--)\n/", $input) :
@@ -1091,3 +1103,49 @@ class Mail_mimeDecode extends PEAR
     }
 
 } // End of class
+
+class StringView {
+    var $string;
+    var $start;
+    var $end;
+
+    function __construct(&$string, $start=0, $end=false) {
+        $this->string = &$string;
+        $this->start = $start;
+        $this->end = $end;
+    }
+
+    function __toString() {
+        return $this->end
+            ? substr($this->string, $this->start, $this->end - $this->start)
+            : substr($this->string, $this->start);
+    }
+
+    function substr($start, $end=false) {
+        return new StringView($this->string, $this->start + $start,
+            $end ? min($this->start + $end, $this->end ?: PHP_INT_MAX) : $this->end);
+    }
+
+    function split($token) {
+        $ltoken = strlen($token);
+        $windows = array();
+        $offset = $this->start;
+        for ($i = 0;; $i++) {
+            $windows[$i] = array('start' => $offset);
+            $offset = strpos($this->string, $token, $offset);
+            if (!$offset || ($this->end && $offset >= $this->end))
+                break;
+            // Enforce local window
+            $windows[$i]['stop'] = min($this->end ?: $offset, $offset);
+            $offset += $ltoken;
+            if ($this->end && $offset > $this->end)
+                break;
+        }
+
+        $parts = array();
+        foreach ($windows as $w) {
+            $parts[] = new static($this->string, $w['start'], @$w['stop'] ?: false);
+        }
+        return $parts;
+    }
+}

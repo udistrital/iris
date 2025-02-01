@@ -1593,7 +1593,7 @@ class SelectionField extends FormField {
         $selection = array();
 
         if ($value && !is_array($value))
-            $value = array($value);
+            $value = JsonDataParser::parse($value) ?: array($value);
 
         if ($value && is_array($value)) {
             foreach ($value as $k=>$v) {
@@ -1633,6 +1633,7 @@ class SelectionField extends FormField {
             $values = array();
             $choices = $this->getChoices();
             foreach (explode(',', $value) as $V) {
+                $V = trim($V);
                 if (isset($choices[$V]))
                     $values[$V] = $choices[$V];
             }

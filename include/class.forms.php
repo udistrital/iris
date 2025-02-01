@@ -3336,7 +3336,7 @@ class DepartmentField extends ChoiceField {
 
     function getValue() {
          if (($value = parent::getValue()) && ($id=$this->getClean()))
-            return $value[$id];
+            return is_array($value) ? $value[$id] : $value;
      }
 
     function to_php($value, $id=false) {
