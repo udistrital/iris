@@ -1355,7 +1355,7 @@ class DynamicFormEntry extends VerySimpleModel {
                     //use getChanges if getClean returns an empty array
                     $fieldClean = $field->getClean() ?: $field->getChanges();
                     if (is_array($fieldClean) && $fieldClean[0])
-                        $fieldClean = json_decode($fieldClean[0], true);
+                        $fieldClean = is_string($fieldClean[0]) ? json_decode($fieldClean[0], true) : $fieldClean[0];
                 } else
                     $fieldClean = $field->getClean();
 
