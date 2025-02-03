@@ -2725,7 +2725,7 @@ implements RestrictedAccess, Threadable, Searchable {
              && ($msg=$tpl->getTransferAlertMsgTemplate())
          ) {
             $msg = $this->replaceVars($msg->asArray(),
-                array('comments' => $note, 'staff' => $thisstaff));
+                array('comments' => $note ?: '', 'staff' => $thisstaff));
             // Recipients
             $recipients = array();
             // Assigned staff or team... if any
