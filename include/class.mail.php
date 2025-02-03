@@ -106,7 +106,7 @@ namespace osTicket\Mail {
             $part = new MimePart($text);
             $part->type = Mime::TYPE_TEXT;
             $part->charset = $this->charset;
-            $part->encoding = $encoding ?: Mime::ENCODING_BASE64;
+            $part->encoding = $encoding;
             $this->addMimeContent($part);
         }
 
