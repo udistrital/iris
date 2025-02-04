@@ -1,3 +1,8 @@
+osTicket v1.18.2
+================
+### Improvements
+* OAuth2: Show Scopes and Enforce Strict Mode (a77cf535, 390555db)
+
 osTicket v1.18.1
 ================
 ### Improvements
