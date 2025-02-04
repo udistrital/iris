@@ -371,8 +371,11 @@ class MysqlSearchBackend extends SearchBackend {
         #elseif (count(explode(' ', $query)) == 1)
         #    $mode = ' WITH QUERY EXPANSION';
 
-        // Strip colon (:num) to avoid possible params injection
-        $query = preg_replace('/:(\d+)/i', '$1', $query);
+        // Sanitize query to avoid possible SQL injection via parameter markers
+        // This regex matches one or more colons followed by one or more digits,
+        // and then replaces the match with only the digits (i.e. stripping the colon(s)).
+        $query = preg_replace('/:+(\d+)/', '$1', $query);
+
         // escape query and using it as search
         $search = 'MATCH (Z1.title, Z1.content) AGAINST ('.db_input($query).$mode.')';
 
