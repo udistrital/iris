@@ -556,7 +556,7 @@ implements AuthenticatedUser, EmailContact, TemplateVariable, Searchable {
             )
             ->values('id');
 
-        return $member->union($extended);
+        return $member->union($extended, false);
     }
 
     function getManagedDepartments() {
@@ -564,6 +564,19 @@ implements AuthenticatedUser, EmailContact, TemplateVariable, Searchable {
         return ($depts=Dept::getDepartments(
                     array('manager' => $this->getId())
                     ))?array_keys($depts):array();
+    }
+
+    function getRawManagedDepartments() {
+        return Dept::objects()
+            ->filter(array('manager_id' => $this->getId()))
+            ->values('id');
+    }
+
+    // Retrieves managed depts and depts with PERM_VIEW_ALL permission
+    function getAdminDepartments() {
+        return $this->getDeptsByPermission(Task::PERM_VIEW_ALL)
+            ->union($this->getRawManagedDepartments(), false)
+            ->values('id');
     }
 
     function getLeadedTeams() {
@@ -718,6 +731,13 @@ implements AuthenticatedUser, EmailContact, TemplateVariable, Searchable {
 
     function isAdmin() {
         return $this->isadmin;
+    }
+
+    function canBeTeamMember($teamId) {
+        $dept = TeamMember::objects()
+            ->filter(array('team_id' => $teamId, 'staff__dept_id__notequal' => $this->dept_id))
+            ->count();
+        return !$dept;
     }
 
     function isTeamMember($teamId) {
@@ -960,6 +980,9 @@ implements AuthenticatedUser, EmailContact, TemplateVariable, Searchable {
         reset($membership);
         foreach ($membership as $mem) {
             list($team_id, $alerts) = $mem;
+            if (!$this->canBeTeamMember($team_id))
+                continue;
+
             $member = $this->teams->findFirst(array('team_id' => $team_id));
             if (!$member) {
                 $this->teams->add($member = new TeamMember(array(
@@ -1364,9 +1387,13 @@ implements AuthenticatedUser, EmailContact, TemplateVariable, Searchable {
             $access = array();
             if ($vars['submit'] == 'Dar Acceso Global') {
                 $depts = Dept::getDepartments();
-                foreach ($depts as $id => $_) {
+                foreach (array_diff(array_keys($depts), @$vars['dept_access']) as $id) {
                     if ($vars['dept_id'] != $id)
                         $access[] = array($id, 4, 1);
+                }
+                foreach (array_intersect(array_keys($depts), @$vars['dept_access']) as $dept_id) {
+                    $access[] = array($dept_id, $vars['dept_access_role'][$dept_id],
+                        @$vars['dept_access_alerts'][$dept_id]);
                 }
             } else if (isset($vars['dept_access'])) {
                 foreach (@$vars['dept_access'] as $dept_id) {
@@ -1374,6 +1401,13 @@ implements AuthenticatedUser, EmailContact, TemplateVariable, Searchable {
                         @$vars['dept_access_alerts'][$dept_id]);
                 }
             }
+
+            $user = UserForm::getUserForm()->getForm(array(
+                'name' => $this->firstname . ' ' . $this->lastname,
+                'email' => $this->email,
+            ));
+            User::fromForm($user);
+
             $this->updateAccess($access, $errors);
             $this->setExtraAttr('def_assn_role',
                 isset($vars['assign_use_pri_role']), true);

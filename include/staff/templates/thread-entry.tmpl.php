@@ -35,6 +35,13 @@ if ($user && $cfg->isAvatarsEnabled())
         <span class="muted-button pull-right" data-dropdown="#entry-action-more-<?php echo $entry->getId(); ?>">
             <i class="icon-caret-down"></i>
         </span>
+<?php   if (extension_loaded('zip') && count($entry->attachments) > 1) { ?>
+        <span class="muted-button pull-right">
+            <a class="no-pjax" href="<?php echo $entry->generateDownloadUrl(); ?>" target="_blank" title="Descargar adjuntos en .zip">
+                <i class="icon-cloud-download"></i>
+            </a>
+        </span>
+<?php } ?>
         <div id="entry-action-more-<?php echo $entry->getId(); ?>" class="action-dropdown anchor-right">
             <ul class="title">
 <?php       foreach ($actions as $group => $list) {

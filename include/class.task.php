@@ -73,6 +73,7 @@ class TaskModel extends VerySimpleModel {
     const PERM_REPLY    = 'task.reply';
     const PERM_CLOSE    = 'task.close';
     const PERM_DELETE   = 'task.delete';
+    const PERM_VIEW_ALL = 'task.viewAll';
 
     static protected $perms = array(
             self::PERM_CREATE    => array(
@@ -110,6 +111,11 @@ class TaskModel extends VerySimpleModel {
                 /* @trans */ 'Delete',
                 'desc'  =>
                 /* @trans */ 'Ability to delete tasks'),
+            self::PERM_VIEW_ALL    => array(
+                'title' =>
+                /* @trans */ 'Ver todas',
+                'desc'  =>
+                /* @trans */ 'Permiso para ver todas las tareas de la dependencia'),
             );
 
     const ISOPEN    = 0x0001;
@@ -858,6 +864,10 @@ class Task extends TaskModel implements RestrictedAccess, Threadable {
             }
             else {
                 $this->staff_id = $assignee->getId();
+                if ($dept->autoAssignTeam() && ($teams = $assignee->getTeams()) && count($teams) == 1 && $this->team_id != $teams[0]) {
+                    $teamForm = AssignmentForm::instantiate(array('assignee' => array(sprintf('t%s', $teams[0]))));
+                    $this->assign($teamForm, $errors);
+                }
                 if ($thisstaff && $thisstaff->getId() == $assignee->getId())
                     $evd['claim'] = true;
                 else
@@ -1134,7 +1144,7 @@ class Task extends TaskModel implements RestrictedAccess, Threadable {
 
             if (Misc::isCommentEmpty(comment: $vars['response'])) {
                 $this->setStatus(status: $vars['task:status'], errors: $errors);
-                return;
+                return true;
             }
         }
 
@@ -1160,7 +1170,7 @@ class Task extends TaskModel implements RestrictedAccess, Threadable {
 
         // Send activity alert to agents
         $activity = $vars['activity'] ?: $response->getActivity();
-        $this->onActivity( array(
+        $agentRecipients = $this->onActivity( array(
                     'activity' => $activity,
                     'threadentry' => $response,
                     'assignee' => $assignee,
@@ -1173,7 +1183,7 @@ class Task extends TaskModel implements RestrictedAccess, Threadable {
         if ($alert && $vars['emailcollab']) {
             $signature = '';
             $this->notifyCollaborators($response,
-                array('signature' => $signature)
+                array('signature' => $signature, 'agentRecipients' => $agentRecipients ?: array())
             );
         }
 
@@ -1328,7 +1338,7 @@ class Task extends TaskModel implements RestrictedAccess, Threadable {
             elseif ($this->isOpen() && ($assignee = $this->getStaff()))
                 $recipients[] = $assignee;
 
-            if ($team = $this->getTeam())
+            if (($team = $this->getTeam()) && ($team->alertAll() || !$this->getStaff() || ($this->getStaff() && !$team->hasMember($this->getStaff()))))
                 $recipients = array_merge($recipients, $team->getMembersForAlerts());
         }
 
@@ -1375,6 +1385,7 @@ class Task extends TaskModel implements RestrictedAccess, Threadable {
             $sentlist[$staff->getEmail()] = 1;
         }
 
+        return $sentlist;
     }
 
     function addCollaborator($user, $vars, &$errors, $event=true) {
@@ -1435,7 +1446,9 @@ class Task extends TaskModel implements RestrictedAccess, Threadable {
         foreach ($recipients as $recipient) {
             // Skip folks who have already been included on this part of
             // the conversation
-            if (isset($skip[$recipient->getUserId()]))
+            if (isset($skip[$recipient->getUserId()]) ||
+                (($recEmail = $recipient->getEmail()?->getEmail()) &&
+                    $poster->getEmail() == $recEmail || (isset($vars['agentRecipients']) && isset($vars['agentRecipients'][$recEmail]))))
                 continue;
             $notice = $this->replaceVars($msg, array('recipient' => $recipient));
             $email->send($recipient, $notice['subj'], $notice['body'], $attachments,

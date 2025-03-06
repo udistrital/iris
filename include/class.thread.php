@@ -1017,6 +1017,30 @@ implements TemplateVariable {
         return $references;
     }
 
+    function generateDownloadUrl($options = array()) {
+
+        // Expire at the nearest midnight, allow at least12 hrs access
+        $minage = @$options['minage'] ?: 43200;
+        $gmnow = Misc::gmtime() +  $options['minage'];
+        $expires = $gmnow + 86400 - ($gmnow % 86400);
+
+        // Handler / base url
+        $handler = @$options['handler'] ?: ROOT_PATH . 'file.php';
+
+        // Return sanitized query string
+        $args = array(
+            'expires' => $expires,
+            'entry_id' => $this->getId(),
+        );
+
+        return sprintf('%s?%s', $handler, http_build_query($args));
+    }
+
+    function zipExport() {
+        $exporter = new ThreadEntryZipExporter($this);
+        $exporter->download();
+    }
+
     /**
      * Retrieve a list of all the recients of this message if the message
      * was received via email.

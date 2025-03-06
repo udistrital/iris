@@ -7,7 +7,7 @@ if (!isset($info['lookup']) || $info['lookup'] !== false) { ?>
 <div><p id="msg_info"><i class="icon-info-sign"></i>&nbsp; <?php echo
     $thisstaff->hasPerm(User::PERM_CREATE)
     ? __('Search existing users or add a new user.')
-    : 'Buscar mi usuario.';
+    : 'Buscar';
 ?></p></div>
 <div style="margin-bottom:10px;">
     <input type="text" class="search-input" style="width:100%;"

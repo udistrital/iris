@@ -334,6 +334,14 @@ a time {
     line-height:26px;
 }
 
+.team_queue {
+    background-color: rgb(230, 230, 230);
+}
+
+.admin_queue {
+    background-color: rgb(220, 220, 220);
+}
+
 #sub_nav > ul {
     margin-top: 0;
 }

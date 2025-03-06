@@ -256,6 +256,15 @@ implements TemplateVariable {
       $dropped = array();
       foreach ($this->members as $member)
           $dropped[$member->staff_id] = 1;
+
+      $agents = array();
+      foreach ($access as $acc)
+          $agents[] = $acc[0];
+      if ($agents && !$this->canAgentsBeTeamMember($agents)) {
+          $errors['err'] = 'Todos los agentes deben pertenecer a la misma dependencia.';
+          return false;
+      }
+
       foreach ($access as $acc) {
           list($staff_id, $alerts) = $acc;
           unset($dropped[$staff_id]);
@@ -402,6 +411,14 @@ implements TemplateVariable {
             $teams = self::getTeams(array('active' => true, 'dept_id' => $deptId, 'limit' => 1, 'direct' => $deptId != $thisstaff->getDeptId()));
 
         return $teams;
+    }
+
+    function canAgentsBeTeamMember($agents) {
+        $dept = Staff::objects()
+            ->filter(array('staff_id__in' => $agents))
+            ->values_flat('dept')
+            ->distinct('dept');
+        return count($dept) == 1;
     }
 
     static function create($vars=false) {
