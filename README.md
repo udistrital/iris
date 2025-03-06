@@ -1,2 +1,2 @@
 # ost_institucional
-Sistema institucional
+Sistema institucional.
