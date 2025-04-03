@@ -897,8 +897,8 @@ implements TemplateVariable {
             // a response to an existing thread entry
             if ($ost)
                 $ost->log(LOG_ERR, _S('Email loop detected'), sprintf(
-                _S('It appears as though %s is being used as a forwarded or fetched email account and is also being used as a user / system account. Please correct the loop or seek technical assistance.'),
-                $mailinfo['email']),
+                _S('It appears as though %s is being used as a forwarded or fetched email account and is also being used as a user / system account. Please correct the loop or seek technical assistance.\n\n%s'),
+                $mailinfo['email'], $mailinfo['header']),
 
                 // This is quite intentional -- don't continue the loop
                 false,
@@ -1015,6 +1015,30 @@ implements TemplateVariable {
         if ($include_mid && ($mid = $this->getEmailMessageId()))
             $references .= $mid;
         return $references;
+    }
+
+    function generateDownloadUrl($options = array()) {
+
+        // Expire at the nearest midnight, allow at least12 hrs access
+        $minage = @$options['minage'] ?: 43200;
+        $gmnow = Misc::gmtime() +  $options['minage'];
+        $expires = $gmnow + 86400 - ($gmnow % 86400);
+
+        // Handler / base url
+        $handler = @$options['handler'] ?: ROOT_PATH . 'file.php';
+
+        // Return sanitized query string
+        $args = array(
+            'expires' => $expires,
+            'entry_id' => $this->getId(),
+        );
+
+        return sprintf('%s?%s', $handler, http_build_query($args));
+    }
+
+    function zipExport() {
+        $exporter = new ThreadEntryZipExporter($this);
+        $exporter->download();
     }
 
     /**
@@ -2115,6 +2139,7 @@ class ThreadEvent extends VerySimpleModel {
                 case 'timestamp':
                     $timeFormat = null;
                     if ($mode != self::MODE_CLIENT && $thisstaff
+                            && (!isset($_REQUEST['a']) || $_REQUEST['a']!='print')
                             && !strcasecmp($thisstaff->datetime_format,
                                 'relative')) {
                         $timeFormat = function ($timestamp) {
@@ -2285,7 +2310,7 @@ class Event extends VerySimpleModel {
     static function getStates($dropdown=false) {
         $names = array();
         if ($dropdown)
-            $names = array(__('All'));
+            $names = array('All');
 
         $events = self::objects()->values_flat('name');
         foreach ($events as $val)
@@ -2987,7 +3012,7 @@ class ResponseThreadEntry extends ThreadEntry {
 
         if (!$vars || !is_array($vars) || !$vars['threadId'])
             $errors['err'] = __('Missing or invalid data');
-        elseif (!$vars['response'])
+        elseif (Misc::isCommentEmpty($vars['response']))
             $errors['response'] = __('Response content is required');
 
         if ($errors) return false;
@@ -3031,7 +3056,7 @@ class NoteThreadEntry extends ThreadEntry {
         //Check required params.
         if (!$vars || !is_array($vars) || !$vars['threadId'])
             $errors['err'] = __('Missing or invalid data');
-        elseif (!$vars['note'])
+        elseif (Misc::isCommentEmpty($vars['note']))
             $errors['note'] = __('Note content is required');
 
         if ($errors) return false;

@@ -51,6 +51,11 @@ direct_request_alert:
     content: >
         Permite seleccionar el equipo cuando un agente de otra dependencia está creando una tarea.
 
+alert_all_alert:
+    title: Notificar a todos
+    content: >
+        Cuando se asigna una tarea al equipo o hay una nueva actividad, se notificará a todos sus miembros.
+
 members:
     title: Team Members
     content: >

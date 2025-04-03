@@ -141,6 +141,7 @@ class Export {
 
         return self::dumpQuery($tasks,
             array(
+                '::getTaskStaffLink' => 'Enlace',
                 'number' =>         __('Task Number'),
                 '::getCreateDateExport' =>        __('Date Created'),
                 '::getCloseDateExport' =>   __('Date Closed'),
@@ -151,7 +152,8 @@ class Export {
                 '::getDueDateExport' =>        __('Due Date'),
                 'staff::getName' => __('Agent Assigned'),
                 'team::getName' =>  __('Team Assigned'),
-                'thread_count' =>   __('Thread Count'),
+                '::getSubmitter' =>  'Dependencia Creadora',
+                'participaciones' => ('Participaciones'),
                 'attachment_count' => __('Attachment Count'),
             ) + $cdata,
             $how,
@@ -261,7 +263,7 @@ class Export {
 
         // Filename or stream to export agents to
         $filename = $filename ?: sprintf('Agents-%s.csv',
-                strftime('%Y%m%d'));
+                date('Ymd'));
         Http::download($filename, "text/$how");
         $depts = Dept::getDepartments(null, true, Dept::DISPLAY_DISABLED);
         echo self::dumpQuery($agents, array(
@@ -298,7 +300,7 @@ static function departmentMembers($dept, $agents, $filename='', $how='csv') {
 
     // Filename or stream to export depts' agents to
     $filename = $filename ?: sprintf('%s-%s.csv', $dept->getName(),
-            strftime('%Y%m%d'));
+            date('Ymd'));
     Http::download($filename, "text/$how");
     echo self::dumpQuery($agents, array(
                 '::getName'  =>  'Name',
@@ -537,7 +539,7 @@ abstract class  Exporter {
                 || !($email=$cfg->getDefaultEmail()))
             return false;
 
-        $mailer = new Mailer($email);
+        $mailer = new osTicket\Mail\Mailer($email);
         $mailer->addFileObject($file);
         $subject = __("Export");
         $body = __("Attached is file containing the export you asked us to send you!");
@@ -978,6 +980,65 @@ class TicketZipExporter {
 
             $zip->close();
             Http::download("ticket-{$this->ticket->getNumber()}.zip", "application/zip",
+                null, 'attachment');
+            $fp = fopen($zipfile, 'r');
+            fpassthru($fp);
+            fclose($fp);
+        }
+        finally {
+            foreach ($this->tmpfiles as $T)
+                @unlink($T);
+            unlink($zipfile);
+        }
+    }
+}
+
+class ThreadEntryZipExporter {
+    var ThreadEntry $entry;
+    var $tmpfiles;
+
+    function __construct(ThreadEntry $entry) {
+        $this->entry = $entry;
+        $this->tmpfiles = array();
+    }
+
+    function addFiles($entry, $zip, $prefix, $notes=true, $psize=null) {
+
+        // Include all the attachments
+        // XXX: Handle attachments with duplicate filenames between entry posts
+        $attachments = Attachment::objects()
+            ->filter(['thread_entry__id' => $entry->getId()])
+            ->order_by('thread_entry__created')
+            ->select_related('file');
+
+        foreach ($attachments as $att) {
+            $zip->addFromString("{$prefix}/{$att->getFilename()}",
+                $att->getFile()->getData());
+        }
+    }
+
+    function download($options = array()) {
+        global $thisstaff;
+
+        $notes = @$options['notes'] ?? false;
+
+        // TODO: Use a streaming ZIP library
+        $zipfile = tempnam(sys_get_temp_dir(), 'zip');
+        try {
+            $zip = new ZipArchive();
+            if (!$zip->open($zipfile, ZipArchive::CREATE))
+                return;
+
+            $prefix = "{$this->entry->getId()}";
+
+            // Include a PDF of the entry thread (with optional notes)
+            if (!$thisstaff || !($psize = $thisstaff->getDefaultPaperSize()))
+                $psize = 'Letter';
+
+            $this->addFiles($this->entry, $zip, $prefix, $notes, $psize);
+
+            $zip->close();
+            Http::download("entry-{$this->entry->getId()}.zip", "application/zip",
                 null, 'attachment');
             $fp = fopen($zipfile, 'r');
             fpassthru($fp);

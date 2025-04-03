@@ -34,7 +34,7 @@ class UsersAjaxAPI extends AjaxController {
         if (!$_REQUEST['q'])
             return $this->json_encode($matches);
 
-        $q = $_REQUEST['q'];
+        $q = Format::sanitize($_REQUEST['q']);
         $limit = isset($_REQUEST['limit']) ? (int) $_REQUEST['limit']:25;
         $users=array();
         $emails=array();
@@ -99,6 +99,12 @@ class UsersAjaxAPI extends AjaxController {
 
             foreach ($users as $U) {
                 list($id, $name, $email) = $U;
+                // do not allow users related to blocked agents
+                $blocked = Staff::objects()
+                    ->filter(array('email' => $email, 'isactive' => 0))
+                    ->count();
+                if ($blocked)
+                    continue;
                 foreach ($matches as $i=>$u) {
                     if ($u['email'] == $email) {
                         unset($matches[$i]);
@@ -107,7 +113,7 @@ class UsersAjaxAPI extends AjaxController {
                 }
                 $name = Format::htmlchars(new UsersName($name));
                 $matches[] = array('email'=>$email, 'name'=>$name, 'info'=>"$email - $name",
-                    "id" => $id, "/bin/true" => $_REQUEST['q']);
+                    "id" => $id, "/bin/true" => $q);
             }
             usort($matches, function($a, $b) { return strcmp($a['name'], $b['name']); });
         }

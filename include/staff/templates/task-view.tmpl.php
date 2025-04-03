@@ -11,7 +11,7 @@ $dept = $task->getDept();
 $thread = $task->getThread();
 
 $iscloseable = $task->isCloseable();
-$canClose = ($role->hasPerm(TaskModel::PERM_CLOSE) && $iscloseable === true);
+$canClose = (($role->hasPerm(TaskModel::PERM_CLOSE) || $task->isCreator()) && $iscloseable === true);
 $actions = array();
 $object = $task->ticket;
 

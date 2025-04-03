@@ -335,8 +335,9 @@ class Format {
                   ':<(a|span) (name|style)="(mso-bookmark\:)?_MailEndCompose">(.+)?<\/(a|span)>:', # Drop _MailEndCompose
                   ':<div dir=(3D)?"ltr">(.*?)<\/div>(.*):is', # drop Gmail "ltr" attributes
                   ':data-cid="[^"]*":',         # drop image cid attributes
+                  '(position:[^!";]+;?)',
             ),
-            array('', '', '', '', '<html', '$4', '$2 $3', ''),
+            array('', '', '', '', '<html', '$4', '$2 $3', '', ''),
             $html);
 
         // HtmLawed specific config only
@@ -358,7 +359,7 @@ class Format {
             $config['elements'] .= '+iframe';
             $config['spec'] = 'iframe=-*,height,width,type,style,src(match="`^(https?:)?//(www\.)?('
                 .implode('|', $whitelist)
-                .')/?([^@]*)$`i"),frameborder'.($options['spec'] ? '; '.$options['spec'] : '').',allowfullscreen';
+                .')(\?|/|#)([^@]*)$`i"),frameborder'.($options['spec'] ? '; '.$options['spec'] : '').',allowfullscreen';
         }
 
         return Format::html($html, $config);
@@ -367,16 +368,16 @@ class Format {
     static function localizeInlineImages($text) {
         // Change file.php urls back to content-id's
         return preg_replace(
-            '`src="(?:https?:/)?(?:/[^/"]+)*?/file\\.php\\?(?:\w+=[^&]+&(?:amp;)?)*?key=([^&]+)[^"]*`',
-            'src="cid:$1', $text);
+            '`<img src="(?:https?:/)?(?:/[^/"]+)*?/file\\.php\\?(?:\w+=[^&"]+&(?:amp;)?)*?key=([^&]+)[^"]*`',
+            '<img src="cid:$1', $text);
     }
 
     static function sanitize($text, $striptags=false, $spec=false) {
+        // Localize inline images before sanitizing content
+        $text = self::localizeInlineImages($text);
 
         //balance and neutralize unsafe tags.
         $text = Format::safe_html($text, array('spec' => $spec));
-
-        $text = self::localizeInlineImages($text);
 
         //If requested - strip tags with decoding disabled.
         return $striptags?Format::striptags($text, false):$text;
@@ -420,6 +421,14 @@ class Format {
             $flags |= ENT_HTML401;
 
         return htmlspecialchars_decode($var, $flags);
+    }
+
+    static function http_query_string(string $query, array $filter = null) {
+        $args = [];
+        parse_str($query, $args);
+        if ($filter && is_array($filter))
+            $args = array_diff_key($args, array_flip($filter));
+        return http_build_query($args);
     }
 
     static function input($var) {
@@ -575,18 +584,19 @@ class Format {
     }
 
 
-    static function viewableImages($html, $options=array()) {
+    static function viewableImages($html, $options=array(), $format=false) {
         $cids = $images = array();
         $options +=array(
                 'disposition' => 'inline');
-        return preg_replace_callback('/"cid:([\w._-]{32})"/',
+        $html = preg_replace_callback('/("|&quot;)cid:([\w._-]{32})("|&quot;)/',
         function($match) use ($options, $images) {
-            if (!($file = AttachmentFile::lookup($match[1])))
+            if (!($file = AttachmentFile::lookup($match[2])))
                 return $match[0];
 
             return sprintf('"%s" data-cid="%s"',
-                $file->getDownloadUrl($options), $match[1]);
+                $file->getDownloadUrl($options), $match[2]);
         }, $html);
+        return $format ? Format::htmlchars($html, true) : $html;
     }
 
 
@@ -747,6 +757,7 @@ class Format {
         if ($cfg && $cfg->isForce24HourTime())
             $format = str_replace('X', 'R', $format);
 
+        // TODO: Deprecated; replace this soon
         return strftime($format, $timestamp);
     }
 
@@ -1036,7 +1047,7 @@ class Format {
 
     // Performs Unicode normalization (where possible) and splits words at
     // difficult word boundaries (for far eastern languages)
-    static function searchable($text, $lang=false) {
+    static function searchable($text, $lang=false, $length=false) {
         global $cfg;
 
         if (function_exists('normalizer_normalize')) {
@@ -1068,6 +1079,10 @@ class Format {
             // Drop leading and trailing whitespace
             $text = trim($text);
         }
+
+        if ($length && (str_word_count($text) > $length))
+            return null;
+
         return $text;
     }
 

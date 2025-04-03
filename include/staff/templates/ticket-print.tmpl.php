@@ -145,9 +145,10 @@ img.avatar {
 <tr>
     <th><?php echo __('Status'); ?></th>
     <td><?php echo $ticket->getStatus(); ?></td>
-    <th><?php echo __('Name'); ?></th>
-    <td><?php echo $ticket->getOwner()->getName(); ?></td>
+    <th><?php echo __('Dependencia'); ?></th>
+    <td><?php echo $ticket->getDept() ?></td>
 </tr>
+<?php if (false) {?>
 <tr>
     <th><?php echo __('Priority'); ?></th>
     <td><?php echo $ticket->getPriority(); ?></td>
@@ -155,18 +156,20 @@ img.avatar {
     <td><?php echo $ticket->getEmail(); ?></td>
 </tr>
 <tr>
-    <th><?php echo __('Department'); ?></th>
-    <td><?php echo $ticket->getDept(); ?></td>
+    <th><?php echo __('Name'); ?></th>
+    <td><?php echo $ticket->getOwner()->getName(); ?></td>
     <th><?php echo __('Phone'); ?></th>
     <td><?php echo $ticket->getPhoneNumber(); ?></td>
 </tr>
+<?php }?>
 <tr>
     <th><?php echo __('Create Date'); ?></th>
     <td><?php echo Format::datetime($ticket->getCreateDate()); ?></td>
-    <th><?php echo __('Source'); ?></th>
-    <td><?php echo $ticket->getSource(); ?></td>
+    <th><?php echo __('Last Response'); ?></th>
+    <td><?php echo Format::datetime($ticket->getLastResponseDate()); ?></td>
 </tr>
 </tbody>
+<?php if (false) {?>
 <tbody>
     <tr><td colspan="4" class="spacer">&nbsp;</td></tr>
 </tbody>
@@ -180,8 +183,8 @@ img.avatar {
 <tr>
     <th><?php echo __('SLA Plan'); ?></th>
     <td><?php if ($sla = $ticket->getSLA()) echo $sla->getName(); ?></td>
-    <th><?php echo __('Last Response'); ?></th>
-    <td><?php echo Format::datetime($ticket->getLastResponseDate()); ?></td>
+    <th><?php echo __('Source'); ?></th>
+    <td><?php echo $ticket->getSource(); ?></td>
 </tr>
 <tr>
     <th><?php echo __('Due Date'); ?></th>
@@ -190,6 +193,7 @@ img.avatar {
     <td><?php echo Format::datetime($ticket->getLastMessageDate()); ?></td>
 </tr>
 </tbody>
+<?php }?>
 </table>
 
 <!-- Custom Data -->
@@ -255,7 +259,7 @@ if ($entries->exists(true)) {
             //       changes in dates between thread items.
             if ($this->includeevents) {
                 while ($event && $cmp($event->timestamp, $entry->created)) {
-                    $event->render(ThreadEvent::MODE_CLIENT);
+                    $event->render(ThreadEvent::MODE_STAFF);
                     $events->next();
                     $event = $events->current();
                 }
@@ -294,7 +298,7 @@ if ($entries->exists(true)) {
 }
 // Emit all other events
 while ($event) {
-    $event->render(ThreadEvent::MODE_CLIENT);
+    $event->render(ThreadEvent::MODE_STAFF);
     $events->next();
     $event = $events->current();
 } ?>

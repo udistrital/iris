@@ -212,6 +212,18 @@ $info = Format::htmlchars(($errors && $_POST) ? $_POST : $info, true);
                 href="#disable_auto_claim"></i>
             </td>
         </tr>
+        <tr>
+            <td><?php echo 'Asignar equipo automáticamente'; ?>:</td>
+            <td>
+                <label>
+                <input type="checkbox" name="auto_assign_team" <?php echo $info['auto_assign_team'] ? 'checked="checked"' : ''; ?>>
+                <?php echo sprintf('<strong>%s</strong> %s',
+                        __('Enable'),
+                        'asignación automática de equipo'); ?>
+                </label>
+                <i class="help-tip icon-question-sign" href="#auto_assign_team"></i>
+            </td>
+        </tr>
 
         <tr>
             <td><?php echo __('Reopen Auto Assignment'); ?>:</td>
@@ -371,7 +383,7 @@ $info = Format::htmlchars(($errors && $_POST) ? $_POST : $info, true);
         <tr>
             <td colspan=2>
                 <textarea class="richtext no-bar" name="signature" cols="21"
-                    rows="5" style="width: 60%;"><?php echo $info['signature']; ?></textarea>
+                    rows="5" style="width: 60%;"><?php echo Format::viewableImages($info['signature']); ?></textarea>
             </td>
         </tr>
     </tbody>

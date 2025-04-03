@@ -1,3 +1,117 @@
+osTicket v1.18.1
+================
+### Improvements
+* Update upgrade.php (9fd83eba)
+* Update upgrade.inc.php (8c8a7fd1)
+* update: PHP Requirements 1.18.x (1c0c670b)
+* CLI: Make sure manage util can be executed via CLI (0caf5864)
+* Update raphael-min.js to 2.3.0 (d4aeada1)
+
+osTicket v1.18
+==============
+### Enhancements
+* update: Laminas-Mail (66fa10af, bb45d37a)
+
+### Improvements
+* Database: Change Plugin Name to varchar(255) (aac546d0)
+* update: MAJOR_VERSION (3eac42e5)
+
+osTicket v1.17.5
+================
+### Improvements
+* update: README.md PHP & Laminas (4baf9dc8, 555c4a74, 88294e2d, 30a4a6e9)
+* issue: putenv() Disabled (3c0d5f47)
+* i18n: Update Signing (98706274, 776c0f27)
+* i18n: Flags Position & Codes (3ee11112, 45f5b5b4)
+* mailer: Undefined SmtpAccount::getName() (560a4f1d)
+* issue: SystemSessionHandler (7e17daa6)
+* issue: Status List Overflow (1deee342)
+* faq: Category Notes Images (ccca0f59)
+* patches: Latest 10/03/2023 (65e12297, 48e8501d, a8d42a9d, 4475e03e, bd034712, 64b8c81d, 070eefcb, 1775ce75)
+* mail: NoValidateCert (d3c140ce)
+* issue: Choice/Selection Field Searches (00e22fad)
+* stubs: Add stubs to pass lint test (895c7236)
+* issue: Canned Response Inline Images (a503c160)
+* format: Viewable Images Bug (2a412883)
+
+### Security
+* issue: CSP Headers (6228f640)
+* security: Latest Vulns 09/2023 (04f4e611, 88a87a33, c4ad48de, 37cf8350)
+* issue: User Account Creation (777e6f0b)
+
+osTicket v1.17.4
+================
+### Improvements
+* issue: Thread Entry Actions z-index (215a0ce2)
+* oauth2: Strict Matching Bug (e014ffd2)
+* Make string translatable (1105cde7)
+* issue: Inline-Images Canned Responses (4493b126)
+* issue: Remove Old Login Code (e17ad463)
+* issue: i18n Audit Exports (45dd7c4f)
+* Bug: Custom File Upload Field Config (6371269a, 7283ac81, 902b5d35)
+* issue: Duplicate User Copy/Paste Import (b304cdb)
+* issue: Relocate Typeahead JS/CSS Files (62cd406)
+* issue: strftime() Deprecation (3fe132c4)
+* jquery: Update To 3.7.0 (ffa23da)
+* issue: glob() Empty Array (c64a2611)
+* issue: Email Only Attachment (9e45f3fa)
+* installer: Change Email (a11aee29)
+
+### Security
+* security: Latest Vulns 06/2023 (86c2ba02, 69244175, 73b997a, ae37925, e4bfb00)
+
+osTicket v1.17.3
+================
+### Enhancements
+* oauth2: Strict Matching (7275d67b, b7718be4, ca913ba2, cb3625e8, f531718a, c0cd8b16)
+* OAuth2 Resource Owner (5c239adb)
+
+### Improvements
+* session: Regenerate Session Id (d5853245)
+* fetcher: Mail Fetcher / Parser Error Handling (d4d9c424, 0a4498b2)
+* mysql: Support Sidecar Database Proxies (246aaa4d)
+* Misc. Fixes (e6beeb9b, 24fd5075, eac9960a, 10af29a5)
+* fetcher: Default Department (f410d4ec)
+* issue: LDAP Multi-Instance Fatal Error (f6486044)
+* issue: TicketDenied errno (6de7cf4c)
+* session: User Logged Out (00d409d3)
+* Uncaught Error: Call to a member function getId() on bool (af83896d)
+* Mailer: Inline Images (7efbdfd2, 8815d087, 64a8abf3)
+
+osTicket v1.17.2
+================
+### Improvements
+* Fix old reference to SessionData (cf8b8ce7)
+* Email Misc. Fixes (de620fe6, c19a5f03)
+* session: Memcache Max TTL (ea3e03d2)
+* mailer: Use Namespaced Mailer (133585f8)
+
+osTicket v1.17.1
+================
+### Enhancements
+* mail: Add plain:// encryption scheme hint (7c1b97b3, 39d76258)
+
+### Improvements
+* mailer: Make Headers Valid Again (c08a8a8a, aaee6b0f, 00981554, 2223877c, 020fa0d3, 60c8c884)
+* POP3 Configration can not saved (b84547b0, ccd8445e)
+* fetcher: Errors Handling & Logging (384aad13, 22edf2b4, c92006e6)
+* upgrader: Email Account Status (aee25d69)
+* issue: Plugin Config Item Exists (fdf9e412)
+* mailer: Improvements & Enhancements (845e5008, 23a80592, 977cf9aa)
+* smtp: Use proper name when saying What's Up (HELO/EHLO) (b0e5ac83)
+* email: Make sure Email Account is Active 4realz! (5efd9f14, a9b57496)
+* Session++ (ced0ef4d, b943a955, b6b63c99, f58e1c5d, 47df2b44, e2e6c0f4, 9ab5b4f1, da667366, f2c01840, c2be4ebf, db913bd3)
+* setup: Use Bootstrap:ini() to initialize setup dir sessions (48e436f0)
+* issue: Plugin Config Item Exists (fdf9e412)
+* upgrader: Email Account Status (aee25d69)
+* fetcher: Errors Handling & Logging (384aad13, 22edf2b4, c92006e6)
+* fetcher: Mail Fetch Order (f1639d41, 24338c2b)
+* SMTP: Dont send 'QUIT' on __destruct() (dbeae227)
+* issue: MTA Typo (03eeb8e2)
+* sendmail: Strip "To" and "Subject" headers (ac3855a4)
+* Mail Parse Error Handling (320981df, 75c5cfe9, a4e36d39, ba2d31cd, 30ad9cd4, 678098d8, 46b7899b, f85f9036)
+* Issue/session revisited (49d91b05, 4fc5f5cc)
+
 osTicket v1.17
 ==============
 ### Enhancements
@@ -49,6 +163,78 @@ osTicket v1.17-rc1
 ==================
 ### Enhancements
 * Oauth2 / Modern Email Authentication Support (d99ff6e1-163c28b5)
+
+osTicket v1.16.6
+================
+### Improvements
+* session: Collab View Ticket (6afe0efa)
+* issue: Static forTask() (1079011f)
+* issue: Featured FAQs (8df09581)
+* print: Hidden Thread Events (f63fc67d)
+* issue: Does Not Have A Value (d47fc2b1)
+* issue: Disabled Queues Run Counts (3ff3ce93)
+* issue: Queue Counts Incorrect (2428cc58)
+* jquery: Update jQueryUI 1.13.2 (b896f70d)
+* issue: Department Export (5418cf20)
+* jquery: Update To 3.6.3 (8d39a4cc)
+* i18n: make-pot (74274b5c)
+* update: README PHP Version (6087bc55)
+* issue: mPDF Font Files (427a8aa6)
+* issue: FileUpload False (8dd2ab61)
+* Add translation for "last resort" standard column labels (cb528044)
+* add translation for task status (46c005a0)
+* issue: getRealPath() Stub (32a229aa)
+
+### Security
+* security: Latest Security Patches 03/2023 (86f9693d, 091ddba9, ec604393, daee20fd, 9fb01bc1, 619ce0f6, 343a2b47, 8a55c29f, e2c8f799, ee7ce3d9, 263f71a3)
+
+osTicket v1.16.5
+================
+### Improvements
+* Fix trusted proxy wildcard check (04c0bb3a)
+* issue: Html Typo (50dfe931)
+* mailparse: Parse filenames with complex format (c8067212)
+* validator: Email Domain Verification (3c4a20a8)
+* user: Make sure User has a valid Email on create (55fbfcb5)
+
+osTicket v1.16.4
+================
+### Enhancements
+* i18n: Default Ticket Queue (7a5dd0eb)
+* mailparse: thread_entry_recipients to (a82af698)
+* issue: Unique Variable Names (0dc5a02e)
+* php: 8.1 Support (22b599e3, c24ee575, dd2b9a43)
+* issue: Session Cookie Refresh (1630459a)
+
+### Improvements
+* oops: jQuery UI Images (822a05fe)
+* issue: Manually Sorted Topics (a80db8a7)
+* issue: Queue Export Headings (47449758)
+* installer: Checking Existing Install (a3f2e246)
+* Catch storage error when mailing ticket response (ca5932ac)
+* issue: Staff Ticket Open Session (4f3d3cff)
+* issue: External Auth Regenerate Session (83252260)
+* issue: Searching Numbers (e00003f6)
+* Replace hacky way with ReflectionClass (55f61390)
+* Issue: Installer YAML (6780f29e)
+* issue: Fix Upgrader Session Issues (311089a6)
+* issue: Undefined Variable ORM (4009881a)
+* v1.16: Misc Bug Fixes (4c0341e2)
+* issue: User/Agent Password Reset (d3de1599)
+* issue: imagesx Boolean (5d06ee46)
+* file: Possible Key Collision (21c71c6e)
+* cli: User Import (4c43e46f)
+* issue: Miscellaneous Fixes (50bc1a21, 5002bef9, e036fd9a, 35684189, 9c280b49, c2a15b64, 5e970061)
+* issue: urldecode Dispatcher (c00b8e87)
+* issue: Information and SectionBreak Fields On Edit (7b60c576)
+* issue: Favicons Login Headers (61655ec6)
+* issue: Schedules stops_on (e2dcbb69)
+* Issue: Agent Permission to Assign Tickets (b4732b05)
+* issue: File Upload Size (45f554ad)
+
+### Security
+* security: Username XSS (5213ff13)
+* security: Refresh URL (3702a4fb)
 
 osTicket v1.16.3
 ================

@@ -118,6 +118,16 @@ $info = $team->getInfo();
             </td>
         </tr>
         <tr>
+        <td width="180">
+                <?php echo __('Alertar a todos');?>:
+            </td>
+            <td>
+                <input type="checkbox" name="alertAll" value="1" <?php echo $team->alertAll()?'checked="checked"':''; ?> >
+                <?php echo sprintf(__('<strong>Habilitar</strong>%s'), __(' para este Equipo')); ?>
+                <i class="help-tip icon-question-sign" href="#alert_all_alert"></i>
+            </td>
+        </tr>
+        <tr>
             <th colspan="2">
                 <em><strong><?php echo __('Admin Notes');?></strong>: <?php echo __('Internal notes viewable by all admins.');?>&nbsp;</em>
             </th>
@@ -125,7 +135,7 @@ $info = $team->getInfo();
         <tr>
             <td colspan=2>
                 <textarea name="notes" cols="21"
-                    rows="8" style="width: 80%;"><?php echo Format::htmlchars($team->notes); ?></textarea>
+                    rows="8" style="width: 80%;"><?php echo Format::viewableImages(Format::htmlchars($team->notes, true)); ?></textarea>
             </td>
         </tr>
     </tbody>

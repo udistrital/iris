@@ -871,6 +871,7 @@ class TasksAjaxAPI extends AjaxController {
                     ':action' => sprintf('#tasks/%d/reopen',
                         $task->getId())
                     );
+            $info[':placeholder'] = 'Indique el motivo por el cual se reabre la tarea.';
             break;
         case 'closed':
             $perm = Task::PERM_CLOSE;
@@ -881,11 +882,19 @@ class TasksAjaxAPI extends AjaxController {
                         $task->getId())
                     );
 
+            // Claim if unassigned, in my dept, teams and closing
+            if ($thisstaff && !$task->getStaffId() &&
+                $task->getDeptId() == $thisstaff->getDeptId() &&
+                $thisstaff->isTeamMember(teamId: $task->getTeamId())) {
+                $cform = $task->getClaimForm();
+                $task->claim(form: $cform, errors: $errors);
+            }
+
+            $info[':placeholder'] = 'Indique el motivo por el cual se cierra la tarea (opcional).';
             if (($m=$task->isCloseable()) !== true)
                 $errors['err'] = $info['error'] = $m;
             else
-                $info['warn'] = sprintf(__('Are you sure you want to change status of %s?'),
-                        __('this task'));
+                $info['warn'] = '¿Está seguro de cerrar la tarea?';
             break;
         default:
             Http::response(404, __('Unknown status'));
@@ -897,10 +906,12 @@ class TasksAjaxAPI extends AjaxController {
                         $statuses[$status]);
 
         if ($_POST && !$errors) {
-            if ($task->setStatus($status, $_POST['comments'], $errors))
+            if ($status == 'open' && Misc::isCommentEmpty($_POST['comments']))
+                $info['error'] = 'Debe indicar la razón por la que se reabre la tarea.';
+            else if ($task->setStatus($status, $_POST['comments'], $errors))
                 Http::response(201, 0);
-
-            $info['error'] = $errors['err'] ?: __('Unable to change status of the task');
+            else
+                $info['error'] = $errors['err'] ?: __('Unable to change status of the task');
         }
 
         $info['status'] = $status;

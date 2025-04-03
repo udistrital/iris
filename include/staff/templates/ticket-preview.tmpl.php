@@ -34,7 +34,7 @@ echo '<ul class="tabs" id="ticket-preview">';
 
 echo '
         <li class="active"><a id="preview_tab" href="#preview"
-            ><i class="icon-list-alt"></i>&nbsp;'.__('Ticket Summary').'</a></li>';
+            ><i class="icon-list-alt"></i>&nbsp;'.__('Información General').'</a></li>';
 if ($thread && $thread->getNumCollaborators()) {
 echo sprintf('
         <li><a id="collab_tab" href="#collab"
@@ -44,7 +44,7 @@ echo sprintf('
 }
 echo '<li><a id="thread_tab" href="#threadPreview"
             ><i class="icon-fixed-width icon-list
-            faded"></i>&nbsp;'.__('Thread Preview').'</a></li>';
+            faded"></i>&nbsp;'.__('Hilo del Ticket').'</a></li>';
 
 echo '</ul>';
 echo '<div id="ticket-preview_container">';
@@ -52,7 +52,7 @@ echo '<div class="tab_content" id="preview">';
 echo '<table border="0" cellspacing="" cellpadding="1" width="100%" class="ticket_info">';
 
 $ticket_state=sprintf('<span>%s</span>',ucfirst($ticket->getStatus()));
-if($ticket->isOpen()) {
+if(false && $ticket->isOpen()) {
     if($ticket->isOverdue())
         $ticket_state.=' &mdash; <span>'.__('Overdue').'</span>';
     else
@@ -61,7 +61,7 @@ if($ticket->isOpen()) {
 
 echo sprintf('
         <tr>
-            <th width="100">'.__('Ticket State').':</th>
+            <th width="100">'.__('Status').':</th>
             <td>%s</td>
         </tr>
         <tr>
@@ -78,7 +78,7 @@ if($ticket->isClosed()) {
             Format::datetime($ticket->getCloseDate()),
             ($staff?$staff->getName():'staff')
             );
-} elseif($ticket->getEstDueDate()) {
+} elseif(false && $ticket->getEstDueDate()) {
     echo sprintf('
             <tr>
                 <th>'.__('Due Date').':</th>
@@ -94,19 +94,28 @@ echo '<hr>
 if($ticket->isOpen()) {
     echo sprintf('
             <tr>
-                <th width="100">'.'Asignado'.':</th>
+                <th width="100">'.__('Assigned To').':</th>
                 <td>%s</td>
             </tr>',$ticket->isAssigned()?implode('/', $ticket->getAssignees()):' <span class="faded">&mdash; '.__('Unassigned').' &mdash;</span>');
 }
 echo sprintf(
     '
         <tr>
+            <th width="100">'.__('Dependencia').':</th>
+            <td>%s</td>
+        </tr>
+        </tr>',
+    Format::htmlchars($ticket->getDeptName()));
+
+echo '
+    </table>';
+
+if (false) {
+echo sprintf(
+    '
+        <tr>
             <th>'.__('From').':</th>
             <td><a href="users.php?id=%d" class="no-pjax">%s</a> <span class="faded">%s</span></td>
-        </tr>
-        <tr>
-            <th width="100">'.__('Department').':</th>
-            <td>%s</td>
         </tr>
         <tr>
             <th>'.__('Help Topic').':</th>
@@ -115,11 +124,12 @@ echo sprintf(
     $ticket->getUserId(),
     Format::htmlchars($ticket->getName()),
     $ticket->getEmail(),
-    Format::htmlchars($ticket->getDeptName()),
     Format::htmlchars($ticket->getHelpTopic()));
 
 echo '
     </table>';
+}
+
 ?>
 <?php
 foreach (DynamicFormEntry::forTicket($ticket->getId()) as $form) {
@@ -182,7 +192,7 @@ echo '</div>'; // ticket preview content.
                             href="#thread/%d/collaborators/1">%s</a></span>',
                             $thread->getId(),
                             $thread && $thread->getNumCollaborators()
-                                ? __('Manage') : __('Add')
+                                ? __('Gestionar usuarios con copia') : __('Add')
                                 );
     ?>
 </div>

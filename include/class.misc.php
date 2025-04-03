@@ -139,6 +139,13 @@ class Misc {
         return $time->getTimestamp() - $tz->getOffset($time);
     }
 
+    static function bogTimeStartToday() {
+        $tz = new DateTimeZone('America/Bogota');
+        $time = new DateTime('now', $tz);
+        $time->setTime(0, 0, 0);
+        return $time->getTimestamp();
+    }
+
     /* Needed because of PHP 4 support */
     static function micro_time() {
         list($usec, $sec) = explode(" ", microtime());
@@ -226,32 +233,13 @@ class Misc {
         return (object) array('start' => $start, 'end' => $end);
     }
 
-    //Current page
-    static function currentURL() {
-
-        $str = 'http';
-        if (isset($_SERVER['HTTPS']) && $_SERVER['HTTPS'] == 'on') {
-            $str .='s';
-        }
-        $str .= '://';
-        if (!isset($_SERVER['REQUEST_URI'])) { //IIS???
-            $_SERVER['REQUEST_URI'] = substr($_SERVER['PHP_SELF'],1 );
-            if (isset($_SERVER['QUERY_STRING'])) {
-                $_SERVER['REQUEST_URI'].='?'.$_SERVER['QUERY_STRING'];
-            }
-        }
-        if ($_SERVER['SERVER_PORT']!=80) {
-            $str .= $_SERVER['SERVER_NAME'].':'.$_SERVER['SERVER_PORT'].$_SERVER['REQUEST_URI'];
-        } else {
-            $str .= $_SERVER['SERVER_NAME'].$_SERVER['REQUEST_URI'];
-        }
-
-        return $str;
-    }
-
     static function realpath($path) {
         $rp = realpath($path);
         return $rp ? $rp : $path;
+    }
+
+    static function isCommentEmpty($comment) {
+        return !$comment || $comment == '<p></p>' || $comment == '<p><br></p>' || $comment == '<p>&nbsp;</p>';
     }
 
 }

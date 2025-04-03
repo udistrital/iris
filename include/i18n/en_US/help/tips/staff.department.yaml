@@ -108,6 +108,11 @@ disable_reopen_auto_assign:
         <br><br>
         Otherwise, the Ticket will be auto assigned to the last responding Agent
 
+auto_assign_team:
+    title: Habilitar asignación automática de equipo
+    content: >
+        Si un agente pertenece a un solo equipo y se le asigna una tarea, ésta además será asignada a dicho equipo.
+
 auto_response_settings:
     title: Autoresponder Settings
     content: >

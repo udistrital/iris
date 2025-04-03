@@ -35,6 +35,7 @@ implements TemplateVariable {
     const FLAG_ENABLED  = 0x0001;
     const FLAG_NOALERTS = 0x0002;
     const FLAG_DIRECT_REQUEST = 0x0004;
+    const FLAG_ALERT_ALL = 0x0008;
 
     var $_members;
 
@@ -122,6 +123,8 @@ implements TemplateVariable {
         $base = $this->ht;
         $base['isenabled'] = $this->isEnabled();
         $base['noalerts'] = !$this->alertsEnabled();
+        $base['directRequest'] = !$this->directRequest();
+        $base['alertAll'] = !$this->alertAll();
         unset($base['members']);
         return $base;
     }
@@ -160,6 +163,10 @@ implements TemplateVariable {
         return ($this->flags & self::FLAG_DIRECT_REQUEST);
     }
 
+    function alertAll() {
+        return ($this->flags & self::FLAG_ALERT_ALL);
+    }
+
     function getTranslateTag($subtag) {
         return _H(sprintf('team.%s.%s', $subtag, $this->getId()));
     }
@@ -183,15 +190,18 @@ implements TemplateVariable {
 
         $vars['noalerts'] = isset($vars['noalerts']) ? self::FLAG_NOALERTS : 0;
         $vars['directRequest'] = isset($vars['directRequest']) ? self::FLAG_DIRECT_REQUEST : 0;
+        $vars['alertAll'] = !$vars['noalerts'] && isset($vars['alertAll']) ? self::FLAG_ALERT_ALL : 0;
         if ($this->getId()) {
             //flags
             $auditEnabled = $this->flagChanged(self::FLAG_ENABLED, $vars['isenabled']);
             $auditAlerts = $this->flagChanged(self::FLAG_NOALERTS, $vars['noalerts']);
             $directRequest = $this->flagChanged(self::FLAG_DIRECT_REQUEST, $vars['directRequest']);
+            $alertAll = $this->flagChanged(self::FLAG_ALERT_ALL, $vars['alertAll']);
 
             foreach ($vars as $key => $value) {
                 if (isset($this->$key) && ($this->$key != $value) && $key != 'members' ||
-                   ($auditEnabled && $key == 'isenabled' || $auditAlerts && $key == 'noalerts' || $directRequest && $key == 'directRequest')) {
+                   ($auditEnabled && $key == 'isenabled' || $auditAlerts && $key == 'noalerts' || $directRequest && $key == 'directRequest' ||
+                   $alertAll && $key == 'alertAll')) {
                     $type = array('type' => 'edited', 'key' => $key);
                     Signal::send('object.edited', $this, $type);
                 }
@@ -208,7 +218,8 @@ implements TemplateVariable {
         $this->flags =
               ($vars['isenabled'] ? self::FLAG_ENABLED : 0)
             | ($vars['noalerts'])
-            | ($vars['directRequest']);
+            | ($vars['directRequest'])
+            | ($vars['alertAll']);
         $this->lead_id = $vars['lead_id'] ?: 0;
         $this->name = Format::striptags($vars['name']);
         $this->notes = Format::sanitize($vars['notes']);
@@ -245,6 +256,15 @@ implements TemplateVariable {
       $dropped = array();
       foreach ($this->members as $member)
           $dropped[$member->staff_id] = 1;
+
+      $agents = array();
+      foreach ($access as $acc)
+          $agents[] = $acc[0];
+      if ($agents && !$this->canAgentsBeTeamMember($agents)) {
+          $errors['err'] = 'Todos los agentes deben pertenecer a la misma dependencia.';
+          return false;
+      }
+
       foreach ($access as $acc) {
           list($staff_id, $alerts) = $acc;
           unset($dropped[$staff_id]);
@@ -391,6 +411,14 @@ implements TemplateVariable {
             $teams = self::getTeams(array('active' => true, 'dept_id' => $deptId, 'limit' => 1, 'direct' => $deptId != $thisstaff->getDeptId()));
 
         return $teams;
+    }
+
+    function canAgentsBeTeamMember($agents) {
+        $dept = Staff::objects()
+            ->filter(array('staff_id__in' => $agents))
+            ->values_flat('dept')
+            ->distinct('dept');
+        return count($dept) == 1;
     }
 
     static function create($vars=false) {

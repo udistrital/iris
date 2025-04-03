@@ -2,6 +2,7 @@
 if(!defined('OSTSTAFFINC') || !$thisstaff || !$thisstaff->isStaff()) die('Access Denied');
 $qs = array();
 $agents = $thisstaff->getDeptAgents();
+$agents->filter(array('isactive' => 1));
 
 // htmlchar 'order' param To Escape XSS
 if ($_REQUEST['order'])

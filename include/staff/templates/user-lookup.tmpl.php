@@ -7,11 +7,11 @@ if (!isset($info['lookup']) || $info['lookup'] !== false) { ?>
 <div><p id="msg_info"><i class="icon-info-sign"></i>&nbsp; <?php echo
     $thisstaff->hasPerm(User::PERM_CREATE)
     ? __('Search existing users or add a new user.')
-    : 'Buscar mi usuario.';
+    : 'Buscar';
 ?></p></div>
 <div style="margin-bottom:10px;">
     <input type="text" class="search-input" style="width:100%;"
-    placeholder="<?php echo 'Buscar por mi correo, nombre o teléfono'; ?>" id="user-search"
+    placeholder="<?php echo 'Buscar por correo institucional o nombre'; ?>" id="user-search"
     autofocus autocorrect="off" autocomplete="off"/>
 </div>
 <?php
@@ -46,24 +46,6 @@ if ($thisstaff->hasPerm(User::PERM_CREATE)) { ?>
 if ($user) { ?>
     <div><strong id="user-name"><?php echo Format::htmlchars($user->getName()->getOriginal()); ?></strong></div>
     <div>&lt;<span id="user-email"><?php echo $user->getEmail(); ?></span>&gt;</div>
-    <?php
-    if ($org=$user->getOrganization()) { ?>
-    <div><span id="user-org"><?php echo $org->getName(); ?></span></div>
-    <?php
-    } ?>
-    <table style="margin-top: 1em;">
-<?php foreach ($user->getDynamicData() as $entry) { ?>
-    <tr><td colspan="2" style="border-bottom: 1px dotted black"><strong><?php
-         echo $entry->getTitle(); ?></strong></td></tr>
-<?php foreach ($entry->getAnswers() as $a) { ?>
-    <tr style="vertical-align:top"><td style="width:30%;border-bottom: 1px dotted #ccc"><?php echo Format::htmlchars($a->getField()->get('label'));
-         ?>:</td>
-    <td style="border-bottom: 1px dotted #ccc"><?php echo $a->display(); ?></td>
-    </tr>
-<?php }
-}
-?>
-</table>
 <?php } ?>
     <div class="clear"></div>
     <hr>

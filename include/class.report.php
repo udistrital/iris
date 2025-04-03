@@ -85,24 +85,30 @@ class OverviewReport {
     function getPlotData() {
         $tableData = $this->getTabularData();
         
+        // Initialize containers
         $labels = [];
         $plots = [];
         $events = [];
         
+        // Extract header/column names (excluding the first one which is labels)
         if (!empty($tableData["headers"]) && count($tableData["headers"]) > 1) {
             $events = array_slice($tableData["headers"], 1);
             
+            // Initialize empty arrays for each event type
             foreach ($events as $event) {
                 $eventKey = strtolower(str_replace(' ', '_', $event));
                 $plots[$eventKey] = [];
             }
         }
         
+        // Get all rows except the last one (total row)
         $dataRows = array_slice($tableData["data"], 0, count($tableData["data"]) - 1);
         
         foreach ($dataRows as $index => $row) {
+            // First column is the label
             $labels[] = $row[0];
             
+            // Process each metric value dynamically
             for ($i = 1; $i < count($row); $i++) {
                 $eventKey = strtolower(str_replace(' ', '_', $events[$i - 1]));
                 $plots[$eventKey][$index] = (int)$row[$i];

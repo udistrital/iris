@@ -4239,7 +4239,8 @@ implements RestrictedAccess, Threadable, Searchable {
             $errors += $form->errors();
 
         if ($vars['topicId']) {
-            if (($topic=Topic::lookup($vars['topicId']))
+            if (is_numeric($vars['topicId'])
+                    && ($topic=Topic::lookup((int) $vars['topicId']))
                     && $topic->isActive()) {
                 foreach ($topic_forms as $topic_form) {
                     $TF = $topic_form->getForm($vars);
@@ -4328,9 +4329,9 @@ implements RestrictedAccess, Threadable, Searchable {
                 unset($vars['slaId']);
 
             //set default sla.
-            if (isset($vars['slaId']))
+            if (isset($vars['slaId']) && $vars['slaId'] != -1)
                 $vars['slaId'] = $vars['slaId'] ?: $cfg->getDefaultSLAId();
-            elseif ($topic && $topic->getSLAId())
+            elseif ($vars['slaId'] != -1 && $topic && $topic->getSLAId())
                 $vars['slaId'] = $topic->getSLAId();
         }
 

@@ -5,17 +5,9 @@ $date_header = $date_col = false;
 // Make sure the cdata materialized view is available
 TaskForm::ensureDynamicDataView();
 
-// Figure out REFRESH url — which might not be accurate after posting a
-// response
-list($path,) = explode('?', $_SERVER['REQUEST_URI'], 2);
-$args = array();
-parse_str($_SERVER['QUERY_STRING'], $args);
-
-// Remove commands from query
-unset($args['id']);
-unset($args['a']);
-
-$refresh_url = htmlspecialchars($path) . '?' . http_build_query($args);
+// Remove some variables from query string.
+$qsFilter = ['id', 'a'];
+$refresh_url = Http::refresh_url($qsFilter);
 
 $sort_options = array(
     'updated' =>            __('Most Recently Updated'),
@@ -32,38 +24,43 @@ $sort_options = array(
 $queue_columns = array(
     'number' => array(
         'width' => '10%',
-        'heading' => __('Number'),
+        'heading' => __('Number') . '<br>&nbsp;',
         'sort_col'  => 'number',
     ),
     'ticket' => array(
         'width' => '10%',
-        'heading' => __('Expediente'),
+        'heading' => __('Expediente') . '<br>&nbsp;',
         'sort_col'  => 'ticket__number',
     ),
     'date' => array(
-        'width' => '12%',
-        'heading' => __('Date Created'),
+        'width' => '10%',
+        'heading' => 'Fecha de<br>Creación',
         'filter_type' => 'date',
     ),
     'last_entry' => array(
         'width' => '10%',
-        'heading' => __('Última Actividad'),
+        'heading' => 'Última<br>Actividad',
         'filter_type' => 'date',
         'disabled' => true,
     ),
     'title' => array(
-        'width' => '19%',
-        'heading' => __('Title'),
+        'width' => '16%',
+        'heading' => __('Title') . '<br>&nbsp;',
         'sort_col' => 'cdata__title',
     ),
     'dept' => array(
-        'width' => '15%',
-        'heading' => __('Dependencia'),
+        'width' => '14%',
+        'heading' => 'Dependencia<br>Asignada',
         'sort_col'  => 'dept__name',
     ),
     'assignee' => array(
-        'width' => '20%',
-        'heading' => __('Assigned To'),
+        'width' => '12%',
+        'heading' => __('Assigned To') . '<br>&nbsp;',
+    ),
+    'submitter' => array(
+        'width' => '14%',
+        'heading' => 'Dependencia<br>Creadora',
+        'disabled' => true,
     ),
 );
 
@@ -72,158 +69,171 @@ $queue_columns = array(
 // Queue we're viewing
 $queue_key = sprintf('::Q:%s', ObjectModel::OBJECT_TYPE_TASK);
 $queue_name = $_SESSION[$queue_key] ?: '';
+$staffId = $thisstaff->getId();
+$deptId = $thisstaff->getDept()->getID();
+$adminDeptIds = $thisstaff->getAdminDepartments();
 
 switch ($queue_name) {
     case 'closed':
         $status = 'closed';
         $results_type = __('Casos cerrados asignados a mí');
         $showassigned = true; //closed by.
-        // mis casos cerrados
-        $tasks->filter(array('staff_id' => $thisstaff->getId()));
-        setFilter($status, $tasks);
+        $tasks->filter(array('staff_id' => $staffId));
         $queue_sort_options = array('closed', 'updated', 'created', 'number', 'hot');
         break;
     case 'closed_dept':
         $status = 'closed';
         $results_type = __('Casos cerrados asignados a Mi Dependencia');
         $showassigned = true; //closed by.
-        if ($thisstaff->getManagedDepartments()) {
-            $tasks->filter(array('dept_id' => $thisstaff->getDept()->getID()));
-        } else {
-            $tasks->filter(array('id' => 0));
-        }
-        setFilter($status, $tasks);
+        $tasks->filter(array('dept_id__in' => array($adminDeptIds)));
         $queue_sort_options = array('closed', 'updated', 'created', 'number', 'hot');
         break;
     case 'overdue':
         $status = 'open';
         $results_type = __('Overdue Tasks');
         $tasks->filter(array('isoverdue' => 1));
-        setFilter($status, $tasks);
         $queue_sort_options = array('created', 'updated', 'number', 'hot');
         break;
     default:
     case 'assigned':
         $status = 'open';
         $results_type = __('Casos asignados a mí');
-        $tasks->filter(array('staff_id' => $thisstaff->getId()));
-        setFilter($status, $tasks);
+        $tasks->filter(array('staff_id' => $staffId));
         $queue_sort_options = array('created', 'updated', 'number', 'hot');
         break;
     case 'assigned_dept':
         $status = 'open';
         $results_type = __('Casos abiertos asignados a Mi Dependencia');
-        if ($thisstaff->getManagedDepartments()) {
-            $tasks->filter(array('dept_id' => $thisstaff->getDept()->getID()));
-        } else {
-            $tasks->filter(array('id' => 0));
-        }
-        setFilter($status, $tasks);
+        $tasks->filter(array('dept_id__in' => array($adminDeptIds)));
         $queue_sort_options = array('created', 'updated', 'number', 'hot');
         break;
     case 'unassigned_dept':
         $status = 'open';
         $results_type = __('Casos sin asignar en Mi Dependencia');
-        if ($thisstaff->getManagedDepartments() || $thisstaff->getLeadedTeams()) {
-            $tasks->filter(array(
-                'dept_id' => $thisstaff->getDept()->getID(),
-                'staff_id' => 0,
-                'team_id' => 0
-            ));
+        $tasks->filter(array(
+            'staff_id' => 0,
+            'team_id' => 0,
+        ));
+        if (count($adminDeptIds)) {
+            $tasks->filter(array('dept_id__in' => array($adminDeptIds)));
+        } else if ($thisstaff->getLeadedTeams()) {
+            $tasks->filter(array('dept_id' => $deptId));
         } else {
             $tasks->filter(array('id' => 0));
         }
-        setFilter($status, $tasks);
         $queue_sort_options = array('created', 'updated', 'number', 'hot');
         break;
     case 'dept':
         $results_type = __('Todos los casos en Mi Dependencia');
-        if ($thisstaff->getManagedDepartments()) {
-            $tasks->filter(array('dept_id' => $thisstaff->getDept()->getID()));
-        } else {
-            $tasks->filter(array('id' => 0));
-        }
-        setFilter($status, $tasks);
+        $tasks->filter(array('dept_id__in' => array($adminDeptIds)));
         $queue_sort_options = array('created', 'updated', 'number', 'hot');
         break;
     case 'open_me':
         $results_type = __('Creados por mí (abiertos y cerrados)');
-        $staffId = $thisstaff->getId();
         $tasks->filter(
             array(
                 'thread__events__agent' => $staffId,
                 'thread__events__event__name' => 'created',
             ),
         );
+        $queue_sort_options = array('created', 'updated', 'number', 'hot');
+        break;
+    case 'created_pairs':
+        $results_type = __('Creados por un miembro de mis equipos');
+        if ($teams = $thisstaff->getTeams())
+            $pairs = TeamMember::objects()
+                ->distinct('staff_id')
+                ->filter(
+                    array(
+                        'team_id__in' => $teams,
+                        'staff_id__notequal' => $staffId,
+                    ),
+                )
+                ->values('staff_id');
 
-        setFilter($status, $tasks);
+        if (!$teams || !$pairs)
+            $tasks->filter(array('id' => 0));
+        else
+            $tasks->filter(
+                array(
+                    'thread__events__agent__in' => $pairs,
+                    'thread__events__event__name' => 'created',
+                ),
+            );
+        $queue_sort_options = array('created', 'updated', 'number', 'hot');
+        break;
+    case 'involved':
+        $results_type = __('Casos en los que he participado y no estoy asignado');
+        $tasks->distinct('id');
+        $tasks->filter(
+            array(
+                'thread__entries__type__in' => array('N', 'R'),
+                'thread__entries__staff__staff_id' => $staffId,
+                'staff_id__notequal' => $staffId,
+            ),
+        );
         $queue_sort_options = array('created', 'updated', 'number', 'hot');
         break;
     case 'transferred':
-        $results_type = __('Transferidos a otra dependencia');
-        $deptId = $thisstaff->getDept()->getID();
+        $results_type = __('Transferidos por mi dependencia');
         if ($thisstaff->getManagedDepartments()) {
             $tasks->distinct('id');
             $tasks->filter(
                 array(
                     'thread__events__dept' => $deptId,
                     'thread__events__event__name__in' => array('transferred', 'created'),
-                ),
-                Q::not(
-                    array('dept' => $deptId),
+                    'dept__notequal' => $deptId,
                 ),
             );
         } else {
             $tasks->filter(array('id' => 0));
         }
+        $queue_sort_options = array('created', 'updated', 'number', 'hot');
+        break;
 
-        setFilter($status, $tasks);
+        case 'transferred_me':
+            $results_type = __('Transferidos por mí');
+            $tasks->distinct('id');
+            $tasks->filter(
+                array(
+                    'thread__events__event__name' => 'transferred',
+                    'thread__events__agent' => $staffId,
+                ),
+            );
         $queue_sort_options = array('created', 'updated', 'number', 'hot');
         break;
     case 'thread_me':
         $results_type = __('Asignados por mí a otro agente');
-        $staffId = $thisstaff->getId();
         $tasks->distinct('id');
         $tasks->filter(
             array(
                 'thread__events__agent' => $staffId,
                 'thread__events__event__name' => 'assigned',
-            ),
-            Q::not(
-                array(
-                    'thread__events__staff' => $staffId,
-                ),
+                'thread__events__staff__staff_id__notequal' => $staffId,
             ),
         );
-
-        setFilter($status, $tasks);
         $queue_sort_options = array('created', 'updated', 'number', 'hot');
         break;
     case 'assigned_mteams':
         $status = 'open';
         $results_type = __('Casos asignados a mis equipos');
         $tasks->filter(array('team_id__in' => $thisstaff->teams->values_flat('team_id')));
-        setFilter($status, $tasks);
         $queue_sort_options = array('created', 'updated', 'number', 'hot');
         break;
     case 'unassigned':
         $status = 'open';
-        $results_type = __('Casos sin asignar a un agente');
-        if ($thisstaff->getManagedDepartments()) {
+        $results_type = __('Casos en mis equipos sin asignar a un agente');
+        $tasks->filter(array('staff_id' => 0));
+        if (count($adminDeptIds)) {
             $tasks->filter(array(
-                'dept_id' => $thisstaff->getDept()->getID(),
-                'staff_id' => 0,
+                'dept_id__in' => array($adminDeptIds),
                 'team_id__gt' => 0
             ));
         } else if ($thisstaff->getLeadedTeams()) {
-            $tasks->filter(array(
-                'team_id__in' => $thisstaff->teams->values_flat('team_id'),
-                'staff_id' => 0
-            ));
+            $tasks->filter(array('team_id__in' => $thisstaff->teams->values_flat('team_id')));
         } else {
             $tasks->filter(array('id' => 0));
         }
-        setFilter($status, $tasks);
         $queue_sort_options = array('created', 'updated', 'number', 'hot');
         break;
     case 'closed_mteams':
@@ -231,23 +241,31 @@ switch ($queue_name) {
         $results_type = __('Casos cerrados asignados a mis equipos');
         $showassigned = true; //closed by.
         $tasks->filter(array('team_id__in' => $thisstaff->teams->values_flat('team_id')));
-        setFilter($status, $tasks);
         $queue_sort_options = array('closed', 'updated', 'created', 'number', 'hot');
         break;
     case 'created_dep':
         $results_type = __('Casos creados por alguien de mi dependencia');
+        $tasks->filter(
+            array(
+                'thread__events__agent__dept_id__in' => array($adminDeptIds),
+                'thread__events__event__name' => 'created',
+            ),
+        );
+        $queue_sort_options = array('created', 'updated', 'number', 'hot');
+        break;
+    case 'requested_dep':
+        $results_type = __('Casos solicitados por mi dependencia');
         if ($thisstaff->getManagedDepartments()) {
             $tasks->filter(
                 array(
-                    'thread__events__agent__dept' => $thisstaff->getDept()->getID(),
+                    'thread__events__agent__dept_id' => $deptId,
                     'thread__events__event__name' => 'created',
+                    'dept_id__notequal' => $deptId,
                 ),
             );
         } else {
             $tasks->filter(array('id' => 0));
         }
-
-        setFilter($status, $tasks);
         $queue_sort_options = array('created', 'updated', 'number', 'hot');
         break;
     case 'cc':
@@ -258,70 +276,63 @@ switch ($queue_name) {
                 array(
                     'thread__collaborators__user' => $userId,
                     'thread__events__event__name' => 'created',
-                ),
-                Q::not(
-                    array(
-                        'thread__events__agent' => $thisstaff->getId(),
-                    ),
+                    'thread__events__agent__notequal' => $staffId,
                 ),
             );
         } else {
             $tasks->filter(array('id' => 0));
         }
-        setFilter($status, $tasks);
         $queue_sort_options = array('created', 'updated', 'number', 'hot');
         break;
 }
 
 // Apply filters
-function setFilter($status, $tasks) {
-    if ($_REQUEST['number']) {
-        $tasks->filter(array('number__contains' => $_REQUEST['number']));
-    }
-
-    if ($_REQUEST['ticket']) {
-        $tasks->filter(array('ticket__number__contains' => $_REQUEST['ticket']));
-    }
-
-    if ($_REQUEST['start'] || $_REQUEST['end']) {
-        if ($_REQUEST['start']) {
-            $initDate = $_REQUEST['start'] . ' 05:00:00';
-            $tasks->filter(array('created__gt' => $initDate));
-        }
-        if ($_REQUEST['end']) {
-            $endDate = new DateTime($_REQUEST['end']);
-            $interval = new DateInterval('PT29H');
-            $endDate->add($interval);
-            $tasks->filter(array('created__lt' => $endDate));
-        }
-    } else if ($_REQUEST['date']) {
-        $initDate = $_REQUEST['date'] . ' 05:00:00';
-        $interval = new DateInterval('P1D');
-        $endDate = new DateTime($initDate);
-        $endDate->add($interval);
-        $endFormat = $endDate->format('Y-m-d H:i:s');
-        $column = $status === 'closed' ? 'closed' : 'created';
-        $tasks->filter(array(($column . '__range') => array("'" . $initDate . "'", "'" . $endFormat . "'", true)));
-    }
-
-    if ($_REQUEST['title']) {
-        $tasks->filter(array('cdata__title__contains' => $_REQUEST['title']));
-    }
-
-    if ($_REQUEST['dept']) {
-        $tasks->filter(array('dept__name__contains' => $_REQUEST['dept']));
-    }
-
-    if ($_REQUEST['assignee']) {
-        $tasks = $tasks->filter(Q::any(array(
-            'staff__firstname__contains' => $_REQUEST['assignee'],
-            'staff__lastname__contains' => $_REQUEST['assignee'],
-            'team__name__contains' => $_REQUEST['assignee'],
-        )));
-    }
+$filters = array();
+if ($_REQUEST['number']) {
+    $filters[] = new Q(array('number__contains' => $_REQUEST['number']));
 }
 
-$filters = array();
+if ($_REQUEST['ticket']) {
+    $filters[] = new Q(array('ticket__number__contains' => $_REQUEST['ticket']));
+}
+
+if ($_REQUEST['start'] || $_REQUEST['end']) {
+    if ($_REQUEST['start']) {
+        $initDate = $_REQUEST['start'] . ' 05:00:00';
+        $filters[] = new Q(array('created__gt' => $initDate));
+    }
+    if ($_REQUEST['end']) {
+        $endDate = new DateTime($_REQUEST['end']);
+        $interval = new DateInterval('PT29H');
+        $endDate->add($interval);
+        $filters[] = new Q(array('created__lt' => $endDate));
+    }
+} else if ($_REQUEST['date']) {
+    $initDate = $_REQUEST['date'] . ' 05:00:00';
+    $interval = new DateInterval('P1D');
+    $endDate = new DateTime($initDate);
+    $endDate->add($interval);
+    $endFormat = $endDate->format('Y-m-d H:i:s');
+    $column = $status === 'closed' ? 'closed' : 'created';
+    $filters[] = new Q(array(($column . '__range') => array("'" . $initDate . "'", "'" . $endFormat . "'", true)));
+}
+
+if ($_REQUEST['title']) {
+    $filters[] = new Q(array('cdata__title__contains' => $_REQUEST['title']));
+}
+
+if ($_REQUEST['dept']) {
+    $filters[] = new Q(array('dept__name__contains' => $_REQUEST['dept']));
+}
+
+if ($_REQUEST['assignee']) {
+    $filters[] = Q::any(array(
+        'staff__firstname__contains' => $_REQUEST['assignee'],
+        'staff__lastname__contains' => $_REQUEST['assignee'],
+        'team__name__contains' => $_REQUEST['assignee'],
+    ));
+}
+
 if ($status) {
     $SQ = new Q(array('flags__hasbit' => TaskModel::ISOPEN));
     if (!strcasecmp($status, 'closed'))
@@ -337,12 +348,12 @@ if ($filters)
 // ------------------------------------------------------------
 // -- Open and assigned to me
 $visibility = Q::any(
-    new Q(array('flags__hasbit' => TaskModel::ISOPEN, 'staff_id' => $thisstaff->getId()))
+    new Q(array('flags__hasbit' => TaskModel::ISOPEN, 'staff_id' => $staffId))
 );
 // -- Task for tickets assigned to me
 $visibility->add(
     new Q(array(
-        'ticket__staff_id' => $thisstaff->getId(),
+        'ticket__staff_id' => $staffId,
         'ticket__status__state' => 'open'
     ))
 );
@@ -366,10 +377,26 @@ $tasks->annotate(array(
             ->otherwise(new SqlField('thread__entries__attachments')),
         true
     ),
+    'submitter' => SqlCase::N()
+        ->when(
+            new Q(array('thread__events__event__name' => 'created')),
+            new SqlField('thread__events__agent__dept__name')
+        )
+        ->otherwise(null),
     'thread_count' => SqlAggregate::COUNT(
         SqlCase::N()
             ->when(
                 new Q(array('thread__entries__flags__hasbit' => ThreadEntry::FLAG_HIDDEN)),
+                null
+            )
+            ->otherwise(new SqlField('thread__entries__id')),
+        true
+    ),
+    'participaciones' => SqlAggregate::COUNT(
+        SqlCase::N()
+            ->when(
+                Q::any(array('thread__entries__staff__staff_id__notequal' => $staffId))
+                    ->add(array('thread__entries__type' => 'M')),
                 null
             )
             ->otherwise(new SqlField('thread__entries__id')),
@@ -466,7 +493,7 @@ switch ($sort_cols) {
             break;
         }
     case 'created':
-        $queue_columns['date']['heading'] = __('Date Created');
+        $queue_columns['date']['heading'] = 'Fecha de<br>Creación';
         $queue_columns['date']['sort'] = 'created';
         $queue_columns['date']['sort_col'] = $date_col = 'created';
         $tasks->order_by($sort_dir ? 'created' : '-created');
@@ -484,7 +511,7 @@ if (in_array($sort_cols, array('created', 'due', 'updated')))
 $page = ($_GET['p'] && is_numeric($_GET['p'])) ? $_GET['p'] : 1;
 $count = $tasks->count();
 $pageNav = new Pagenate($count, $page, PAGE_LIMIT);
-$pageNav->setURL('tasks.php', $args);
+$pageNav->setURL('tasks.php', array_merge($args ?: array(), $_REQUEST));
 $tasks = $pageNav->paginate($tasks);
 
 // Save the query to the session for exporting
@@ -523,7 +550,7 @@ if ($thisstaff->hasPerm(Task::PERM_DELETE, false)) {
 
 ?>
 <div class="clear"></div>
-<div style="margin-bottom:20px; padding-top:5px;">
+<div style="margin-bottom:20px; padding-top:5px; overflow-x: scroll">
     <div class="sticky bar opaque">
         <div class="content">
             <div class="pull-left flush-left">
@@ -539,18 +566,18 @@ if ($thisstaff->hasPerm(Task::PERM_DELETE, false)) {
         </div>
     </div>
     <div class="clear"></div>
-    <form action="tasks.php" method="get">
-        <input type="hidden" name="status" value="<?php echo $_REQUEST['status']; ?>" />
+    <form action="tasks.php" method="GET" id="query">
+        <input type="hidden" name="status" value="<?php echo Format::htmlchars($_REQUEST['status'], true); ?>" form="query">
         <div id="basic_search" style="min-height:25px; margin: auto">
             <label>
                 <?php echo __('Desde'); ?>:
                 <input type="date" class="input-medium search-query" name="start"
-                    value="<?php echo $_REQUEST['start']; ?>" />
+                    value="<?php echo $_REQUEST['start']; ?>" form="query"/>
             </label>
             <label>
                 <?php echo __('Hasta'); ?>:
                 <input type="date" class="input-medium search-query" name="end"
-                    value="<?php echo $_REQUEST['end']; ?>" />
+                    value="<?php echo $_REQUEST['end']; ?>" form="query"/>
             </label>
             <button class="green button action-button muted" type="submit">
                 <?php echo __( 'Buscar');?>
@@ -567,24 +594,21 @@ if ($thisstaff->hasPerm(Task::PERM_DELETE, false)) {
             <thead>
                 <tr>
                     <?php if ($thisstaff->canManageTickets()) { ?>
-                        <th width="4%">&nbsp;<form action="tasks.php" method="get"></form></th>
+                        <th width="4%">&nbsp;</th>
                     <?php } ?>
 
                     <?php
                     // Query string
                     unset($args['sort'], $args['dir'], $args['_pjax']);
-                    $qstr = Http::build_query($args);
+                    $qstr = Http::build_clean_query($_REQUEST, true, true, true);
                     // Show headers
                     foreach ($queue_columns as $k => $column) {
                         echo sprintf(
                             '<th width="%s"><a href="?sort=%s&dir=%s&%s" class="%s">%s</a>
-                                <form action="tasks.php" method="get">
-                                    <input type="hidden" name="status" value="%s" />
                                     <div class="attached input">
-                                        <input type="%s" class="column-search" name="%s" value="%s" %s>
-                                        <button type="submit" class="attached button" %s><i class="icon-search"></i></button>
+                                        <input type="%s" class="column-search" name="%s" value="%s" %s form="query">
+                                        <button type="submit" class="attached button" %s form="query"><i class="icon-search"></i></button>
                                     </div>
-                                </form>
                             </th>',
                             $column['width'],
                             $column['sort'] ?: $k,
@@ -593,7 +617,6 @@ if ($thisstaff->hasPerm(Task::PERM_DELETE, false)) {
                             isset($column['sort_dir'])
                                 ? ($column['sort_dir'] ? 'asc' : 'desc') : '',
                             $column['heading'],
-                            $_REQUEST['status'],
                             $column['filter_type'] ?: 'text',
                             $k,
                             Format::htmlchars($_REQUEST[$k], true),
@@ -615,7 +638,7 @@ if ($thisstaff->hasPerm(Task::PERM_DELETE, false)) {
                     $total += 1;
                     $tag = $T['staff_id'] ? 'assigned' : 'openticket';
                     $flag = null;
-                    if ($T['lock__staff_id'] && $T['lock__staff_id'] != $thisstaff->getId())
+                    if ($T['lock__staff_id'] && $T['lock__staff_id'] != $staffId)
                         $flag = 'locked';
                     elseif ($T['isoverdue'])
                         $flag = 'overdue';
@@ -623,6 +646,8 @@ if ($thisstaff->hasPerm(Task::PERM_DELETE, false)) {
                     $assignee = '';
                     $dept = Dept::getLocalById($T['dept_id'], 'name', $T['dept__name']);
                     $assinee = '';
+                    $created = explode(' ', Format::datetime($T[$date_col ?: 'created']), 2);
+                    $lastEntry = explode(' ', Format::datetime($T['last_entry']), 2);
                     if ($T['staff_id'] && $T['team_id']) {
                         $staff =  new AgentsName($T['staff__firstname'] . ' ' . $T['staff__lastname']);
                         $team = Team::getLocalById($T['team_id'], 'name', $T['team__name']);
@@ -669,9 +694,9 @@ if ($thisstaff->hasPerm(Task::PERM_DELETE, false)) {
                             <a class="preview" href="tickets.php?id=<?php echo $T['ticket__ticket_id']; ?>" data-preview="#tickets/<?php echo $T['ticket__ticket_id']; ?>/preview"><?php echo $T['ticket__number']; ?></a>
                         </td>
                         <td nowrap><?php echo
-                                    Format::datetime($T[$date_col ?: 'created']); ?></td>
+                                    implode('<br>', $created); ?></td>
                         <td nowrap><?php echo
-                                    Format::datetime($T['last_entry']); ?></td>
+                                    implode('<br>', $lastEntry); ?></td>
                         <td><a <?php if ($flag) { ?> class="Icon <?php echo $flag; ?>Ticket" title="<?php echo ucfirst($flag); ?> Ticket" <?php } ?> href="tasks.php?id=<?php echo $T['id']; ?>"><?php
                                                                                                                                                                                                     echo $title; ?></a>
                             <?php
@@ -686,6 +711,7 @@ if ($thisstaff->hasPerm(Task::PERM_DELETE, false)) {
                         </td>
                         <td><?php echo $dept; ?></td>
                         <td><?php echo $assignee; ?></td>
+                        <td><?php echo $T['submitter']; ?></td>
                     </tr>
                 <?php
                 } //end of foreach
@@ -695,7 +721,7 @@ if ($thisstaff->hasPerm(Task::PERM_DELETE, false)) {
             </tbody>
             <tfoot>
                 <tr>
-                    <td colspan="8">
+                    <td colspan="9">
                         <?php if ($total && $thisstaff->canManageTickets()) { ?>
                             <?php echo __('Select'); ?>:&nbsp;
                             <a id="selectAll" href="#ckb"><?php echo __('All'); ?></a>&nbsp;&nbsp;

@@ -76,12 +76,13 @@ if ($_POST)
     <tbody>
         <tr>
             <th colspan="2">
-                <em><strong><?php echo __('User and Collaborators'); ?></strong>: </em>
+                <em><strong><?php echo __('Con Copia'); ?></strong>: </em>
                 <div class="error"><?php echo $errors['user']; ?></div>
             </th>
         </tr>
-              <?php
-              if ($user) { ?>
+              <?php if ($user) { ?>
+              <input type="hidden" name="uid" id="uid" value="<?php echo $user->getId(); ?>" />
+              <?php if (false) {?>
                   <tr><td><?php echo __('User'); ?>:</td><td>
                     <div id="user-info">
                       <input type="hidden" name="uid" id="uid" value="<?php echo $user->getId(); ?>" />
@@ -113,9 +114,10 @@ if ($_POST)
                     "><i class="icon-retweet"></i> <?php echo __('Change'); ?></a>
                   </div>
                 </td>
+                <?php }?>
               </tr>
               <?php
-            } else { //Fallback: Just ask for email and name
+            } elseif (false) { //Fallback: Just ask for email and name
               ?>
               <tr id="userRow">
                 <td width="120"><?php echo __('User'); ?>:</td>
@@ -147,11 +149,11 @@ if ($_POST)
             <?php
           } ?>
           <tr id="ccRow">
-            <td width="160"><?php echo __('Cc'); ?>:</td>
+            <td width="160"><?php echo __('CC'); ?>:</td>
             <td>
               <span>
                 <select class="collabSelections" name="ccs[]" id="cc_users_open" multiple="multiple"
-                ref="tags" data-placeholder="<?php echo __('Select Contacts'); ?>">
+                ref="tags" data-placeholder="<?php echo __('CC'); ?>">
               </select>
             </span>
 
@@ -171,6 +173,8 @@ if ($_POST)
         if ($cfg->notifyONNewStaffTicket()) {
          ?>
         <tr class="no_border">
+          <input id="reply-to"  type="hidden" name="reply-to" value="none">
+          <?php if (false) {?>
           <td>
             <?php echo __('Ticket Notice');?>:
           </td>
@@ -181,6 +185,7 @@ if ($_POST)
               <option value="none">&mdash; <?php echo __('Do Not Send Alert'); ?> &mdash;</option>
             </select>
           </td>
+          <?php }?>
         </tr>
       <?php } ?>
     </tbody>
@@ -191,6 +196,8 @@ if ($_POST)
             </th>
         </tr>
         <tr>
+            <input type="hidden" name="source" value="Email">
+            <?php if (false) {?>
             <td width="160" class="required">
                 <?php echo __('Ticket Source');?>:
             </td>
@@ -209,6 +216,7 @@ if ($_POST)
                 </select>
                 &nbsp;<font class="error"><b>*</b>&nbsp;<?php echo $errors['source']; ?></font>
             </td>
+            <?php }?>
         </tr>
         <tr>
             <td width="160" class="required">
@@ -228,7 +236,7 @@ if ($_POST)
                             }
                           });">
                     <?php
-                    if ($topics=$thisstaff->getTopicNames(false, false)) {
+                    if ($topics=$thisstaff->getTopicNames(false, false, Ticket::PERM_CREATE)) {
                         if (count($topics) == 1)
                             $selected = 'selected="selected"';
                         else { ?>
@@ -247,7 +255,7 @@ if ($_POST)
                     ?>
                 </select>
                 &nbsp;<font class="error"><b>*</b>&nbsp;<?php echo $errors['topicId']; ?></font>
-                <em><?php echo 'Recuerde poner su dependencia'; ?>&nbsp;(<?php echo $thisstaff->getDept(); ?>)</em>
+                <em><?php echo 'Seleccione la dependencia que está a cargo del proceso'; ?></em>
             </td>
         </tr>
         <tr style="display:none;"> 
@@ -280,6 +288,8 @@ if ($_POST)
         </tr>
 
          <tr>
+            <input type="hidden" name="slaId" value="-1">
+            <?php if (false) {?>
             <td width="160">
                 <?php echo __('SLA Plan');?>:
             </td>
@@ -297,9 +307,12 @@ if ($_POST)
                 </select>
                 &nbsp;<font class="error">&nbsp;<?php echo $errors['slaId']; ?></font>
             </td>
+            <?php }?>
          </tr>
 
          <tr>
+            <input type="hidden" name="duedate" value="">
+            <?php if (false) {?>
             <td width="160">
                 <?php echo __('Due Date');?>:
             </td>
@@ -311,6 +324,7 @@ if ($_POST)
                 &nbsp;<font class="error">&nbsp;<?php echo $errors['duedate']; ?> &nbsp; <?php echo $errors['time']; ?></font>
                 <em><?php echo 'Hora basada en su zona horaria'; ?>&nbsp;(<?php echo $cfg->getTimezone($thisstaff); ?>)</em>
             </td>
+            <?php }?>
         </tr>
 
         <?php
@@ -363,9 +377,11 @@ if ($_POST)
         ?>
         </tbody>
         <tbody>
+        <input type="hidden" name="response" id="response" value="">
+        <input type="hidden" name="statusId" id="statusId" value="1">
         <?php
         //is the user allowed to post replies??
-        if ($thisstaff->getRole()->hasPerm(Ticket::PERM_REPLY)) { ?>
+        if (false && $thisstaff->getRole()->hasPerm(Ticket::PERM_REPLY)) { ?>
         <tr>
             <th colspan="2">
                 <em><strong><?php echo __('Response');?></strong>: <?php echo __('Optional response to the above issue.');?></em>
@@ -397,7 +413,7 @@ if ($_POST)
                 <textarea
                     class="<?php if ($cfg->isRichTextEnabled()) echo 'richtext';
                         ?> draft draft-delete" data-signature="<?php
-                        echo Format::htmlchars(Format::viewableImages($signature)); ?>"
+                        echo Format::viewableImages(Format::htmlchars($signature, true)); ?>"
                     data-signature-field="signature" data-dept-field="deptId"
                     placeholder="<?php echo __('Initial response for the ticket'); ?>"
                     name="response" id="response" cols="21" rows="8"
@@ -458,6 +474,7 @@ print $response_form->getField('attachments')->render();
         <?php
         } //end canPostReply
         ?>
+        <?php if (false) {?>
         <tr>
             <th colspan="2">
                 <em><strong><?php echo __('Internal Note');?></strong>
@@ -476,6 +493,7 @@ print $response_form->getField('attachments')->render();
                 ?></textarea>
             </td>
         </tr>
+        <?php }?>
     </tbody>
 </table>
 <p style="text-align:center;">

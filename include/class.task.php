@@ -73,6 +73,7 @@ class TaskModel extends VerySimpleModel {
     const PERM_REPLY    = 'task.reply';
     const PERM_CLOSE    = 'task.close';
     const PERM_DELETE   = 'task.delete';
+    const PERM_VIEW_ALL = 'task.viewAll';
 
     static protected $perms = array(
             self::PERM_CREATE    => array(
@@ -110,6 +111,11 @@ class TaskModel extends VerySimpleModel {
                 /* @trans */ 'Delete',
                 'desc'  =>
                 /* @trans */ 'Ability to delete tasks'),
+            self::PERM_VIEW_ALL    => array(
+                'title' =>
+                /* @trans */ 'Ver todas',
+                'desc'  =>
+                /* @trans */ 'Permiso para ver todas las tareas de la dependencia'),
             );
 
     const ISOPEN    = 0x0001;
@@ -176,12 +182,33 @@ class TaskModel extends VerySimpleModel {
         return $this->isClosed() ? $this->closed : '';
     }
 
+    function getSubmitter() {
+        return $this->submitter;
+    }
+
     function isOpen() {
         return $this->hasFlag(self::ISOPEN);
     }
 
     function isClosed() {
         return !$this->isOpen();
+    }
+
+    function isCreator() {
+        global $thisstaff;
+        $this->isCreator = Task::objects()
+            ->filter(
+                array(
+                    'id' => $this->getId(),
+                    'thread__events__agent' => $thisstaff->getId(),
+                    'thread__events__event__name' => 'created',
+                )
+            )
+            ->values_flat('id')
+            ->first()
+            ?: false;
+
+        return $this->isCreator;
     }
 
     function isCloseable() {
@@ -294,6 +321,11 @@ class Task extends TaskModel implements RestrictedAccess, Threadable {
 
     function getLastActivityDateExport() {
         return Format::datetimeLocal($this->getLastActivityDate());
+    }
+
+    function getTaskStaffLink() {
+        global $cfg;
+        return sprintf('%s/scp/tasks.php?id=%d', $cfg->getBaseUrl(), $this->getId());
     }
 
     function getTitle() {
@@ -832,6 +864,10 @@ class Task extends TaskModel implements RestrictedAccess, Threadable {
             }
             else {
                 $this->staff_id = $assignee->getId();
+                if ($dept->autoAssignTeam() && ($teams = $assignee->getTeams()) && count($teams) == 1 && $this->team_id != $teams[0]) {
+                    $teamForm = AssignmentForm::instantiate(array('assignee' => array(sprintf('t%s', $teams[0]))));
+                    $this->assign($teamForm, $errors);
+                }
                 if ($thisstaff && $thisstaff->getId() == $assignee->getId())
                     $evd['claim'] = true;
                 else
@@ -909,7 +945,7 @@ class Task extends TaskModel implements RestrictedAccess, Threadable {
             if ($cfg->alertStaffONTaskAssignment())
                 $recipients[] = $assignee;
         } elseif (($assignee instanceof Team) && $assignee->alertsEnabled()) {
-            if ($cfg->alertTeamMembersONTaskAssignment() && ($members=$assignee->getMembersForAlerts()))
+            if (($cfg->alertTeamMembersONTaskAssignment() || $assignee->alertAll()) && ($members=$assignee->getMembersForAlerts()))
                 $recipients = array_merge($recipients, $members);
             elseif ($cfg->alertTeamLeadONTaskAssignment() && ($lead=$assignee->getTeamLead()))
                 $recipients[] = $lead;
@@ -1046,6 +1082,22 @@ class Task extends TaskModel implements RestrictedAccess, Threadable {
             $vars['poster'] = $poster;
         }
 
+        if ($this->isClosing(newState: $vars['task:status'])) {
+            // Claim if unassigned, in my dept, teams and closing
+            if (!$this->getStaffId() &&
+                $thisstaff && $this->getDeptId() == $thisstaff->getDeptId() &&
+                $thisstaff->isTeamMember(teamId: $this->getTeamId())) {
+                $cform = $this->getClaimForm();
+                if (!$this->claim(form: $cform, errors: $errors));
+                    return null;
+            }
+
+            if (Misc::isCommentEmpty(comment: $vars['note'])) {
+                $this->setStatus(status: $vars['task:status'], errors: $errors);
+                return;
+            }
+        }
+
         if (!($note=$this->getThread()->addNote($vars, $errors)))
             return null;
 
@@ -1080,6 +1132,22 @@ class Task extends TaskModel implements RestrictedAccess, Threadable {
         if (!$vars['ip_address'] && $_SERVER['REMOTE_ADDR'])
             $vars['ip_address'] = $_SERVER['REMOTE_ADDR'];
 
+        if ($this->isClosing(newState: $vars['task:status'])) {
+            // Claim if unassigned, in my dept, teams and closing
+            if (!$this->getStaffId() &&
+                $thisstaff && $thisstaff->getDeptId() == $this->getDeptId() &&
+                $thisstaff->isTeamMember(teamId: $this->getTeamId())) {
+                $cform = $this->getClaimForm();
+                if (!$this->claim(form: $cform, errors: $errors));
+                    return null;
+            }
+
+            if (Misc::isCommentEmpty(comment: $vars['response'])) {
+                $this->setStatus(status: $vars['task:status'], errors: $errors);
+                return true;
+            }
+        }
+
         if (!($response = $this->getThread()->addResponse($vars, $errors)))
             return null;
 
@@ -1102,7 +1170,7 @@ class Task extends TaskModel implements RestrictedAccess, Threadable {
 
         // Send activity alert to agents
         $activity = $vars['activity'] ?: $response->getActivity();
-        $this->onActivity( array(
+        $agentRecipients = $this->onActivity( array(
                     'activity' => $activity,
                     'threadentry' => $response,
                     'assignee' => $assignee,
@@ -1115,7 +1183,7 @@ class Task extends TaskModel implements RestrictedAccess, Threadable {
         if ($alert && $vars['emailcollab']) {
             $signature = '';
             $this->notifyCollaborators($response,
-                array('signature' => $signature)
+                array('signature' => $signature, 'agentRecipients' => $agentRecipients ?: array())
             );
         }
 
@@ -1270,7 +1338,7 @@ class Task extends TaskModel implements RestrictedAccess, Threadable {
             elseif ($this->isOpen() && ($assignee = $this->getStaff()))
                 $recipients[] = $assignee;
 
-            if ($team = $this->getTeam())
+            if (($team = $this->getTeam()) && ($team->alertAll() || !$this->getStaff() || ($this->getStaff() && !$team->hasMember($this->getStaff()))))
                 $recipients = array_merge($recipients, $team->getMembersForAlerts());
         }
 
@@ -1317,6 +1385,7 @@ class Task extends TaskModel implements RestrictedAccess, Threadable {
             $sentlist[$staff->getEmail()] = 1;
         }
 
+        return $sentlist;
     }
 
     function addCollaborator($user, $vars, &$errors, $event=true) {
@@ -1377,7 +1446,9 @@ class Task extends TaskModel implements RestrictedAccess, Threadable {
         foreach ($recipients as $recipient) {
             // Skip folks who have already been included on this part of
             // the conversation
-            if (isset($skip[$recipient->getUserId()]))
+            if (isset($skip[$recipient->getUserId()]) ||
+                (($recEmail = $recipient->getEmail()?->getEmail()) &&
+                    $poster->getEmail() == $recEmail || (isset($vars['agentRecipients']) && isset($vars['agentRecipients'][$recEmail]))))
                 continue;
             $notice = $this->replaceVars($msg, array('recipient' => $recipient));
             $email->send($recipient, $notice['subj'], $notice['body'], $attachments,
@@ -1541,8 +1612,11 @@ class Task extends TaskModel implements RestrictedAccess, Threadable {
         if ($vars['internal_formdata']['dept_id'])
             $task->dept_id = $vars['internal_formdata']['dept_id'];
 
-        if ($vars['internal_formdata']['duedate'])
-	    $task->duedate = date('Y-m-d G:i', Misc::dbtime($vars['internal_formdata']['duedate']));
+        if ($vars['internal_formdata']['duedate']) {
+            $time = new DateTime($vars['internal_formdata']['duedate']);
+            $time->setTime(23, 59, 59);
+	        $task->duedate = date('Y-m-d G:i:s', $time->getTimestamp());
+        }
 
         if (!$task->save(true))
             return false;
@@ -1681,6 +1755,10 @@ class Task extends TaskModel implements RestrictedAccess, Threadable {
 
         return true;
 
+    }
+
+    function isClosing($newState): bool {
+        return $this->isOpen() && $newState == 'closed';
     }
 
     static function __loadDefaultForm() {
@@ -1845,21 +1923,16 @@ extends AbstractForm {
                     'required' => true,
                     'layout' => new GridFluidCell(6),
                     )),
-                /* 'assignee' => new AssigneeField(array(
-                    'id'=>2,
-                    'label' => __('Assignee'),
-                    'required' => false,
-                    'layout' => new GridFluidCell(6),
-                    )), */
                 'duedate'  =>  new DatetimeField(array(
                     'id' => 3,
                     'label' => __('Due Date'),
                     'required' => true,
                     'configuration' => array(
-                        'min' => Misc::gmtime(),
-                        'time' => true,
+                        'min' => Misc::bogTimeStartToday(),
+                        'time' => false,
                         'gmt' => false,
                         'future' => true,
+                        'timezone' => 'America/Bogota',
                         ),
                     )),
 

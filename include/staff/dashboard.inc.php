@@ -152,5 +152,6 @@ foreach ($groups as $g=>$desc) {
 </form>
 <script>
   var plotData = <?php echo JsonDataEncoder::encode($report->getPlotData()); ?>;
+  console.log(plotData);
   $.drawPlots(plotData);
 </script>
