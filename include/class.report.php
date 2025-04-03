@@ -83,61 +83,46 @@ class OverviewReport {
     }
 
     function getPlotData() {
-        list($start, $stop) = $this->getDateRange();
-        $states = array("created", "closed", "reopened", "assigned", "transferred");
-        $event_ids = Event::getIds();
-
-        # Fetch all types of events over the timeframe
-        $res = db_query('SELECT DISTINCT(E.name) FROM '.THREAD_EVENT_TABLE
-            .' T JOIN '.EVENT_TABLE . ' E ON E.id = T.event_id'
-            .' WHERE timestamp BETWEEN '.$start.' AND '.$stop
-            .' AND T.event_id IN ('.implode(",",$event_ids).') AND T.thread_type = "A"'
-            .' AND E.name IN (\'created\', \'assigned\', \'closed\', \'reopened\')'
-            .' ORDER BY 1');
-        $events = array();
-        while ($row = db_fetch_row($res)) $events[] = __($row[0]);
-
-        # TODO: Handle user => db timezone offset
-        # XXX: Implement annulled column from the %ticket_event table
-        $res = db_query('SELECT H.name, DATE_FORMAT(timestamp, \'%Y-%m-%d\'), '
-                .'COUNT(DISTINCT E.id)'
-            .' FROM '.THREAD_EVENT_TABLE. ' E '
-            . ' LEFT JOIN '.EVENT_TABLE. ' H
-                ON (E.event_id = H.id)'
-            .' WHERE E.timestamp BETWEEN '.$start.' AND '.$stop
-            .' AND NOT annulled'
-            .' AND E.event_id IN ('.implode(",",$event_ids).')'
-            .' GROUP BY E.event_id, DATE_FORMAT(E.timestamp, \'%Y-%m-%d\')'
-            .' ORDER BY 2, 1');
-        # Initialize array of plot values
-        $plots = array();
-        foreach ($events as $e) { $plots[$e] = array(); }
-
-        $time = null; $times = array();
-        # Iterate over result set, adding zeros for missing ticket events
-        $slots = array();
-        while ($row = db_fetch_row($res)) {
-            $row_time = strtotime($row[1]);
-            if ($time != $row_time) {
-                # New time (and not the first), figure out which events did
-                # not have any tickets associated for this time slot
-                if ($time !== null) {
-                    # Not the first record -- add zeros all the arrays that
-                    # did not have at least one entry for the timeframe
-                    foreach (array_diff($events, $slots) as $slot)
-                        $plots[$slot][] = 0;
-                }
-                $slots = array();
-                $times[] = $time = $row_time;
+        $tableData = $this->getTabularData();
+        
+        // Initialize containers
+        $labels = [];
+        $plots = [];
+        $events = [];
+        
+        // Extract header/column names (excluding the first one which is labels)
+        if (!empty($tableData["headers"]) && count($tableData["headers"]) > 1) {
+            $events = array_slice($tableData["headers"], 1);
+            
+            // Initialize empty arrays for each event type
+            foreach ($events as $event) {
+                $eventKey = strtolower(str_replace(' ', '_', $event));
+                $plots[$eventKey] = [];
             }
-            # Keep track of states for this timeframe
-            $slots[] = __($row[0]);
-            $plots[__($row[0])][] = (int)$row[2];
         }
-        foreach (array_diff($events, $slots) as $slot)
-            $plots[$slot][] = 0;
-
-        return array("times" => $times, "plots" => $plots, "events" => $events);
+        
+        // Get all rows except the last one (total row)
+        $dataRows = array_slice($tableData["data"], 0, count($tableData["data"]) - 1);
+        
+        foreach ($dataRows as $index => $row) {
+            // First column is the label
+            $labels[] = $row[0];
+            
+            // Process each metric value dynamically
+            for ($i = 1; $i < count($row); $i++) {
+                $eventKey = strtolower(str_replace(' ', '_', $events[$i - 1]));
+                $plots[$eventKey][$index] = (int)$row[$i];
+            }
+        }
+        
+        $times = range(0, count($labels) - 1);
+        
+        return [
+            "times" => $times, 
+            "plots" => $plots, 
+            "events" => array_keys($plots), 
+            "labels" => $labels
+        ];
     }
 
     function enumTabularGroups() {
