@@ -25,23 +25,10 @@ $plots = $report->getPlotData();
                     ?>" />
             </label>
             <label>
-                <?php echo __( 'period');?>:
+                <?php echo __('period');?>:
                 <select name="period">
-                    <option value="now" selected="selected">
-                        <?php echo __( 'Up to today');?>
-                    </option>
-                    <option value="+7 days">
-                        <?php echo __( 'One Week');?>
-                    </option>
-                    <option value="+14 days">
-                        <?php echo __( 'Two Weeks');?>
-                    </option>
-                    <option value="+1 month">
-                        <?php echo __( 'One Month');?>
-                    </option>
-                    <option value="+3 months">
-                        <?php echo __( 'One Quarter');?>
-                    </option>
+                    <?php foreach ($report::$end_choices as $val=>$desc)
+                            echo "<option value='$val'>" . __($desc) . "</option>"; ?>
                 </select>
             </label>
             <button class="green button action-button muted" type="submit">
@@ -53,20 +40,20 @@ $plots = $report->getPlotData();
 <div class="clear"></div>
 <div style="margin-bottom:20px; padding-top:5px;">
     <div class="pull-left flush-left">
-        <h2><?php echo __('Ticket Activity');
+        <h2><?php echo __('Actividad de Tareas');
             ?>&nbsp;<i class="help-tip icon-question-sign" href="#ticket_activity"></i></h2>
     </div>
 </div>
 <div class="clear"></div>
 <!-- Create a graph and fetch some data to create pretty dashboard -->
-<div style="position:relative">
+<div style="position:relative;">
     <div id="line-chart-here" style="height:300px"></div>
     <div style="position:absolute;right:0;top:0" id="line-chart-legend"></div>
 </div>
 
 <hr/>
 <h2><?php echo __('Statistics'); ?>&nbsp;<i class="help-tip icon-question-sign" href="#statistics"></i></h2>
-<p><?php echo __('Statistics of tickets organized by department, help topic, and agent.');?></p>
+<p><?php echo __('Estadísticas de tareas organizadas por dependencias, equipos y agentes.');?></p>
 <p><b><?php echo __('Range: '); ?></b>
   <?php
   $range = array();
@@ -79,7 +66,7 @@ $plots = $report->getPlotData();
     $timezone = $date->format('e');
     $range[] = $date->format('F j, Y');
   }
-  echo __($range[0] . ' - ' . $range[1] .  ' (' . Format::timezone($timezone) . ')');
+  echo __($range[0] . ' - ' . $range[1]);
 ?>
 
 <ul class="clean tabs">
@@ -105,7 +92,7 @@ foreach ($groups as $g=>$desc) {
       ?>
         <th <?php if ($j === 0) echo 'width="30%" class="flush-left"'; ?>><?php echo Format::htmlchars($c);
         switch ($c) {
-          case 'Opened':
+          case 'Created':
             ?>
               <i class="help-tip icon-question-sign" href="#opened"></i>
             <?php
@@ -115,11 +102,6 @@ foreach ($groups as $g=>$desc) {
               <i class="help-tip icon-question-sign" href="#assigned"></i>
             <?php
             break;
-            case 'Overdue':
-              ?>
-                <i class="help-tip icon-question-sign" href="#overdue"></i>
-              <?php
-              break;
             case 'Closed':
               ?>
                 <i class="help-tip icon-question-sign" href="#closed"></i>
@@ -130,19 +112,9 @@ foreach ($groups as $g=>$desc) {
                 <i class="help-tip icon-question-sign" href="#reopened"></i>
               <?php
               break;
-            case 'Deleted':
-              ?>
-                <i class="help-tip icon-question-sign" href="#deleted"></i>
-              <?php
-              break;
             case 'Service Time':
               ?>
                 <i class="help-tip icon-question-sign" href="#service_time"></i>
-              <?php
-              break;
-            case 'Response Time':
-              ?>
-                <i class="help-tip icon-question-sign" href="#response_time"></i>
               <?php
               break;
         }
@@ -179,17 +151,6 @@ foreach ($groups as $g=>$desc) {
 ?>
 </form>
 <script>
-    $.drawPlots(<?php echo JsonDataEncoder::encode($report->getPlotData()); ?>);
-    // Set Selected Period For Dashboard Stats and Export
-    <?php if ($report && $report->end) { ?>
-        $("div#basic_search select option").each(function(){
-            // Remove default selection
-            if ($(this)[0].selected)
-                $(this).removeAttr('selected');
-            // Set the selected period by the option's value (periods equal
-            // option's values)
-            if ($(this).val() == "<?php echo $report->end; ?>")
-                $(this).attr("selected","selected");
-        });
-    <?php } ?>
+  var plotData = <?php echo JsonDataEncoder::encode($report->getPlotData()); ?>;
+  $.drawPlots(plotData);
 </script>
