@@ -141,20 +141,21 @@ class Export {
 
         return self::dumpQuery($tasks,
             array(
-                '::getTaskStaffLink' => 'Enlace',
-                'number' =>         __('Task Number'),
-                '::getCreateDateExport' =>        __('Date Created'),
-                '::getCloseDateExport' =>   __('Date Closed'),
+                '::getTaskStaffLink' => __('Enlace'),
+                'number' => __('Numero de tarea'),
+                '::getCreateDateExport' => __('Fecha de creación'),
+                '::getCloseDateExport' => __('Fecha de cierre'),
                 '::getLastActivityDateExport' => __('Última Actividad'),
-                'cdata.title' =>    __('Title'),
-                'dept::getLocalName' => __('Department'),
-                '::getStatusExport' =>    __('Current Status'),
-                '::getDueDateExport' =>        __('Due Date'),
-                'staff::getName' => __('Agent Assigned'),
-                'team::getName' =>  __('Team Assigned'),
-                '::getSubmitter' =>  'Dependencia Creadora',
-                'participaciones' => ('Participaciones'),
-                'attachment_count' => __('Attachment Count'),
+                'cdata.title' => __('Título'),
+                'dept::getLocalName' => __('Dependencia'),
+                '::getStatusExport' => __('Estado actual'),
+                '::getDueDateExport' => __('Fecha de vencimiento'),
+                '::getLastTaskAssigner' => __('Asignado por'),
+                'staff::getName' => __('Agente asignado'),
+                'team::getName' => __('Equipo asignado'),
+                '::getSubmitter' =>  __('Dependencia Creadora'),
+                'participaciones' => __('Participaciones'),
+                'attachment_count' => __('Total adjuntos'),
             ) + $cdata,
             $how,
             array('modify' => function(&$record, $keys, $obj) use ($fields) {
@@ -165,7 +166,7 @@ class Export {
                 }
                 return $record;
             })
-            );
+        );
     }
 
 
