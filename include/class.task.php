@@ -214,6 +214,31 @@ class TaskModel extends VerySimpleModel {
         return 'No ha sido asignada';
     }
 
+    function getTaskCreator() {
+        $task_id = $this->getId();
+    
+        if (!$task_id) return 'No disponible';
+    
+        $sql = "SELECT COALESCE((
+                    SELECT oute.poster
+                    FROM ost_ud_thread_entry oute  
+                    WHERE oute.thread_id = (
+                        SELECT id 
+                        FROM ost_ud_thread o
+                        WHERE o.object_id = " . db_input($task_id) . "
+                        LIMIT 1
+                    )
+                    AND oute.type = 'M'
+                    LIMIT 1
+                ), '') AS ultimo_asignador";
+    
+        if (($row = db_fetch_array(db_query($sql))))
+            return $row['ultimo_asignador'];
+        
+        //si no llega encontrar nada, lo deja vacio
+        return '';
+    }
+
     function isOpen() {
         return $this->hasFlag(self::ISOPEN);
     }
