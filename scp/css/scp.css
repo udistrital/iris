@@ -335,11 +335,11 @@ a time {
 }
 
 .team_queue {
-    background-color: rgb(230, 230, 230);
+    background-color: #fce7d8;
 }
 
 .admin_queue {
-    background-color: rgb(220, 220, 220);
+    background-color: #dcf3ff;
 }
 
 #sub_nav > ul {
