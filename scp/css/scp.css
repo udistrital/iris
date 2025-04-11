@@ -319,89 +319,190 @@ a time {
                  Start Custom Queues Menu System
 /***********************************************************************/
 
+
+/***************************************
+          Custom Q Dropdown
+****************************************/
+
 #sub_nav {
-    background:#f7f7f7;
-    border-bottom:1px solid #bebebe;
-    padding: 2px 20px;
+    background: linear-gradient(to bottom, #ffffff, #f5f7fa);
+    border-bottom: 1px solid rgba(0, 0, 0, 0.08);
+    padding: 6px 24px;
     display: flex;
     flex-wrap: wrap;
+    align-items: center;
+    box-shadow: 0 2px 8px rgba(0, 0, 0, 0.04);
+    min-height: 36px;
+    position: relative;
     height: auto;
-}
-#customQ_nav {
-    clear:both;
-    margin:0;
-    padding:0;
-    line-height:26px;
-}
-
-.team_queue {
-    background-color: #fce7d8;
-}
-
-.admin_queue {
-    background-color: #dcf3ff;
-}
-
-#sub_nav > ul {
-    margin-top: 0;
-}
-
-#sub_nav > li + li > a {
-    margin-left: 10px;
-}
-
-#customQ_nav .jb-overflowmenu-menu-primary li.item {
-    position:relative;
-    padding:3px 6px 4px;
-    display: inline-block;
+  }
+  
+  #sub_nav::before {
+    content: "";
+    position: absolute;
+    top: 0;
+    left: 0;
+    right: 0;
+    bottom: 0;
+    background-image: url("data:image/svg+xml,%3Csvg width='20' height='20' viewBox='0 0 20 20' xmlns='http://www.w3.org/2000/svg'%3E%3Cg fill='%23f0f0f0' fill-opacity='0.4' fill-rule='evenodd'%3E%3Ccircle cx='3' cy='3' r='1'/%3E%3C/g%3E%3C/svg%3E");
+    opacity: 0.3;
+    pointer-events: none;
+  }
+  
+  #customQ_nav {
+    margin: 0;
+    padding: 0;
+    line-height: 1.2;
+    display: flex;
+    flex-wrap: wrap;
+    position: relative;
+    z-index: 1;
+  }
+  
+  .team_queue {
+    background: linear-gradient(to right, #fff3e0, #fff8e8);
+    border-left: 2px solid #ff9800;
+    border-radius: 3px;
+    box-shadow: 0 1px 3px rgba(255, 152, 0, 0.1);
+  }
+  
+  .admin_queue {
+    background: linear-gradient(to right, #e3f2fd, #eaf6ff);
+    border-left: 2px solid #2196f3;
+    border-radius: 3px;
+    box-shadow: 0 1px 3px rgba(33, 150, 243, 0.1);
+  }
+  
+  #sub_nav > ul {
+    margin: 0;
+    padding: 0;
+    list_style: none;
+    display: flex;
+    flex-wrap: wrap;
+  }
+  
+  #customQ_nav .jb-overflowmenu-menu-primary li.item {
+    position: relative;
+    padding: 3px 10px;
+    display: inline-flex;
+    align-items: center;
     border-top-right-radius: 6px;
     border-top-left-radius: 6px;
-    margin:0 2px;
-}
-
-#sub_nav > li > a,
-#customQ_nav .jb-overflowmenu-menu-primary li.item > a {
-    display:inline-block;
-    padding:0 10px 0 21px;
-    background-position:0 50%;
-    background-repeat:no-repeat;
-    color:#000;
-}
-
-#customQ_nav .jb-overflowmenu-menu-primary li.item:hover {
-    padding:2px 5px 3px;
-    color:#E65524;
-    background-color: #fff;
-    border-left:1px solid #bebebe;
-    border-top:1px solid #bebebe;
-    border-right:1px solid #bebebe;
-}
-
-#sub_nav > li > a:hover,
-#customQ_nav .jb-overflowmenu-menu-primary li.item:hover > a {
-    color:#E65524;
+    margin: 0 4px;
+    transition: all 0.2s ease;
+    height: 24px;
+  }
+  
+  #sub_nav > li > a,
+  #customQ_nav .jb-overflowmenu-menu-primary li.item > a {
+    display: inline-flex;
+    align-items: center;
+    padding: 3px 12px 3px 24px;
+    background-position: 6px center;
+    background-repeat: no-repeat;
+    background-size: 14px;
+    color: #4a5568;
     text-decoration: none;
-}
-
-#sub_nav a.active, #sub_nav li.active > a, #sub_nav li.child.active > a
-#customQ_nav .jb-overflowmenu-menu-primary li.item > a.active {
-    font-weight:bold;
-}
-
-#sub_nav li.child.active > a {
+    font-size: 14px;
     font-weight: 500;
-}
-
-#customQ_nav .jb-overflowmenu-menu-primary li.item a > i {
-    margin-top:5px;
-}
-
-#sub_nav .open     { background-image:url(../images/icons/open.gif) }
-#sub_nav .answered { background-image:url(../images/icons/answered.gif) }
-#sub_nav .mine     { background-image:url(../images/icons/mine.gif) }
-#sub_nav .closed   { background-image:url(../images/icons/closed.gif) }
-#sub_nav .search   { background-image:url(../images/icons/search.gif) }
-#sub_nav .new      { background-image:url(../images/icons/new.gif) }
+    letter-spacing: 0.2px;
+    transition: all 0.2s ease;
+    line-height: 1.5;
+    position: relative;
+    overflow: hidden;
+  }
+  
+  #customQ_nav .jb-overflowmenu-menu-primary li.item:hover {
+    padding: 2px 9px;
+    background: linear-gradient(to bottom, #ffffff, #fafbfc);
+    border-left: 1px solid rgba(0, 0, 0, 0.08);
+    border-top: 1px solid rgba(0, 0, 0, 0.08);
+    border-right: 1px solid rgba(0, 0, 0, 0.08);
+    box-shadow: 0 -2px 10px rgba(0, 0, 0, 0.02);
+  }
+  
+  #sub_nav > li > a:hover,
+  #customQ_nav .jb-overflowmenu-menu-primary li.item:hover > a {
+    color: #e65524;
+    transform: translateY(-1px);
+  }
+  
+  #customQ_nav .jb-overflowmenu-menu-primary li.item > a::after {
+    content: "";
+    position: absolute;
+    bottom: 0;
+    left: 0;
+    width: 0;
+    height: 2px;
+    background: linear-gradient(to right, #e65524, #ff7e47);
+    transition: width 0.3s ease;
+    border-radius: 2px;
+  }
+  
+  #customQ_nav .jb-overflowmenu-menu-primary li.item:hover > a::after {
+    width: 100%;
+  }
+  
+  #sub_nav a.active,
+  #sub_nav li.active > a,
+  #sub_nav li.child.active > a,
+  #customQ_nav .jb-overflowmenu-menu-primary li.item > a.active {
+    font-weight: 600;
+    color: #000000;
+  }
+  
+  #sub_nav li.active > a::after,
+  #sub_nav li.child.active > a::after,
+  #customQ_nav .jb-overflowmenu-menu-primary li.item > a.active::after {
+    content: "";
+    position: absolute;
+    bottom: 0;
+    left: 0;
+    width: 100%;
+    height: 2px;
+    background: linear-gradient(to right, #e65524, #ff7e47);
+    border-radius: 2px;
+  }
+  
+  #sub_nav li.child.active > a {
+    font-weight: 500;
+  }
+  
+  #customQ_nav .jb-overflowmenu-menu-primary li.item a > i {
+    margin-right: 6px;
+    font-size: 12px;
+    opacity: 0.8;
+    transition: opacity 0.2s ease;
+  }
+  
+  #customQ_nav .jb-overflowmenu-menu-primary li.item:hover a > i {
+    opacity: 1;
+  }
+  
+  #sub_nav .open {
+    background-image: url(../images/icons/open.gif);
+    filter: drop-shadow(0 1px 1px rgba(0, 0, 0, 0.1));
+  }
+  #sub_nav .answered {
+    background-image: url(../images/icons/answered.gif);
+    filter: drop-shadow(0 1px 1px rgba(0, 0, 0, 0.1));
+  }
+  #sub_nav .mine {
+    background-image: url(../images/icons/mine.gif);
+    filter: drop-shadow(0 1px 1px rgba(0, 0, 0, 0.1));
+  }
+  #sub_nav .closed {
+    background-image: url(../images/icons/closed.gif);
+    filter: drop-shadow(0 1px 1px rgba(0, 0, 0, 0.1));
+  }
+  #sub_nav .search {
+    background-image: url(../images/icons/search.gif);
+    filter: drop-shadow(0 1px 1px rgba(0, 0, 0, 0.1));
+  }
+  #sub_nav .new {
+    background-image: url(../images/icons/new.gif);
+    filter: drop-shadow(0 1px 1px rgba(0, 0, 0, 0.1));
+  }
 
 /**********************initiate Custom Queues Dropdown******************/
 
