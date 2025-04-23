@@ -102,7 +102,6 @@ class TasksAjaxAPI extends AjaxController {
 
         $info=$errors=array();
         if ($_POST) {
-            Draft::deleteForNamespace('task.add', $thisstaff->getId());
             // Default form
             $form = TaskForm::getInstance();
             $form->setSource($_POST);
@@ -163,6 +162,7 @@ class TasksAjaxAPI extends AjaxController {
                     $task->postNote($note, $errors, $thisstaff);
                   }
 
+                  Draft::deleteForNamespace('task.add', $thisstaff->getId());
                   Http::response(201, $task->getId());
                 }
               }
