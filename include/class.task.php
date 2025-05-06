@@ -1176,6 +1176,7 @@ class Task extends TaskModel implements RestrictedAccess, Threadable {
     function postReply($vars, &$errors, $alert = true) {
         global $thisstaff, $cfg;
 
+        $wasClosed = $this->isClosed();
 
         if (!$vars['poster'] && $thisstaff)
             $vars['poster'] = $thisstaff;
@@ -1229,6 +1230,10 @@ class Task extends TaskModel implements RestrictedAccess, Threadable {
                     'threadentry' => $response,
                     'assignee' => $assignee,
                     ));
+
+        if ($wasClosed) {
+            $this->reopen();
+        }
 
         $this->lastrespondent = $response->staff;
         $this->save();
