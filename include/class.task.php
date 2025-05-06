@@ -1047,6 +1047,7 @@ class Task extends TaskModel implements RestrictedAccess, Threadable {
         else
             $this->dept_id = $dept->getId();
 
+        $this->reopen(); 
         $this->unassign();
         if ($errors || !$this->save(true))
             return false;
