@@ -1212,7 +1212,7 @@ class Task extends TaskModel implements RestrictedAccess, Threadable {
             $this->setStatus($vars['task:status']);
 
         /*
-        // TODO: add auto claim setting for tasks.
+        // TODO: add auto claim setting for tasks
         // Claim on response bypasses the department assignment restrictions
         if ($thisstaff
             && $this->isOpen()
