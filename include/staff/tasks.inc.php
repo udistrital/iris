@@ -57,10 +57,10 @@ $queue_columns = array(
         'width' => '12%',
         'heading' => __('Assigned To') . '<br>&nbsp;',
     ),
-    'submitter' => array(
+    'origin_dept' => array(
         'width' => '14%',
         'heading' => 'Dependencia<br>Creadora',
-        'disabled' => true,
+        'sort_col'  => 'origin_dept',
     ),
 );
 
@@ -323,6 +323,12 @@ if ($_REQUEST['title']) {
 
 if ($_REQUEST['dept']) {
     $filters[] = new Q(array('dept__name__contains' => $_REQUEST['dept']));
+}
+
+if ($_REQUEST['origin_dept']) {
+    $filters[] = new Q([
+        'thread__events__agent__dept__name__contains' => $_REQUEST['origin_dept'],
+    ]);
 }
 
 if ($_REQUEST['assignee']) {
