@@ -490,14 +490,18 @@ switch ($sort_cols) {
         $tasks->order_by('team__name', $orm_dir);
         $queue_columns['assignee']['sort_dir'] = $sort_dir;
         break;
-    default:
-        if ($sort_cols && isset($queue_columns[$sort_cols])) {
-            $queue_columns[$sort_cols]['sort_dir'] = $sort_dir;
-            if (isset($queue_columns[$sort_cols]['sort_col']))
-                $sort_cols = $queue_columns[$sort_cols]['sort_col'];
-            $tasks->order_by($sort_cols, $orm_dir);
-            break;
-        }
+    case 'origin_dept':
+        $queue_columns['origin_dept']['sort_dir'] = $sort_dir;
+        $tasks->order_by(
+            SqlCase::N()
+            ->when(
+                new Q(array('thread__events__event__name' => 'created')),
+                new SqlField('thread__events__agent__dept__name')
+            )
+            ->otherwise(null),
+            $orm_dir
+        );
+        break;
     case 'created':
         $queue_columns['date']['heading'] = 'Fecha de<br>Creación';
         $queue_columns['date']['sort'] = 'created';
@@ -508,7 +512,15 @@ switch ($sort_cols) {
         $queue_columns['last_entry']['sort_dir'] = $sort_dir;
         $tasks->order_by($sort_dir ? 'last_entry' : '-last_entry');
         break;
-}
+    default:
+        if ($sort_cols && isset($queue_columns[$sort_cols])) {
+            $queue_columns[$sort_cols]['sort_dir'] = $sort_dir;
+            if (isset($queue_columns[$sort_cols]['sort_col']))
+                $sort_cols = $queue_columns[$sort_cols]['sort_col'];
+                $tasks->order_by($sort_cols, $orm_dir);
+                break;
+            }
+        }
 
 if (in_array($sort_cols, array('created', 'due', 'updated')))
     $queue_columns['date']['sort_dir'] = $sort_dir;
