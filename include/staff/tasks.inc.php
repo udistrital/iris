@@ -703,7 +703,15 @@ if ($thisstaff->hasPerm(Task::PERM_DELETE, false)) {
                                     implode('<br>', $created); ?></td>
                         <td nowrap><?php echo
                                     implode('<br>', $lastEntry); ?></td>
-                        <td><a <?php if ($flag) { ?> class="Icon <?php echo $flag; ?>Ticket" title="<?php echo ucfirst($flag); ?> Ticket" <?php } ?> href="tasks.php?id=<?php echo $T['id']; ?>"><?php
+                        <td>
+                            <a class="preview" 
+                                <?php if ($flag) { ?>
+                                    class="Icon <?php echo $flag; ?>Ticket" 
+                                    title="<?php echo ucfirst($flag); ?> Ticket" 
+                                    <?php } ?> 
+                                    href="tasks.php?id=<?php echo $T['id']; ?>"   
+                                    data-preview="#tasks/<?php echo $T['id']; ?>/preview"
+                                    ><?php
                                                                                                                                                                                                     echo $title; ?></a>
                             <?php
                             if ($threadcount > 1)
