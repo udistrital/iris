@@ -6159,6 +6159,26 @@ class TransferForm extends Form {
                         ),
                     )
                 ),
+                
+                'comments2' => new TextareaField(array(
+                    'id' => 3,
+                    'label'=> '',
+                    'required'=>true,
+                    'default'=>'',
+                    'configuration' => array(
+                        'html' => true,
+                        'size' => 'small',
+                        'placeholder' => 'Razones para la transferencia 2(Obligatorio)',
+                        ),
+                    )
+                ),
+                'attachments' => new FileUploadField(array(
+                    'id'=>'attach',
+                    'label' => __('Attachments'),
+                    'name'=>'files',
+                    'configuration' => array('extensions'=>'')
+                    )
+                ),
             );
 
         $this->setFields($fields);
