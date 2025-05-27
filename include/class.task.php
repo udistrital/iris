@@ -1056,18 +1056,36 @@ class Task extends TaskModel implements RestrictedAccess, Threadable {
         $this->logEvent('transferred', array('dept' => $dept->getName()));
 
         // Post internal note if any
-        $note = $form->getField('comments')->getClean();
-        if ($note) {
-            $title = sprintf(__('%1$s transferred from %2$s to %3$s'),
-                    __('Task'),
-                   $cdept->getName(),
-                    $dept->getName());
-
-            $_errors = array();
-            $note = $this->postNote(
-                    array('note' => $note, 'title' => $title),
-                    $_errors, $thisstaff, false);
+        $noteText = $form->getField('comments')->getClean();
+        $attachments = array();
+        if ($form->getField('attachments')) {
+            $attachments = $form->getField('attachments')->getFiles();
+            $attachments = array_map(function($file) {
+                if (is_numeric($file)) {
+                    return AttachmentFile::lookup($file);
+                }
+                return $file;
+            }, $attachments);            
         }
+
+        $title = sprintf(__('%1$s transferred from %2$s to %3$s'),
+            __('Task'),
+            $cdept->getName(),
+            $dept->getName());
+
+        $_errors = array();
+        $note = $this->postNote(
+            array(
+                'note' => $noteText ?: __('Transferencia de tarea sin comentario'),
+                'title' => $title,
+                'attachments' => $attachments,
+            ),
+            $_errors,
+            $thisstaff,
+            false
+        );
+
+
 
         // Send alerts if requested && enabled.
         if (!$alert || !$cfg->alertONTaskTransfer())

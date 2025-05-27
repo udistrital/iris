@@ -6160,12 +6160,11 @@ class TransferForm extends Form {
                     )
                 ),
                 'attachments' => new FileUploadField(array(
-                    'id'=>'attach',
-                    'label' => __('Attachments'),
-                    'name'=>'files',
-                    'configuration' => array('extensions'=>'')
-                    )
-                ),
+                    'id' => 'attachments',
+                    'label' => __('Adjuntos'),
+                    'required' => false,
+                    'configuration' => array('types' => 'all'),
+                ))
             );
 
         $this->setFields($fields);

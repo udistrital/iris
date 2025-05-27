@@ -29,8 +29,7 @@ foreach ($entries as $entry) {
             </div>
             <div class="clear"></div>
             <?php
-                $atts = isset($thread_attachments) ?
-                $thread_attachments[$entry->id] : $entry->attachments;
+                $atts = $entry->getAttachments();
                 if (isset($atts) && $atts) {
             ?>
                 <div class="attachments"><?php
