@@ -40,20 +40,32 @@ if ($thisstaff && $thisstaff->is2FAPending())
              </fieldset>
         <?php
         } else { ?>
-            <input type="hidden" name="do" value="scplogin">
-            <fieldset>
-            <input type="text" name="userid" id="name" value="<?php
-                echo $info['userid'] ?? null; ?>" placeholder="<?php echo __('Email or Username'); ?>"
-                autofocus autocorrect="off" autocapitalize="off">
-            <input type="password" name="passwd" id="pass" maxlength="128" placeholder="<?php echo __('Password'); ?>" autocorrect="off" autocapitalize="off">
-                <h3 style="display:inline"><a id="reset-link" class="<?php
-                    if (!$show_reset || !$cfg->allowPasswordReset()) echo 'hidden';
-                    ?>" href="pwreset.php"><?php echo __('Forgot My Password'); ?></a></h3>
-                <button class="submit button pull-right" type="submit"
-                    name="submit"><i class="icon-signin"></i>
-                    <?php echo __('Log In'); ?>
+            <!-- Botón para mostrar login tradicional -->
+            <div style="margin-bottom: 1em; text-align: right;">
+                <button type="button" class="button" onclick="document.getElementById('manual-login').style.display='block'" style="background: none; border: none; padding: 0;">
+                    <img src="logo.php?login" alt="i" style="height: 32px; cursor: pointer;" />
                 </button>
-            </fieldset>
+            </div>
+
+
+            <!-- Login tradicional oculto por defecto -->
+            <div id="manual-login" style="display: none;">
+                <input type="hidden" name="do" value="scplogin">
+                <fieldset>
+                    <input type="text" name="userid" id="name" value="<?php
+                        echo $info['userid'] ?? null; ?>" placeholder="<?php echo __('Email or Username'); ?>"
+                        autofocus autocorrect="off" autocapitalize="off">
+                    <input type="password" name="passwd" id="pass" maxlength="128" placeholder="<?php echo __('Password'); ?>" autocorrect="off" autocapitalize="off">
+                    <h3 style="display:inline"><a id="reset-link" class="<?php
+                        if (!$show_reset || !$cfg->allowPasswordReset()) echo 'hidden';
+                        ?>" href="pwreset.php"><?php echo __('Forgot My Password'); ?></a></h3>
+                    <button class="submit button pull-right" type="submit"
+                        name="submit"><i class="icon-signin"></i>
+                        <?php echo __('Log In'); ?>
+                    </button>
+                </fieldset>
+            </div>
+
         <?php
         } ?>
     </form>
