@@ -1240,11 +1240,43 @@ class Task extends TaskModel implements RestrictedAccess, Threadable {
 
         // Send alert to collaborators
         if ($alert && $vars['emailcollab']) {
-            $signature = '';
-            $this->notifyCollaborators($response,
-                array('signature' => $signature, 'agentRecipients' => $agentRecipients ?: array())
-            );
+        if (!($dept = $this->getDept())
+            || !($tpl = $dept->getTemplate())
+            || !($email = $dept->getAlertEmail())
+            || !($msg = $tpl->getTaskAssignmentAlertMsgTemplate())
+        ) {
+            return $response;
         }
+
+        $assigner = $thisstaff ?: __('SYSTEM (Auto Notification)');
+        $comments = $vars['response'] ?? '';
+
+        $msg = $this->replaceVars($msg->asArray(), [
+            'comments'  => $comments,
+            'assigner'  => $assigner,
+            'assignee'  => __('Colaborador copiado'),
+            'message'   => (string) $response,
+        ]);
+
+        $recipients = [];
+        foreach ($this->getThread()->getRecipients() as $user) {
+            if ($user instanceof User && !in_array($user->getEmail(), $recipients)) {
+                $recipients[] = $user;
+            }
+        }
+
+        $sentlist = [];
+        $options = ['thread' => $response];
+        foreach ($recipients as $recipient) {
+            if (!is_object($recipient) || in_array($recipient->getEmail(), $sentlist))
+                continue;
+
+            $alert = $this->replaceVars($msg, ['recipient' => $recipient]);
+            $email->sendAlert($recipient, $alert['subj'], $alert['body'], null, $options);
+            $sentlist[] = $recipient->getEmail();
+        }
+    }
+
 
         $type = array('type' => 'message');
         Signal::send('object.created', $this, $type);
