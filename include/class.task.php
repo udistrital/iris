@@ -1459,61 +1459,62 @@ class Task extends TaskModel implements RestrictedAccess, Threadable {
      * Notify collaborators on response or new message
      *
      */
-    function  notifyCollaborators($entry, $vars = array()) {
-        global $cfg;
+    function notifyCollaborators($entry, $vars = array()) {
+        global $cfg, $thisstaff;
 
         if (!$entry instanceof ThreadEntry
-            || !($recipients=$this->getThread()->getRecipients())
-            || !($dept=$this->getDept())
-            || !($tpl=$dept->getTemplate())
-            || !($msg=$tpl->getTaskActivityNoticeMsgTemplate())
-            || !($email=$dept->getEmail())
+            || !($dept = $this->getDept())
+            || !($tpl = $dept->getTemplate())
+            || !($msgTpl = $tpl->getTaskAssignmentAlertMsgTemplate())
+            || !($email = $dept->getAlertEmail())
         ) {
             return;
         }
 
-        // Who posted the entry?
-        $skip = array();
-        if ($entry instanceof MessageThreadEntry) {
-            $poster = $entry->getUser();
-            // Skip the person who sent in the message
-            $skip[$entry->getUserId()] = 1;
-            // Skip all the other recipients of the message
-            foreach ($entry->getAllEmailRecipients() as $R) {
-                foreach ($recipients as $R2) {
-                    if (0 === strcasecmp($R2->getEmail(), $R->mailbox.'@'.$R->host)) {
-                        $skip[$R2->getUserId()] = true;
-                        break;
-                    }
-                }
-            }
-        } else {
-            $poster = $entry->getStaff();
+        // Crear nota interna si hay comentario
+        $assigner = $thisstaff ?: __('SYSTEM (Auto Notification)');
+        $note = null;
+        if (!empty($vars['comments'])) {
+            $title = __('Task shared with collaborators');
+            $errors = array();
+            $note = $this->postNote([
+                'note' => $vars['comments'],
+                'title' => $title
+            ], $errors, $assigner, false);
         }
 
-        $vars = array_merge($vars, array(
-            'message' => (string) $entry,
-            'poster' => $poster ?: _S('A collaborator'),
-            )
-        );
+        // Reunir destinatarios: solo usuarios copiados (con FLAG_CC)
+        $recipients = [];
+        foreach ($this->getThread()->getRecipients() as $user) {
+            // Solo usuarios (no agentes) y sin repetir
+            if ($user instanceof User && !in_array($user, $recipients)) {
+                $recipients[] = $user;
+            }
+        }
 
-        $msg = $this->replaceVars($msg->asArray(), $vars);
 
-        $attachments = $cfg->emailAttachments()?$entry->getAttachments():array();
-        $options = array('thread' => $entry);
+        if (empty($recipients)) return;
+
+        // Preparar plantilla
+        $msgTpl = $this->replaceVars($msgTpl->asArray(), array_merge($vars, [
+            'assigner' => $assigner,
+            'assignee' => __('Collaborator'),
+            'message'  => (string) $entry,
+        ]));
+
+        $options = $note instanceof ThreadEntry ? ['thread' => $note] : ['thread' => $entry];
+        $sentlist = [];
 
         foreach ($recipients as $recipient) {
-            // Skip folks who have already been included on this part of
-            // the conversation
-            if (isset($skip[$recipient->getUserId()]) ||
-                (($recEmail = $recipient->getEmail()?->getEmail()) &&
-                    $poster->getEmail() == $recEmail || (isset($vars['agentRecipients']) && isset($vars['agentRecipients'][$recEmail]))))
+            if (!$recipient || in_array($recipient->getEmail(), $sentlist))
                 continue;
-            $notice = $this->replaceVars($msg, array('recipient' => $recipient));
-            $email->send($recipient, $notice['subj'], $notice['body'], $attachments,
-                $options);
+
+            $personalized = $this->replaceVars($msgTpl, ['recipient' => $recipient]);
+            $email->sendAlert($recipient, $personalized['subj'], $personalized['body'], null, $options);
+            $sentlist[] = $recipient->getEmail();
         }
     }
+
 
     function update($forms, $vars, &$errors) {
         global $thisstaff;
