@@ -1274,24 +1274,46 @@ class Task extends TaskModel implements RestrictedAccess, Threadable {
                 $correo = $emailObj->address;
                 $name = $user->getName();
 
+                $taskUrl = sprintf("%s/scp/tasks.php?id=%d", $cfg->getBaseUrl(), $this->getId());
 
                 $body = <<<EOT
-                    Estimado(a) {$name},
-                    \n
-                    Usted ha sido copiado(a) en una tarea del sistema IRIS.\n
-                    \n
-                    Puede consultarla y realizar seguimiento en el sistema ingresando con su usuario.\n
-                    \n
-                    \n
-                    Esto es un mensaje automático, por favor no responder.\n
-                    \n
-                    Atentamente,\n
-                    Equipo IRIS
+                    <html>
+                    <head>
+                    </head>
+                    <body>
+                    <div>
+                        <p>Buen día,</p>
+
+                        <p>Nos permitimos informarle que ha sido copiado(a) en esta tarea. Puede consultarla e interactuar con ella ingresando al sistema a través del siguiente enlace:</p>
+
+                        <p>
+                            <a href="{$taskUrl}" target="_blank" rel="noopener noreferrer">{$this->getNumber()}</a>
+                        </p>
+
+                        <p class="footer">
+                            Este es un mensaje automático, por favor no responder.<br>
+                            Atentamente,<br>
+                            Equipo IRIS
+                        </p>
+
+                        <div style="margin-top: 1em;">
+                            <img src="https://iris.portaloas.udistrital.edu.co/logo.php?login" alt="Logo IRIS" style="height: 32px;" />
+                        </div>
+                    </div>
+                    </body>
+                    </html>
                     EOT;
 
-                $subject = 'Ud ha sido copiado a una tarea en IRIS';
+
+
+
+                $subject = 'Tarea en copia';
 
                 $ok = $email->send($correo, $subject, $body);
+                echo $body;
+
+
+
 
             }
 
