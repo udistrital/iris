@@ -1188,12 +1188,11 @@ class Task extends TaskModel implements RestrictedAccess, Threadable {
             $vars['ip_address'] = $_SERVER['REMOTE_ADDR'];
 
         if ($this->isClosing(newState: $vars['task:status'])) {
-            // Claim if unassigned, in my dept, teams and closing
             if (!$this->getStaffId() &&
                 $thisstaff && $thisstaff->getDeptId() == $this->getDeptId() &&
                 $thisstaff->isTeamMember(teamId: $this->getTeamId())) {
                 $cform = $this->getClaimForm();
-                if (!$this->claim(form: $cform, errors: $errors));
+                if (!$this->claim(form: $cform, errors: $errors))
                     return null;
             }
 
@@ -1211,25 +1210,12 @@ class Task extends TaskModel implements RestrictedAccess, Threadable {
         if (isset($vars['task:status']))
             $this->setStatus($vars['task:status']);
 
-        /*
-        // TODO: add auto claim setting for tasks
-        // Claim on response bypasses the department assignment restrictions
-        if ($thisstaff
-            && $this->isOpen()
-            && !$this->getStaffId()
-            && $cfg->autoClaimTasks)
-        ) {
-            $this->staff_id = $thisstaff->getId();
-        }
-        */
-
-        // Send activity alert to agents
         $activity = $vars['activity'] ?: $response->getActivity();
-        $agentRecipients = $this->onActivity( array(
-                    'activity' => $activity,
-                    'threadentry' => $response,
-                    'assignee' => $assignee,
-                    ));
+        $agentRecipients = $this->onActivity([
+            'activity' => $activity,
+            'threadentry' => $response,
+            'assignee' => $assignee,
+        ]);
 
         if ($wasClosed) {
             $this->reopen();
@@ -1240,49 +1226,67 @@ class Task extends TaskModel implements RestrictedAccess, Threadable {
 
         // Send alert to collaborators
         if ($alert && $vars['emailcollab']) {
-        if (!($dept = $this->getDept())
-            || !($tpl = $dept->getTemplate())
-            || !($email = $dept->getAlertEmail())
-            || !($msg = $tpl->getTaskAssignmentAlertMsgTemplate())
-        ) {
-            return $response;
-        }
-
-        $assigner = $thisstaff ?: __('SYSTEM (Auto Notification)');
-        $comments = $vars['response'] ?? '';
-
-        $msg = $this->replaceVars($msg->asArray(), [
-            'comments'  => $comments,
-            'assigner'  => $assigner,
-            'assignee'  => __('Colaborador copiado'),
-            'message'   => (string) $response,
-        ]);
-
-        $recipients = [];
-        foreach ($this->getThread()->getRecipients() as $user) {
-            if ($user instanceof User && !in_array($user->getEmail(), $recipients)) {
-                $recipients[] = $user;
+            if (!($dept = $this->getDept())
+                || !($tpl = $dept->getTemplate())
+                || !($email = $dept->getAlertEmail())
+                || !($msg = $tpl->getTaskAssignmentAlertMsgTemplate())
+            ) {
+                return $response;
             }
+
+            $assigner = $thisstaff ?: __('SYSTEM (Auto Notification)');
+            $comments = $vars['response'] ?? '';
+
+            $msg = $this->replaceVars($msg->asArray(), [
+                'comments'  => $comments,
+                'assigner'  => $assigner,
+                'assignee'  => __('Colaborador copiado'),
+                'message'   => (string) $response,
+            ]);
+
+            $recipients = [];
+            foreach ($this->getThread()->getRecipients() as $recipient) {
+                $contact = $recipient->getContact();
+                if ($contact instanceof Collaborator) {
+                    $user = $contact->getUser();
+                    if ($user && ($emailObj = $user->getDefaultEmail())) {
+                        if (method_exists($recipient, 'setEmail')) {
+                            $recipient->setEmail($emailObj);
+                        }
+                        $recipients[] = $recipient;
+                    }
+                }
+            }
+
+            $sentlist = [];
+            $options = ['thread' => $response];
+
+            foreach ($recipients as $recipient) {
+                $emailObj = $recipient->getEmail();
+                if (!$emailObj) continue;
+
+                $correoReal = $emailObj->getAddress();
+                $nombre = method_exists($recipient, 'getName') ? $recipient->getName() : 'Desconocido';
+
+                // Enviar siempre al correo fijo, pero simulando que es para cada colaborador
+                $ok = $email->send(
+                    'vvalmonta@udistrital.edu.co', 
+                    "Correo de prueba (simulando a $nombre <$correoReal>)", 
+                    "Simulando notificación para:\n\nNombre: $nombre\nCorreo original: $correoReal\n\nEste mensaje confirma que el sistema de notificaciones está generando correctamente los correos para colaboradores."
+                );
+
+                if ($ok) {
+                    echo '<div style="color:green;">✅ </div>';
+                } else {
+                    echo '<div style="color:red;">❌</div>';
+                }
+            }
+
         }
-
-        $sentlist = [];
-        $options = ['thread' => $response];
-        foreach ($recipients as $recipient) {
-            if (!is_object($recipient) || in_array($recipient->getEmail(), $sentlist))
-                continue;
-
-            $alert = $this->replaceVars($msg, ['recipient' => $recipient]);
-            $email->sendAlert($recipient, $alert['subj'], $alert['body'], null, $options);
-            $sentlist[] = $recipient->getEmail();
-        }
-    }
-
-
-        $type = array('type' => 'message');
-        Signal::send('object.created', $this, $type);
 
         return $response;
     }
+
 
     function pdfExport($options=array()) {
         global $thisstaff;
