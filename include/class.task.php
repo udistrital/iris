@@ -1310,7 +1310,6 @@ class Task extends TaskModel implements RestrictedAccess, Threadable {
                 $subject = 'Tarea en copia';
 
                 $ok = $email->send($correo, $subject, $body);
-                echo $body;
 
 
 
