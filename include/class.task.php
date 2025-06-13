@@ -1274,34 +1274,26 @@ class Task extends TaskModel implements RestrictedAccess, Threadable {
                 $correo = $emailObj->address;
                 $name = $user->getName();
 
-                $taskUrl = sprintf("%s/scp/tasks.php?id=%d", $cfg->getBaseUrl(), $this->getId());
 
                 $body = <<<EOT
-                    Estimado(a) {$name},correo: {$correo},
-
-                    Usted ha sido copiado(a) en una tarea del sistema IRIS.
-
-                    Puede consultarla y realizar seguimiento en el siguiente enlace:
-                    {$taskUrl}
-
-                    Esto es un mensaje automático, por favor no responder.
-                    Atentamente,
+                    Estimado(a) {$name},
+                    \n
+                    Usted ha sido copiado(a) en una tarea del sistema IRIS.\n
+                    \n
+                    Puede consultarla y realizar seguimiento en el sistema ingresando con su usuario.\n
+                    \n
+                    \n
+                    Esto es un mensaje automático, por favor no responder.\n
+                    \n
+                    Atentamente,\n
                     Equipo IRIS
                     EOT;
 
                 $subject = 'Ud ha sido copiado a una tarea en IRIS';
 
-                $ok = $email->send('vvalmonta@udistrital.edu.co', $subject, $body);
+                $ok = $email->send($correo, $subject, $body);
 
-                if ($ok) {
-                    echo '<div style="color:green;">✅/div>';
-                } else {
-                    echo '<div style="color:red;">❌</div>';
-                }
             }
-
-
-
 
         }
 
