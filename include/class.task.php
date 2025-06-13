@@ -1262,38 +1262,44 @@ class Task extends TaskModel implements RestrictedAccess, Threadable {
             $options = ['thread' => $response];
 
             foreach ($recipients as $recipient) {
-                $emailObj = $recipient->getEmail();
+                $contact = $recipient->getContact();
+                if (!$contact instanceof Collaborator) continue;
+
+                $user = $contact->getUser();
+                if (!$user) continue;
+
+                $emailObj = $user->getDefaultEmail();
                 if (!$emailObj) continue;
 
-                $correo = $emailObj->getAddress();
-                $name = $recipient->getContact()->getUser()->getName();
+                $correo = $emailObj->address;
+                $name = $user->getName();
 
-                // URL de la tarea (ajusta el dominio si es necesario)
                 $taskUrl = sprintf("%s/scp/tasks.php?id=%d", $cfg->getBaseUrl(), $this->getId());
 
                 $body = <<<EOT
-            Estimado(a) {$name},correo: {$correo},
+                    Estimado(a) {$name},correo: {$correo},
 
-            Usted ha sido copiado(a) en una tarea del sistema IRIS.
+                    Usted ha sido copiado(a) en una tarea del sistema IRIS.
 
-            Puede consultarla y realizar seguimiento en el siguiente enlace:
-            {$taskUrl}
+                    Puede consultarla y realizar seguimiento en el siguiente enlace:
+                    {$taskUrl}
 
-            Esto es un mensaje automático, por favor no responder.
-            Atentamente,
-            Equipo IRIS
-            EOT;
+                    Esto es un mensaje automático, por favor no responder.
+                    Atentamente,
+                    Equipo IRIS
+                    EOT;
 
                 $subject = 'Ud ha sido copiado a una tarea en IRIS';
 
                 $ok = $email->send('vvalmonta@udistrital.edu.co', $subject, $body);
 
                 if ($ok) {
-                    echo '<div style="color:green;">✅</div>';
+                    echo '<div style="color:green;">✅/div>';
                 } else {
                     echo '<div style="color:red;">❌</div>';
                 }
             }
+
 
 
 
