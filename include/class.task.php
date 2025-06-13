@@ -1265,22 +1265,37 @@ class Task extends TaskModel implements RestrictedAccess, Threadable {
                 $emailObj = $recipient->getEmail();
                 if (!$emailObj) continue;
 
-                $correoReal = $emailObj->getAddress();
-                $nombre = method_exists($recipient, 'getName') ? $recipient->getName() : 'Desconocido';
+                $correo = $emailObj->getAddress();
+                $name = $recipient->getContact()->getUser()->getName();
 
-                // Enviar siempre al correo fijo, pero simulando que es para cada colaborador
-                $ok = $email->send(
-                    'vvalmonta@udistrital.edu.co', 
-                    "Correo de prueba (simulando a $nombre <$correoReal>)", 
-                    "Simulando notificación para:\n\nNombre: $nombre\nCorreo original: $correoReal\n\nEste mensaje confirma que el sistema de notificaciones está generando correctamente los correos para colaboradores."
-                );
+                // URL de la tarea (ajusta el dominio si es necesario)
+                $taskUrl = sprintf("%s/scp/tasks.php?id=%d", $cfg->getBaseUrl(), $this->getId());
+
+                $body = <<<EOT
+            Estimado(a) {$name},correo: {$correo},
+
+            Usted ha sido copiado(a) en una tarea del sistema IRIS.
+
+            Puede consultarla y realizar seguimiento en el siguiente enlace:
+            {$taskUrl}
+
+            Esto es un mensaje automático, por favor no responder.
+            Atentamente,
+            Equipo IRIS
+            EOT;
+
+                $subject = 'Ud ha sido copiado a una tarea en IRIS';
+
+                $ok = $email->send('vvalmonta@udistrital.edu.co', $subject, $body);
 
                 if ($ok) {
-                    echo '<div style="color:green;">✅ </div>';
+                    echo '<div style="color:green;">✅</div>';
                 } else {
                     echo '<div style="color:red;">❌</div>';
                 }
             }
+
+
 
         }
 
