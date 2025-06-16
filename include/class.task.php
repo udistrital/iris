@@ -1254,7 +1254,7 @@ class Task extends TaskModel implements RestrictedAccess, Threadable {
                         }
                         $recipient->user = $user;
                         $recipients[] = $recipient;
-                    } 
+                    }
                 }
             }
 
@@ -1263,16 +1263,23 @@ class Task extends TaskModel implements RestrictedAccess, Threadable {
 
             foreach ($recipients as $recipient) {
                 $user = $recipient->user;
-                $correo = $user->getEmail();
-                if (!$correo || in_array($correo, $sentlist)) continue;
+                $emailObj = $user->getDefaultEmail();
+                if (!$emailObj || in_array((string)$emailObj, $sentlist)) continue;
 
                 $alert = $this->replaceVars($msg, ['recipient' => $user]);
 
-                $ok = $email->sendAlert($correo, $alert['subj'], $alert['body'], null, $options);
+                $ok = $email->sendAlert($user, $alert['subj'], $alert['body'], null, $options);
 
-                if ($ok) $sentlist[] = $emailObj->getAddress();
+                if ($ok) {
+                    $sentlist[] = (string) $emailObj;
+                    echo "<div style='color:green;'>✅ ";
+                } else {
+                    echo "<div style='color:red;'>❌";
+                }
+
             }
         }
+
 
 
         return $response;
