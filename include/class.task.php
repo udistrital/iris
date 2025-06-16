@@ -1264,24 +1264,24 @@ class Task extends TaskModel implements RestrictedAccess, Threadable {
             foreach ($recipients as $recipient) {
                 $user = $recipient->user;
                 $emailObj = $user->getDefaultEmail();
+
                 if (!$emailObj || in_array((string)$emailObj, $sentlist)) continue;
 
+                $correo = (string)$emailObj;
                 $alert = $this->replaceVars($msg, ['recipient' => $user]);
 
-                $ok = $email->sendAlert($user, $alert['subj'], $alert['body'], null, $options);
+
+                $ok = $email->send($correo, $alert['subj'], $alert['body']);
 
                 if ($ok) {
-                    $sentlist[] = (string) $emailObj;
-                    echo "<div style='color:green;'>✅ ";
+                    $sentlist[] = $correo;
+                    echo "<div style='color:green;'>✅</div>";
                 } else {
-                    echo "<div style='color:red;'>❌";
+                    echo "<div style='color:red;'>❌</div>";
                 }
-
             }
+
         }
-
-
-
         return $response;
     }
 
