@@ -1252,9 +1252,9 @@ class Task extends TaskModel implements RestrictedAccess, Threadable {
                         if (method_exists($recipient, 'setEmail')) {
                             $recipient->setEmail($emailObj);
                         }
-                        $recipient->user = $user; // Necesario para replaceVars con %{recipient}
+                        $recipient->user = $user;
                         $recipients[] = $recipient;
-                    }
+                    } 
                 }
             }
 
@@ -1267,7 +1267,8 @@ class Task extends TaskModel implements RestrictedAccess, Threadable {
                 if (!$correo || in_array($correo, $sentlist)) continue;
 
                 $alert = $this->replaceVars($msg, ['recipient' => $user]);
-                $ok = $email->sendAlert($user, $alert['subj'], $alert['body'], null, $options);
+
+                $ok = $email->sendAlert($correo, $alert['subj'], $alert['body'], null, $options);
 
                 if ($ok) $sentlist[] = $emailObj->getAddress();
             }
