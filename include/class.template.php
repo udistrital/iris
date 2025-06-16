@@ -164,6 +164,14 @@ class EmailTemplateGroup {
                 'task', 'recipient', 'comments', 'assignee', 'assigner',
             ),
         ),
+        'task.copy.alert' => array(
+            'group'=>'c.task',
+            'name'=>/* @trans */ 'Task Copy Alert',
+            'desc'=>/* @trans */ 'Alert sent to agents on task copy.',
+            'context' => array(
+                'task', 'recipient', 'comments', 'assignee', 'assigner',
+            ),
+        ),
         'task.transfer.alert'=>array(
             'group'=>'c.task',
             'name'=>/* @trans */ 'Task Transfer Alert',
@@ -368,6 +376,10 @@ class EmailTemplateGroup {
 
     function getTaskAssignmentAlertMsgTemplate() {
         return $this->getMsgTemplate('task.assignment.alert');
+    }
+
+    function getTaskCopyAlertMsgTemplate() {
+        return $this->getMsgTemplate('task.copy.alert');
     }
 
     function getTaskOverdueAlertMsgTemplate() {

@@ -1229,7 +1229,7 @@ class Task extends TaskModel implements RestrictedAccess, Threadable {
             if (!($dept = $this->getDept())
                 || !($tpl = $dept->getTemplate())
                 || !($email = $dept->getAlertEmail())
-                || !($msg = $tpl->getTaskAssignmentAlertMsgTemplate())
+                || !($msg = $tpl->getTaskCopyAlertMsgTemplate())
             ) {
                 return $response;
             }
@@ -1240,8 +1240,7 @@ class Task extends TaskModel implements RestrictedAccess, Threadable {
             $msg = $this->replaceVars($msg->asArray(), [
                 'comments'  => $comments,
                 'assigner'  => $assigner,
-                'assignee'  => __('Colaborador copiado'),
-                'message'   => (string) $response,
+                'task'      => $this,
             ]);
 
             $recipients = [];
@@ -1253,6 +1252,7 @@ class Task extends TaskModel implements RestrictedAccess, Threadable {
                         if (method_exists($recipient, 'setEmail')) {
                             $recipient->setEmail($emailObj);
                         }
+                        $recipient->user = $user; // Necesario para replaceVars con %{recipient}
                         $recipients[] = $recipient;
                     }
                 }
@@ -1262,61 +1262,17 @@ class Task extends TaskModel implements RestrictedAccess, Threadable {
             $options = ['thread' => $response];
 
             foreach ($recipients as $recipient) {
-                $contact = $recipient->getContact();
-                if (!$contact instanceof Collaborator) continue;
+                $user = $recipient->user;
+                $correo = $user->getEmail();
+                if (!$correo || in_array($correo, $sentlist)) continue;
 
-                $user = $contact->getUser();
-                if (!$user) continue;
+                $alert = $this->replaceVars($msg, ['recipient' => $user]);
+                $ok = $email->sendAlert($user, $alert['subj'], $alert['body'], null, $options);
 
-                $emailObj = $user->getDefaultEmail();
-                if (!$emailObj) continue;
-
-                $correo = $emailObj->address;
-                $name = $user->getName();
-
-                $taskUrl = sprintf("%s/scp/tasks.php?id=%d", $cfg->getBaseUrl(), $this->getId());
-
-                $body = <<<EOT
-                    <html>
-                    <head>
-                    </head>
-                    <body>
-                    <div>
-                        <p>Buen día,</p>
-
-                        <p>Nos permitimos informarle que ha sido copiado(a) en esta tarea. Puede consultarla e interactuar con ella ingresando al sistema a través del siguiente enlace:</p>
-
-                        <p>
-                            <a href="{$taskUrl}" target="_blank" rel="noopener noreferrer">{$this->getNumber()}</a>
-                        </p>
-
-                        <p class="footer">
-                            Este es un mensaje automático, por favor no responder.<br>
-                            Atentamente,<br>
-                            Equipo IRIS
-                        </p>
-
-                        <div style="margin-top: 1em;">
-                            <img src="https://iris.portaloas.udistrital.edu.co/logo.php?login" alt="Logo IRIS" style="height: 32px;" />
-                        </div>
-                    </div>
-                    </body>
-                    </html>
-                    EOT;
-
-
-
-
-                $subject = 'Tarea en copia';
-
-                $ok = $email->send($correo, $subject, $body);
-
-
-
-
+                if ($ok) $sentlist[] = $emailObj->getAddress();
             }
-
         }
+
 
         return $response;
     }

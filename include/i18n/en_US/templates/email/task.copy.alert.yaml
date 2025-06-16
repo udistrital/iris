@@ -1,0 +1,25 @@
+# Email template: task.copied_collaborator.alert.yaml
+#
+# Sent to users who are copied on a task.
+# Use %{assigner} to indicate who copied them.
+
+notes: |
+    Sent to users who are copied (CC) on a task.
+    Use %{assigner} to indicate who added them.
+
+subject: |
+    You have been copied to task %{task.number} <strong>%{task.title}</strong>
+
+body: |
+    <h3>Hello %{recipient.name},</h3>
+    <p>You have been copied to the task <strong>%{task.title}</strong> (<a href="%{task.staff_link}">#%{task.number}</a>).</p>
+    
+    <p>%{comments}</p>
+
+    <hr>
+    <p>You can view and respond to the task by <a href="%{task.staff_link}">logging into IRIS</a>.</p>
+
+    <em>This is an automated message. Please do not reply.</em>
+
+    <br>
+    <img src="https://iris.portaloas.udistrital.edu.co/logo.php?login" alt="IRIS Logo" width="126" height="32" style="margin-top: 10px;">
