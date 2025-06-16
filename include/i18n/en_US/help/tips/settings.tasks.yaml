@@ -88,6 +88,14 @@ assignment_alert:
       - title: Default Task Assignment Alert Template
         href: /scp/templates.php?default_for=task.assignment.alert
 
+copy_alert:
+    title: Task copy Alert
+    content: >
+        Alert sent out to Agents on task copy.
+    links:
+      - title: Default Task copy Alert Template
+        href: /scp/templates.php?default_for=task.copy.alert
+
 transfer_alert:
     title: Task Transfer Alert
     content: >
