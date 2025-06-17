@@ -72,6 +72,33 @@ if ($thisstaff
     <script type="text/javascript" src="ajax.php/i18n/<?php
         echo $thisstaff->getLanguage(); ?>/js"></script>
 <?php } ?>
+<script>
+  const sessionTimeout = 85 * 60 * 1000; 
+  const warningTime = 80* 60 * 1000; 
+
+  let warningTimer = setTimeout(() => {
+    alert("⚠️ Tu sesión está por caducar. Haz clic en aceptar para continuar.");
+  }, warningTime);
+
+  let logoutTimer = setTimeout(() => {
+    window.location.href = 'logout.php';
+  }, sessionTimeout);
+
+  const resetTimers = () => {
+    clearTimeout(warningTimer);
+    clearTimeout(logoutTimer);
+    warningTimer = setTimeout(() => {
+      alert("⚠️ Tu sesión está por caducar. Haz clic en aceptar para continuar.");
+    }, warningTime);
+    logoutTimer = setTimeout(() => {
+      window.location.href = 'logout.php';
+    }, sessionTimeout);
+  };
+
+  document.addEventListener("mousemove", resetTimers);
+  document.addEventListener("keydown", resetTimers);
+</script>
+
 </body>
 </html>
 <?php } # endif X_PJAX ?>
