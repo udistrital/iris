@@ -1272,13 +1272,6 @@ class Task extends TaskModel implements RestrictedAccess, Threadable {
 
 
                 $ok = $email->send($correo, $alert['subj'], $alert['body']);
-
-                if ($ok) {
-                    $sentlist[] = $correo;
-                    echo "<div style='color:green;'>✅</div>";
-                } else {
-                    echo "<div style='color:red;'>❌</div>";
-                }
             }
 
         }
