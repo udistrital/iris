@@ -140,108 +140,110 @@ class OverviewReport {
 
     function getTabularData($group='dept') {
         global $thisstaff;
-    
+
         $event_ids = Event::getIds();
         $event = function ($name) use ($event_ids) {
             return $event_ids[$name];
         };
-        $dash_headers = array_merge($group === 'team' ? array() : array(__('Created')), array(__('Assigned'),__('Closed'),__('Abiertos')),
-            $group === 'dept' ? array('Transferidos') : array());
-    
+        $dash_headers = array_merge(
+            $group === 'team' ? array() : array(__('Created')),
+            array(__('Assigned'), __('Closed'), __('Abiertos')),
+            $group === 'dept' ? array('Transferidos') : array()
+        );
+
         list($start, $stop) = $this->getDateRange();
+
         $times = ThreadEvent::objects()
             ->constrain(array(
                 'thread__entries' => array(
                     'thread__entries__type' => 'R',
-                    ),
-               ))
+                ),
+            ))
             ->constrain(array(
                 'thread__events' => array(
                     'thread__events__event_id' => $event('created'),
                     'event_id' => $event('closed'),
                     'annulled' => 0,
-                    ),
-                ))
+                ),
+            ))
+            ->filter(array('timestamp__range' => array($start, $stop, true)));
+
+        $queryAssignTeam = array('data__contains' => '"team"');
+        $queryAssigned = Q::all(array('event_id' => $event('assigned')));
+        if ($group == 'team')
+            $queryAssigned->add($queryAssignTeam);
+        elseif ($group == 'staff')
+            $queryAssigned->add(Q::not($queryAssignTeam));
+
+        $openTasks = TaskModel::objects()
             ->filter(array(
-                    'timestamp__range' => array($start, $stop, true),
+                'flags' => 1,
+                'updated__range' => array($start, $stop, true)
+            ))
+            ->values($group === 'dept' ? 'dept_id' : ($group === 'team' ? 'team_id' : 'staff_id'))
+            ->annotate(array('count' => SqlAggregate::COUNT('id')));
+
+        $openTasksCount = array();
+        foreach ($openTasks as $task) {
+            $key = $group === 'dept' ? $task['dept_id'] : ($group === 'team' ? $task['team_id'] : $task['staff_id']);
+            $openTasksCount[$key] += $task['count'];
+        }
+
+        $stats = ThreadEvent::objects()
+            ->filter(array(
+                'annulled' => 0,
+                'timestamp__range' => array($start, $stop, true),
+                'thread_type' => 'A',
+                'event_id__in' => array_merge(
+                    $group === 'team' ? array() : array($event('created')),
+                    array($event('assigned'), $event('closed')),
+                    $group === 'dept' ? array($event('transferred')) : array()
+                )
+            ))
+            ->aggregate(array_merge(
+                $group === 'team' ? array() : array('Created' => SqlAggregate::COUNT(
+                    SqlCase::N()->when(new Q(array('event_id' => $event('created'), 'staff_id' => 0)), 1)
+                )),
+                array(
+                    'Assigned' => SqlAggregate::COUNT(SqlCase::N()->when($queryAssigned, 1)),
+                    'Closed' => SqlAggregate::COUNT(SqlCase::N()->when(new Q(array('event_id' => $event('closed'))), 1))
+                ),
+                $group === 'dept' ? array('Transferred' => SqlAggregate::COUNT(SqlCase::N()->when(new Q(array('event_id' => $event('transferred'))), 1))) : array()
             ));
-            $queryAssignTeam = array('data__contains' => '"team"');
-            $queryAssigned = Q::all(array('event_id' => $event('assigned')));
-            if ($group == 'team')
-                $queryAssigned->add($queryAssignTeam);
-            elseif ($group == 'staff')
-                $queryAssigned->add(Q::not($queryAssignTeam));
-    
-            $openTasks = TaskModel::objects()
-                ->filter(array(
-                    'flags' => 1,
-                    'updated__range' => array($start, $stop, true)
-                ))
-                ->values($group === 'dept' ? 'dept_id' : ($group === 'team' ? 'team_id' : 'staff_id'))
-                ->annotate(array(
-                    'count' => SqlAggregate::COUNT('id')
-                ));
-                
-            $openTasksCount = array();
-            foreach ($openTasks as $task) {
-                $key = $group === 'dept' ? $task['dept_id'] : ($group === 'team' ? $task['team_id'] : $task['staff_id']);
-                $openTasksCount[$key] += $task['count'];
-            }
 
-            $stats = ThreadEvent::objects()
-                ->filter(array(
-                        'annulled' => 0,
-                        'timestamp__range' => array($start, $stop, true),
-                        'thread_type' => 'A',
-                        'event_id__in' => array_merge(
-                            $group === 'team' ? array() : array($event('created')),
-                            array($event('assigned'), $event('closed')),
-                            $group === 'dept' ? array($event('transferred')) : array())
-                   ))
-                ->aggregate(array_merge(
-                    $group === 'team' ? array() : array('Created' => SqlAggregate::COUNT(
-                        SqlCase::N()
-                            ->when(new Q(array('event_id' => $event('created'), 'staff_id' => 0)), 1)
-                    )),
-                    array('Assigned' => SqlAggregate::COUNT(
-                        SqlCase::N()
-                            ->when($queryAssigned, 1)
-                    ),
-                    'Closed' => SqlAggregate::COUNT(
-                        SqlCase::N()
-                            ->when(new Q(array('event_id' => $event('closed'))), 1)
-                    )),
-                    $group === 'dept' ? array('Transferred' => SqlAggregate::COUNT(
-                        SqlCase::N()
-                            ->when(new Q(array('event_id' => $event('transferred'))), 1)
-                    )) : array(),
-                ));
-    
         switch ($group) {
-        case 'dept':
-            $headers = array(__('Dependencia'));
-            $header = function($row) { return Dept::getLocalNameById($row['dept_id'], $row['dept__name']); };
-            $pk = 'dept__id';
-            $roleName = $thisstaff->getRole()->getName();
-            if ($roleName !== 'Administrador dependencia') {
-                // Si no tiene el rol adecuado, no puede ver nada
-                return [
-                    'headers' => [__('Dependencia')],
-                    'data' => []
-                ];
-            }
-            $depts = $thisstaff->getDepts();
+            case 'dept':
+                $headers = array(__('Dependencia'));
+                $header = function($row) {
+                    return Dept::getLocalNameById($row['dept_id'], $row['dept__name']);
+                };
+                $pk = 'dept__id';
 
+                if ($thisstaff->getRole()->getId() !== 1) {
+                    return [ 'headers' => [__('Dependencia')], 'data' => [] ];
+                }
 
-            $stats = $stats
-                ->filter(array('dept_id__in' => $depts))
-                ->values('dept__id', 'dept__name', 'dept__flags')
-                ->distinct('dept__id');
-            $times = $times
-                ->filter(array('dept_id__in' => $depts))
-                ->values('dept__id')
-                ->distinct('dept__id');
-            break;
+                $adminDeptIds = [];
+                foreach ($thisstaff->getDepts() as $deptId) {
+                    $role = $thisstaff->getRole($deptId);
+                    if ($role && $role->getId() == 1) {
+                        $adminDeptIds[] = $deptId;
+                    }
+                }
+
+                if (!$adminDeptIds) {
+                    return [ 'headers' => [__('Dependencia')], 'data' => [] ];
+                }
+
+                $stats = $stats
+                    ->filter(array('dept_id__in' => $adminDeptIds))
+                    ->values('dept__id', 'dept__name', 'dept__flags')
+                    ->distinct('dept__id');
+                $times = $times
+                    ->filter(array('dept_id__in' => $adminDeptIds))
+                    ->values('dept__id')
+                    ->distinct('dept__id');
+                break;
         case 'team':
             $headers = array(__('Team'));
             $header = function($row) { return $row['team__name']; };
@@ -259,7 +261,7 @@ class OverviewReport {
                 ->filter(array('team_id__gt' => 0))
                 ->distinct('team_id');
             break;
-        case 'staff':
+       case 'staff':
             $headers = array(__('Agent'));
             $header = function($row) {
                 return new AgentsName(array(
@@ -269,37 +271,32 @@ class OverviewReport {
             };
             $pk = 'staff_id';
 
-            // Validar que solo Administrador dependencia puede ver este grupo
             if ($thisstaff->getRole()->getId() !== 1) {
-                return [
-                    'headers' => [__('Agente')],
-                    'data' => []
-                ];
+                return [ 'headers' => [__('Agente')], 'data' => [] ];
             }
 
-            // Obtener dependencias del usuario
-            $depts = $thisstaff->getDepts();
-            if (!$depts) {
-                return [
-                    'headers' => [__('Agente')],
-                    'data' => []
-                ];
+            $adminDeptIds = [];
+            foreach ($thisstaff->getDepts() as $deptId) {
+                $role = $thisstaff->getRole($deptId);
+                if ($role && $role->getId() == 1) {
+                    $adminDeptIds[] = $deptId;
+                }
             }
 
-            // Obtener IDs de agentes y admins que pertenecen a esas dependencias
+            if (!$adminDeptIds) {
+                return [ 'headers' => [__('Agente')], 'data' => [] ];
+            }
+
             $validStaffIds = array();
-            foreach (Staff::objects()->filter(['dept_id__in' => $depts]) as $staff) {
-                $roleId = $staff->getRole()->getId();
-                if (in_array($roleId, [1, 2])) { // 1 = Admin dependencia, 2 = Agente
+            foreach (Staff::objects()->filter(['dept_id__in' => $adminDeptIds]) as $staff) {
+                $role = $staff->getRole($staff->getDeptId());
+                if ($role && in_array($role->getId(), [1, 2])) {
                     $validStaffIds[] = $staff->getId();
                 }
             }
 
             if (!$validStaffIds) {
-                return [
-                    'headers' => [__('Agente')],
-                    'data' => []
-                ];
+                return [ 'headers' => [__('Agente')], 'data' => [] ];
             }
 
             $Q = Q::any(array('staff_id__in' => $validStaffIds));
