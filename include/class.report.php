@@ -261,29 +261,61 @@ class OverviewReport {
             break;
         case 'staff':
             $headers = array(__('Agent'));
-            $header = function($row) { return new AgentsName(array(
-                'first' => $row['staff__firstname'], 'last' => $row['staff__lastname'])); };
+            $header = function($row) {
+                return new AgentsName(array(
+                    'first' => $row['staff__firstname'],
+                    'last' => $row['staff__lastname']
+                ));
+            };
             $pk = 'staff_id';
+
+            // Validar que solo Administrador dependencia puede ver este grupo
+            if ($thisstaff->getRole()->getId() !== 1) {
+                return [
+                    'headers' => [__('Agente')],
+                    'data' => []
+                ];
+            }
+
+            // Obtener dependencias del usuario
+            $depts = $thisstaff->getDepts();
+            if (!$depts) {
+                return [
+                    'headers' => [__('Agente')],
+                    'data' => []
+                ];
+            }
+
+            // Obtener IDs de agentes y admins que pertenecen a esas dependencias
+            $validStaffIds = array();
+            foreach (Staff::objects()->filter(['dept_id__in' => $depts]) as $staff) {
+                $roleId = $staff->getRole()->getId();
+                if (in_array($roleId, [1, 2])) { // 1 = Admin dependencia, 2 = Agente
+                    $validStaffIds[] = $staff->getId();
+                }
+            }
+
+            if (!$validStaffIds) {
+                return [
+                    'headers' => [__('Agente')],
+                    'data' => []
+                ];
+            }
+
+            $Q = Q::any(array('staff_id__in' => $validStaffIds));
+
             $stats = $stats
                 ->values('staff_id', 'staff__firstname', 'staff__lastname', 'agent', 'agent__firstname', 'agent__lastname')
                 ->distinct('staff_id', 'agent')
-                ->order_by('-staff_id');
+                ->order_by('-staff_id')
+                ->filter($Q);
+
             $times = $times
                 ->values('staff_id')
-                ->distinct('staff_id');
-            $roleName = $thisstaff->getRole()->getName();
-            $depts = ($roleName === 'Administrador dependencia') ? $thisstaff->getDepts() : [];
-
-            if ($thisstaff->hasPerm(ReportModel::PERM_AGENTS))
-                $depts = array_merge($depts, $thisstaff->getDepts());
-            if ($depts)
-                $Q = Q::any(array('dept_id__in' => $depts));
-            else
-                $Q = Q::any(Q::all(array('staff_id' => $thisstaff->getId(), 'event_id__in' => array(2, 3, 4))))
-                    ->add(Q::all(array('agent' => $thisstaff->getId(), 'event_id' => 1)));
-            $stats = $stats->filter($Q);
-            $times = $times->filter($Q);
+                ->distinct('staff_id')
+                ->filter($Q);
             break;
+
         default:
             # XXX: Die if $group not in $groups
         }
