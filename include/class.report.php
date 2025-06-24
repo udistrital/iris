@@ -222,7 +222,17 @@ class OverviewReport {
             $headers = array(__('Dependencia'));
             $header = function($row) { return Dept::getLocalNameById($row['dept_id'], $row['dept__name']); };
             $pk = 'dept__id';
-            $depts = ($thisstaff->isAdmin() ? $thisstaff->getDepts() : ($thisstaff->getManagedDepartments() ?: array(0)));
+            $roleName = $thisstaff->getRole()->getName();
+            if ($roleName !== 'Administrador dependencia') {
+                // Si no tiene el rol adecuado, no puede ver nada
+                return [
+                    'headers' => [__('Dependencia')],
+                    'data' => []
+                ];
+            }
+            $depts = $thisstaff->getDepts();
+
+
             $stats = $stats
                 ->filter(array('dept_id__in' => $depts))
                 ->values('dept__id', 'dept__name', 'dept__flags')
@@ -261,7 +271,9 @@ class OverviewReport {
             $times = $times
                 ->values('staff_id')
                 ->distinct('staff_id');
-            $depts = $thisstaff->getManagedDepartments();
+            $roleName = $thisstaff->getRole()->getName();
+            $depts = ($roleName === 'Administrador dependencia') ? $thisstaff->getDepts() : [];
+
             if ($thisstaff->hasPerm(ReportModel::PERM_AGENTS))
                 $depts = array_merge($depts, $thisstaff->getDepts());
             if ($depts)
