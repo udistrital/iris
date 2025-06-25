@@ -152,6 +152,23 @@ class OverviewReport {
         );
 
         list($start, $stop) = $this->getDateRange();
+        // === Conteo manual de eventos de creación por agente (para casos donde no hay staff_id)
+        $createdByAgent = [];
+        $createdEvents = ThreadEvent::objects()
+            ->filter([
+                'event_id' => $event('created'),
+                'timestamp__range' => [$start, $stop, true],
+                'thread_type' => 'A',
+                'annulled' => 0
+            ])
+            ->values('agent');
+
+        foreach ($createdEvents as $ev) {
+            $id = $ev['agent'];
+            if (!$id) continue;
+            $createdByAgent[$id] = ($createdByAgent[$id] ?? 0) + 1;
+        }
+
 
         $times = ThreadEvent::objects()
             ->constrain(array(
@@ -189,7 +206,7 @@ class OverviewReport {
             $openTasksCount[$key] += $task['count'];
         }
 
-        $stats = ThreadEvent::objects()
+        $base_stats = ThreadEvent::objects()
             ->filter(array(
                 'annulled' => 0,
                 'timestamp__range' => array($start, $stop, true),
@@ -199,17 +216,28 @@ class OverviewReport {
                     array($event('assigned'), $event('closed')),
                     $group === 'dept' ? array($event('transferred')) : array()
                 )
-            ))
-            ->aggregate(array_merge(
-                $group === 'team' ? array() : array('Created' => SqlAggregate::COUNT(
-                    SqlCase::N()->when(new Q(array('event_id' => $event('created'), 'staff_id' => 0)), 1)
-                )),
-                array(
-                    'Assigned' => SqlAggregate::COUNT(SqlCase::N()->when($queryAssigned, 1)),
-                    'Closed' => SqlAggregate::COUNT(SqlCase::N()->when(new Q(array('event_id' => $event('closed'))), 1))
-                ),
-                $group === 'dept' ? array('Transferred' => SqlAggregate::COUNT(SqlCase::N()->when(new Q(array('event_id' => $event('transferred'))), 1))) : array()
             ));
+
+        $fields = $group === 'staff'
+            ? array('staff_id', 'staff__firstname', 'staff__lastname', 'agent', 'agent__firstname', 'agent__lastname')
+            : ($group === 'team'
+                ? array('team', 'team__name', 'team__flags')
+                : array('dept__id', 'dept__name', 'dept__flags'));
+
+        call_user_func_array(array($base_stats, 'values'), $fields);
+
+        $stats = $base_stats->aggregate(array_merge(
+            $group === 'team' ? array() : array('Created' => SqlAggregate::COUNT(
+                SqlCase::N()->when(new Q(array('event_id' => $event('created'))), 1)
+            )),
+            array(
+                'Assigned' => SqlAggregate::COUNT(SqlCase::N()->when($queryAssigned, 1)),
+                'Closed' => SqlAggregate::COUNT(SqlCase::N()->when(new Q(array('event_id' => $event('closed'))), 1))
+            ),
+            $group === 'dept' ? array('Transferred' => SqlAggregate::COUNT(SqlCase::N()->when(new Q(array('event_id' => $event('transferred'))), 1))) : array()
+        ));
+
+
 
         switch ($group) {
             case 'dept':
@@ -325,17 +353,26 @@ class OverviewReport {
         $staff = array();
         if ($group === 'staff')
             foreach ($stats as $row) {
+                $staff_id = $row['staff_id'] ?: $row['agent'];
+                $created = $createdByAgent[$staff_id] ?? 0;
                 if ($row['staff_id'] > 0 && !isset($staff[$row['staff_id']])) {
                     $staff[$row['staff_id']] = $row;
+                    $staff[$row['staff_id']]['Created'] = $created;
+                    $staff[$row['staff_id']]['Assigned'] = isset($row['Assigned']) ? $row['Assigned'] : 0;
+                    $staff[$row['staff_id']]['Closed'] = isset($row['Closed']) ? $row['Closed'] : 0;
                     $staff[$row['staff_id']]['Open'] = isset($openTasksCount[$row['staff_id']]) ? $openTasksCount[$row['staff_id']] : 0;
+
                 } elseif ($row['staff_id'] > 0 && isset($staff[$row['staff_id']])) {
                     $staff[$row['staff_id']]['Created'] += $row['Created'];
                     $staff[$row['staff_id']]['Assigned'] += $row['Assigned'];
                     $staff[$row['staff_id']]['Closed'] += $row['Closed'];
-                } elseif ($row['agent'] > 0 && !isset($staff[$row['agent']])) {
+                }  elseif ($row['agent'] > 0 && !isset($staff[$row['agent']])) {
                     $row['staff__firstname'] = $row['agent__firstname'];
                     $row['staff__lastname'] = $row['agent__lastname'];
                     $staff[$row['agent']] = $row;
+                    $staff[$row['agent']]['Created'] = isset($row['Created']) ? $row['Created'] : 0;
+                    $staff[$row['agent']]['Assigned'] = isset($row['Assigned']) ? $row['Assigned'] : 0;
+                    $staff[$row['agent']]['Closed'] = isset($row['Closed']) ? $row['Closed'] : 0;
                     $staff[$row['agent']]['Open'] = isset($openTasksCount[$row['agent']]) ? $openTasksCount[$row['agent']] : 0;
                 } elseif ($row['agent'] > 0 && $row['Created'] > 0) {
                     $staff[$row['agent']]['Created'] = $row['Created'];
@@ -386,6 +423,7 @@ class OverviewReport {
         $rows[] = array_merge(array_merge(array('TOTAL'), $group === 'team' ? array() : array($total['Created']),
            array($total['Assigned'], $total['Closed'], $total['Open']),
            $group === 'dept' ? array($total['Transferred']) : array()));
+
         return array("columns" => array_merge($headers, $dash_headers),
                      "data" => $rows);
     }
