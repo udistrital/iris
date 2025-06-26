@@ -361,15 +361,15 @@ class OverviewReport {
                     ]) : 'N/A';
 
                    $avg1 = isset($createdToAssigned[$staffId])
-                        ? round(array_sum($createdToAssigned[$staffId]) / count($createdToAssigned[$staffId]) / 60, 2)
+                        ? round(array_sum($createdToAssigned[$staffId]) / count($createdToAssigned[$staffId]) / 3600, 2)
                         : '-';
                     $avg2 = isset($assignedToClosed[$staffId])
-                        ? round(array_sum($assignedToClosed[$staffId]) / count($assignedToClosed[$staffId]) / 60, 2)
+                        ? round(array_sum($assignedToClosed[$staffId]) / count($assignedToClosed[$staffId]) / 3600, 2)
                         : '-';
 
                     //echo "Agente {$name}: prom. creado→asignado = $avg1 h, asignado→cerrado = $avg2 h\n";
 
-                    $rows[] = [$name, $avg1 . ' min', $avg2 . ' min'];
+                    $rows[] = [$name, is_numeric($avg1) ? round($avg1, 2) : '-', is_numeric($avg2) ? round($avg2, 2) : '-'];
                 }
 
                 //echo "</pre>";
@@ -381,8 +381,21 @@ class OverviewReport {
                         //echo isset($times['closed']) ? "closed: {$times['closed']} \n" : "closed: -\n";
                    // }
 
+                usort($rows, function($a, $b) {
+                    // Orden descendente por la segunda columna (prom. creado → asignado)
+                    // Los nulls van al final
+                    $aVal = $a[1];
+                    $bVal = $b[1];
+
+                    if ($aVal === null && $bVal === null) return 0;
+                    if ($aVal === null) return 1;
+                    if ($bVal === null) return -1;
+                    return $bVal <=> $aVal;
+                });
+
+
                 return [
-                    'columns' => [__('Agente'), __('Prom. creado a asignado (min)'), __('Prom. asignado a cerrado (min)')],
+                    'columns' => ['Agente', 'Prom. creado a asignado (h)', 'Prom. asignado a cerrado (h)'],
                     'data' => $rows
                 ];
 
