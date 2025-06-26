@@ -127,36 +127,50 @@ class OverviewReport {
         ];
     }
 
-    function enumTabularGroups() {
+   function enumTabularGroups() {
         global $thisstaff;
         $tabs = array();
+
         if ($thisstaff->getManagedDepartments() || $thisstaff->hasPerm(ReportModel::PERM_AGENTS))
             $tabs["dept"] = __("Dependencias");
         if ($thisstaff->getManagedDepartments() || count($thisstaff->teams->values_flat('team_id')))
             $tabs["team"] = __("Teams");
+
         $tabs["staff"] = __("Agents");
+
+        // Nueva pestaña
+        if ($thisstaff->getRole()->getId() == 1) {
+            $tabs["response_time"] = __("Tiempo de respuesta");
+        }
+
         return $tabs;
     }
+
 
     function getTabularData($group='dept') {
         global $thisstaff;
 
-        $event_ids = Event::getIds();
-        $event = function ($name) use ($event_ids) {
-            return $event_ids[$name];
-        };
+        $event = [
+            'created' => 1,
+            'assigned' => 4,
+            'closed'  => 2,
+            'transferred' => 6
+        ];
+
+
+
+        list($start, $stop) = $this->getDateRange();
+
         $dash_headers = array_merge(
             $group === 'team' ? array() : array(__('Created')),
             array(__('Assigned'), __('Closed'), __('Abiertos')),
-            $group === 'dept' ? array('Transferidos') : array()
+            $group === 'dept' ? array(__('Transferidos')) : array()
         );
 
-        list($start, $stop) = $this->getDateRange();
-        // === Conteo manual de eventos de creación por agente (para casos donde no hay staff_id)
         $createdByAgent = [];
         $createdEvents = ThreadEvent::objects()
             ->filter([
-                'event_id' => $event('created'),
+                'event_id' =>$event['created'],
                 'timestamp__range' => [$start, $stop, true],
                 'thread_type' => 'A',
                 'annulled' => 0
@@ -169,29 +183,6 @@ class OverviewReport {
             $createdByAgent[$id] = ($createdByAgent[$id] ?? 0) + 1;
         }
 
-
-        $times = ThreadEvent::objects()
-            ->constrain(array(
-                'thread__entries' => array(
-                    'thread__entries__type' => 'R',
-                ),
-            ))
-            ->constrain(array(
-                'thread__events' => array(
-                    'thread__events__event_id' => $event('created'),
-                    'event_id' => $event('closed'),
-                    'annulled' => 0,
-                ),
-            ))
-            ->filter(array('timestamp__range' => array($start, $stop, true)));
-
-        $queryAssignTeam = array('data__contains' => '"team"');
-        $queryAssigned = Q::all(array('event_id' => $event('assigned')));
-        if ($group == 'team')
-            $queryAssigned->add($queryAssignTeam);
-        elseif ($group == 'staff')
-            $queryAssigned->add(Q::not($queryAssignTeam));
-
         $openTasks = TaskModel::objects()
             ->filter(array(
                 'flags' => 1,
@@ -200,7 +191,7 @@ class OverviewReport {
             ->values($group === 'dept' ? 'dept_id' : ($group === 'team' ? 'team_id' : 'staff_id'))
             ->annotate(array('count' => SqlAggregate::COUNT('id')));
 
-        $openTasksCount = array();
+        $openTasksCount = [];
         foreach ($openTasks as $task) {
             $key = $group === 'dept' ? $task['dept_id'] : ($group === 'team' ? $task['team_id'] : $task['staff_id']);
             $openTasksCount[$key] += $task['count'];
@@ -212,11 +203,12 @@ class OverviewReport {
                 'timestamp__range' => array($start, $stop, true),
                 'thread_type' => 'A',
                 'event_id__in' => array_merge(
-                    $group === 'team' ? array() : array($event('created')),
-                    array($event('assigned'), $event('closed')),
-                    $group === 'dept' ? array($event('transferred')) : array()
+                    $group === 'team' ? array() : array($event['created']),
+                    array($event['assigned'], $event['closed']),
+                    $group === 'dept' ? array($event['transferred']) : array()
                 )
             ));
+
 
         $fields = $group === 'staff'
             ? array('staff_id', 'staff__firstname', 'staff__lastname', 'agent', 'agent__firstname', 'agent__lastname')
@@ -227,19 +219,173 @@ class OverviewReport {
         call_user_func_array(array($base_stats, 'values'), $fields);
 
         $stats = $base_stats->aggregate(array_merge(
-            $group === 'team' ? array() : array('Created' => SqlAggregate::COUNT(
-                SqlCase::N()->when(new Q(array('event_id' => $event('created'))), 1)
-            )),
-            array(
-                'Assigned' => SqlAggregate::COUNT(SqlCase::N()->when($queryAssigned, 1)),
-                'Closed' => SqlAggregate::COUNT(SqlCase::N()->when(new Q(array('event_id' => $event('closed'))), 1))
+            $group === 'team' ? array() : array(
+                'Created' => SqlAggregate::COUNT(
+                    SqlCase::N()->when(new Q(array('event_id' => $event['created'])), 1)
+                )
             ),
-            $group === 'dept' ? array('Transferred' => SqlAggregate::COUNT(SqlCase::N()->when(new Q(array('event_id' => $event('transferred'))), 1))) : array()
+            array(
+                'Assigned' => SqlAggregate::COUNT(
+                    SqlCase::N()->when(new Q(array('event_id' => $event['assigned'])), 1)
+                ),
+                'Closed' => SqlAggregate::COUNT(
+                    SqlCase::N()->when(new Q(array('event_id' => $event['closed'])), 1)
+                )
+            ),
+            $group === 'dept' ? array(
+                'Transferred' => SqlAggregate::COUNT(
+                    SqlCase::N()->when(new Q(array('event_id' => $event['transferred'])), 1)
+                )
+            ) : array()
         ));
 
 
+        $times = ThreadEvent::objects()
+            ->constrain(array(
+                'thread__entries' => array('thread__entries__type' => 'R'),
+            ))
+            ->constrain(array(
+                'thread__events' => array(
+                    'thread__events__event_id' => $event['created'],
+                    'event_id' => $event['closed'],
+                    'annulled' => 0,
+                ),
+            ))
+            ->filter(array('timestamp__range' => array($start, $stop, true)));
 
         switch ($group) {
+            case 'response_time':
+                $headers = [__('Agente')];
+                $pk = 'staff_id';
+
+                // "<pre>=== DEBUG RESPONSE TIME ===\n";
+
+                if ($thisstaff->getRole()->getId() !== 1) {
+                    //echo "Usuario sin permiso suficiente\n</pre>";
+                    return ['headers' => $headers, 'data' => []];
+                }
+
+                $adminDeptIds = [];
+                foreach ($thisstaff->getDepts() as $deptId) {
+                    $role = $thisstaff->getRole($deptId);
+                    if ($role && $role->getId() == 1)
+                        $adminDeptIds[] = $deptId;
+                }
+
+                //echo "Admin Dept IDs: " . implode(', ', $adminDeptIds) . "\n";
+
+                if (!$adminDeptIds) {
+                    //echo "No hay departamentos administrados\n</pre>";
+                    return ['headers' => $headers, 'data' => []];
+                }
+
+                $validStaffIds = [];
+                foreach (Staff::objects()->filter(['dept_id__in' => $adminDeptIds]) as $staff) {
+                    $role = $staff->getRole($staff->getDeptId());
+                    if ($role && in_array($role->getId(), [1, 2]))
+                        $validStaffIds[] = $staff->getId();
+                }
+
+               //echo "Valid Staff IDs: " . implode(', ', $validStaffIds) . "\n";
+
+                $createdEvents = ThreadEvent::objects()
+                    ->filter([
+                        'event_id' => $event['created'],
+                        'timestamp__range' => [$start, $stop, true],
+                        'thread_type' => 'A',
+                        'annulled' => 0
+                    ])
+                    ->filter(Q::any([
+                        'staff_id__in' => $validStaffIds,
+                        'uid__in' => $validStaffIds,
+                        'uid_type' => 'S'
+                    ]))
+                    ->values('thread_id', 'staff_id', 'uid', 'uid_type', 'timestamp');
+
+
+                $assignedEvents = ThreadEvent::objects()
+                    ->filter([
+                        'event_id' => $event['assigned'],
+                        'timestamp__range' => [$start, $stop, true],
+                        'thread_type' => 'A',
+                        'annulled' => 0,
+                        'staff_id__in' => $validStaffIds
+                    ])
+                    ->values('thread_id', 'staff_id', 'timestamp');
+
+                $closedEvents = ThreadEvent::objects()
+                    ->filter([
+                        'event_id' => $event['closed'],
+                        'timestamp__range' => [$start, $stop, true],
+                        'thread_type' => 'A',
+                        'annulled' => 0,
+                        'staff_id__in' => $validStaffIds
+                    ])
+                    ->values('thread_id', 'staff_id', 'timestamp');
+
+                $responseData = [];
+                foreach ($createdEvents as $ev) {
+                    $staffId = $ev['staff_id'] ?: ($ev['uid_type'] === 'S' ? $ev['uid'] : null);
+                    if (!$staffId) continue;
+                    $responseData[$ev['thread_id']]['created'] = strtotime($ev['timestamp']);
+                    $staffMap[$ev['thread_id']] = $staffId;
+                }
+
+                foreach ($assignedEvents as $ev)
+                    $responseData[$ev['thread_id']]['assigned'] = strtotime($ev['timestamp']);
+                foreach ($closedEvents as $ev)
+                    $responseData[$ev['thread_id']]['closed'] = strtotime($ev['timestamp']);
+
+                $createdToAssigned = [];
+                $assignedToClosed = [];
+
+                foreach ($responseData as $id => $times) {
+                    $staffId = $staffMap[$id] ?? null;
+                    if (!$staffId) continue;
+                    if (isset($times['created'], $times['assigned'])) {
+                        $createdToAssigned[$staffId][] = $times['assigned'] - $times['created'];
+                        //echo "Tarea $id: creado→asignado = " . ($times['assigned'] - $times['created']) . "s\n";
+                    }
+                    if (isset($times['assigned'], $times['closed'])) {
+                        $assignedToClosed[$staffId][] = $times['closed'] - $times['assigned'];
+                        //echo "Tarea $id: asignado→cerrado = " . ($times['closed'] - $times['assigned']) . "s\n";
+                    }
+                }
+
+                $rows = [];
+                foreach ($validStaffIds as $staffId) {
+                    $agent = Staff::lookup($staffId);
+                    $name = $agent ? new AgentsName([
+                        'first' => $agent->getFirstName(),
+                        'last' => $agent->getLastName()
+                    ]) : 'N/A';
+
+                   $avg1 = isset($createdToAssigned[$staffId])
+                        ? round(array_sum($createdToAssigned[$staffId]) / count($createdToAssigned[$staffId]) / 60, 2)
+                        : '-';
+                    $avg2 = isset($assignedToClosed[$staffId])
+                        ? round(array_sum($assignedToClosed[$staffId]) / count($assignedToClosed[$staffId]) / 60, 2)
+                        : '-';
+
+                    //echo "Agente {$name}: prom. creado→asignado = $avg1 h, asignado→cerrado = $avg2 h\n";
+
+                    $rows[] = [$name, $avg1 . ' min', $avg2 . ' min'];
+                }
+
+                //echo "</pre>";
+                //echo "\n=== RAW EVENT DATA ===\n";
+                    //foreach ($responseData as $id => $times) {
+                        //echo "thread_id: $id | ";
+                        //echo isset($times['created']) ? "created: {$times['created']} | " : "created: - | ";
+                        //echo isset($times['assigned']) ? "assigned: {$times['assigned']} | " : "assigned: - | ";
+                        //echo isset($times['closed']) ? "closed: {$times['closed']} \n" : "closed: -\n";
+                   // }
+
+                return [
+                    'columns' => [__('Agente'), __('Prom. creado a asignado (min)'), __('Prom. asignado a cerrado (min)')],
+                    'data' => $rows
+                ];
+
             case 'dept':
                 $headers = array(__('Dependencia'));
                 $header = function($row) {
@@ -289,6 +435,7 @@ class OverviewReport {
                 ->filter(array('team_id__gt' => 0))
                 ->distinct('team_id');
             break;
+       
        case 'staff':
             $headers = array(__('Agent'));
             $header = function($row) {
