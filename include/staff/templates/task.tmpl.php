@@ -46,7 +46,7 @@ if ($info['error']) {
             <tr id="dept-alert" style="display:none;">
                 <td colspan="2">
                     <div class="alert" style="color: red; font-weight: bold;">
-                        ⚠ Este departamento requiere autorización especial.
+                        ⚠ Para solicitudes asociadas al servicio de transmisiones via Streaming de RITA, se solicita realizarlas con un mínimo de tres (3) días hábiles anteriores al día del evento. De igual manera, RITA no se hace responsable por los contenidos o información publicada o utilizada en el desarrollo del evento a transmitir.
                     </div>
                 </td>
             </tr>
