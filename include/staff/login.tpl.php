@@ -17,6 +17,80 @@ if ($thisstaff && $thisstaff->is2FAPending())
         <img src="logo.php?login" alt="Iris :: <?php echo __('Sistema Integrado de Solicitudes y Trámites');?>" />
     </a></h1>
     <h3 id="login-message"><?php echo Format::htmlchars($msg); ?></h3>
+
+<div>
+    <!-- === MANUALES === -->
+<p style="text-align:center; margin:8px 0 0;">
+  <a href="#" id="open-manuals">Manuales</a>
+</p>
+
+<div id="manuals-overlay" style="display:none; position:fixed; inset:0; background: rgba(0,0,0,.6); z-index: 9999;">
+  <div class="manuals-modal" style="position:relative; margin:8vh auto; background:#fff; width:90%; max-width:540px; border-radius:8px; overflow:hidden; box-shadow:0 10px 30px rgba(0,0,0,.3);">
+    <button type="button" id="manuals-close" aria-label="Cerrar" style="position:absolute; top:8px; right:10px; border:0; background:transparent; font-size:24px; cursor:pointer; line-height:1;">×</button>
+    <div style="padding:12px 16px; font-weight:bold; border-bottom:1px solid #e5e5e5;">Manuales disponibles</div>
+    <ul id="manuals-list" style="list-style:none; margin:0; padding:0; max-height:60vh; overflow:auto;"></ul>
+    <div style="padding:8px 12px; font-size:12px; border-top:1px solid #e5e5e5;">Los enlaces se abren en una pestaña nueva.</div>
+  </div>
+</div>
+
+<script>
+(function(){
+  var manuals = [
+    { name: 'Presentación del sistema', url: 'https://bit.ly/453Khom' },
+    { name: 'Administrador de dependencia solicitante', url: 'https://bit.ly/3ZozxiX' },
+    { name: 'Administrador dependencia destinataria', url: 'https://bit.ly/3ZiOClX' },
+    { name: 'Agente dependencia destinataria', url: 'https://bit.ly/3ZiJoGZ' },
+    { name: '1. Que es Iris y como funciona', url: 'https://youtu.be/gD435cI9w-s?si=crlFH9ViY55W29yW' },
+    { name: '2. ¿Cómo crear tus tareas en IRIS?', url: 'https://www.youtube.com/watch?v=wVDBDdIeRR8' },
+    { name: '3. Asignar tareas en IRIS desde el rol de Administrador', url: 'https://www.youtube.com/watch?v=TYaWn3V1gew&t=15s' },
+    { name: '4. ¿Cómo consultar y dar respuesta a tus tareas en IRIS?', url: 'https://www.youtube.com/watch?v=H0WmBmFZwE8&t=1s' },
+    { name: '5. ¿Cómo enviar y cerrar tus tareas en IRIS?', url: 'https://www.youtube.com/watch?v=DJKAGKjFoVk' },
+    { name: '6. Exportar datos en IRIS.', url: 'https://youtu.be/-JcspMWd2h8' }
+  ];
+
+  var $ = function(id){ return document.getElementById(id); };
+  var openBtn = $('open-manuals');
+  var overlay = $('manuals-overlay');
+  var listEl  = $('manuals-list');
+  var closeBtn= $('manuals-close');
+
+  function renderList() {
+    listEl.innerHTML = '';
+    manuals.forEach(function(m){
+      var li = document.createElement('li');
+      li.style.margin = '0';
+      var a = document.createElement('a');
+      a.href = m.url;
+      a.target = '_blank';
+      a.rel = 'noopener noreferrer';
+      a.textContent = m.name;
+      a.style.display = 'block';
+      a.style.padding = '10px 16px';
+      a.style.textDecoration = 'none';
+      a.style.borderBottom = '1px solid #f0f0f0';
+      li.appendChild(a);
+      listEl.appendChild(li);
+    });
+  }
+
+  function open()  { overlay.style.display = 'block'; }
+  function close() { overlay.style.display = 'none'; }
+
+  if (openBtn) openBtn.addEventListener('click', function(e){ e.preventDefault(); open(); });
+  if (closeBtn) closeBtn.addEventListener('click', close);
+  overlay.addEventListener('click', function(e){ if (e.target === overlay) close(); });
+  document.addEventListener('keydown', function(e){ if (e.key === 'Escape') close(); });
+
+  renderList();
+})();
+</script>
+<!-- === /MANUALES === -->
+
+
+</div>   
+
+<div class="banner"><small><?php echo ($content) ? Format::display($content->getLocalBody()) : ''; ?></small></div>
+
     <div class="banner"><small><?php echo ($content) ? Format::display($content->getLocalBody()) : ''; ?></small></div>
     <div id="loading" style="display:none;" class="dialog">
         <h1><i class="icon-spinner icon-spin icon-large"></i>
