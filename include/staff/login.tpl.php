@@ -36,10 +36,6 @@ if ($thisstaff && $thisstaff->is2FAPending())
 <script>
 (function(){
   var manuals = [
-    { name: 'Presentación del sistema', url: 'https://bit.ly/453Khom' },
-    { name: 'Administrador de dependencia solicitante', url: 'https://bit.ly/3ZozxiX' },
-    { name: 'Administrador dependencia destinataria', url: 'https://bit.ly/3ZiOClX' },
-    { name: 'Agente dependencia destinataria', url: 'https://bit.ly/3ZiJoGZ' },
     { name: '1. Que es Iris y como funciona', url: 'https://youtu.be/gD435cI9w-s?si=crlFH9ViY55W29yW' },
     { name: '2. ¿Cómo crear tus tareas en IRIS?', url: 'https://www.youtube.com/watch?v=wVDBDdIeRR8' },
     { name: '3. Asignar tareas en IRIS desde el rol de Administrador', url: 'https://www.youtube.com/watch?v=TYaWn3V1gew&t=15s' },
