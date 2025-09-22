@@ -31,8 +31,11 @@ if ($info['topicId'] && ($topic=Topic::lookup($info['topicId']))) {
 }
 
 ?>
-<h1><?php echo __('Open a New Ticket');?></h1>
-<p><?php echo __('Please fill in the form below to open a new ticket.');?></p>
+<h1><?php echo __('Abrir una nueva solicitud');?></h1>
+<p><?php echo __('Por favor, complete el siguiente formulario para crear una nueva solicitud.');?></p>
+<a href="https://udistritaleduco-my.sharepoint.com/:i:/g/personal/computo_udistrital_edu_co/EcJbx6wH5G5FnX_oY1G_O6IBnMsBeIoR6QI74oX77qWP_A?e=n2MjVv" target="_blank" rel="noopener noreferrer">
+<?php echo __('Ver buenas prácticas de uso de IRIS'); ?>
+  </a>
 <form id="ticketForm" method="post" action="open.php" enctype="multipart/form-data">
   <?php csrf_token(); ?>
   <input type="hidden" name="a" value="open">
@@ -55,7 +58,7 @@ if ($info['topicId'] && ($topic=Topic::lookup($info['topicId']))) {
     <tbody>
     <tr><td colspan="2"><hr />
         <div class="form-header" style="margin-bottom:0.5em">
-        <b><?php echo __('Help Topic'); ?></b>
+        <b><?php echo __('Dependencia a la cual desea remitir la solicitud'); ?></b>
         </div>
     </td></tr>
     <tr>
@@ -72,7 +75,7 @@ if ($info['topicId'] && ($topic=Topic::lookup($info['topicId']))) {
                           $(document.head).append(json.media);
                         }
                       });">
-                <option value="" selected="selected">&mdash; <?php echo __('Select a Help Topic');?> &mdash;</option>
+                <option value="" selected="selected">&mdash; <?php echo __('Seleccione ');?> &mdash;</option>
                 <?php
                 if($topics=Topic::getPublicHelpTopics()) {
                     foreach($topics as $id =>$name) {
@@ -115,7 +118,7 @@ if ($info['topicId'] && ($topic=Topic::lookup($info['topicId']))) {
   </table>
 <hr/>
   <p class="buttons" style="text-align:center;">
-        <input type="submit" value="<?php echo __('Create Ticket');?>">
+        <input type="submit" value="<?php echo __('Crear solicitud');?>">
         <input type="reset" name="reset" value="<?php echo __('Reset');?>">
         <input type="button" name="cancel" value="<?php echo __('Cancel'); ?>" onclick="javascript:
             $('.richtext').each(function() {
