@@ -1169,6 +1169,11 @@ class Task extends TaskModel implements RestrictedAccess, Threadable {
         $type = array('type' => 'note');
         Signal::send('object.created', $this, $type);
 
+        if ($this->isClosed()) {
+                $this->reopen();
+                $this->save();
+        }
+
         return $note;
     }
 
