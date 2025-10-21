@@ -149,7 +149,8 @@ if (($all_langs = Internationalization::getConfiguredSystemLanguages())
         </div>
         <div class="clear"></div>
         <?php
-        if($nav){ ?>
+        /*if($nav){ ?>
+        
         <ul id="nav" class="flush-left">
             <?php
             if($nav && ($navs=$nav->getNavLinks()) && is_array($navs)){
@@ -162,7 +163,7 @@ if (($all_langs = Internationalization::getConfiguredSystemLanguages())
         }else{ ?>
          <hr>
         <?php
-        } ?>
+        } */?>
         <div id="content">
 
          <?php if($errors['err']) { ?>
