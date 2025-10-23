@@ -141,21 +141,36 @@
     if ($cfg->isKnowledgebaseEnabled()
         && ($faqs = FAQ::getFeatured()->select_related('category')->limit(5))
         && $faqs->all()) { ?>
-      <section>
-        <div class="header">Preguntas destacadas</div>
-        <?php foreach ($faqs as $F) { ?>
-          <div>
-            <a href="<?php echo ROOT_PATH; ?>kb/faq.php?id=<?php
-              echo urlencode($F->getId()); ?>">
-              <?php echo $F->getLocalQuestion(); ?>
-            </a>
-          </div>
-        <?php } ?>
-      </section>
+        <section>
+            <div class="header">Acerca de Iris</div>
+
+            <div>
+                <a href="https://www.youtube.com/watch?v=gD435cI9w-s" target="_blank" rel="noopener noreferrer">¿Qué es Iris?</a>
+            </div>
+
+            <div>
+                <a href="https://www.youtube.com/watch?v=wVDBDdIeRR8" target="_blank" rel="noopener noreferrer">¿Cómo crear tus tareas en IRIS?</a>
+            </div>
+
+            <div>
+                <a href="https://www.youtube.com/watch?v=TYaWn3V1gew&t=15s" target="_blank" rel="noopener noreferrer">Asignar tareas en IRIS desde el rol de Administrador</a>
+            </div>
+
+            <div>
+                <a href="https://www.youtube.com/watch?v=H0WmBmFZwE8&t=1s" target="_blank" rel="noopener noreferrer">¿Cómo consultar y dar respuesta a tus tareas en IRIS?</a>
+            </div>
+
+            <div>
+                <a href="https://www.youtube.com/watch?v=DJKAGKjFoVk" target="_blank" rel="noopener noreferrer">¿Cómo enviar y cerrar tus tareas en IRIS?</a>
+            </div>
+
+            <div>
+                <a href="https://youtu.be/-JcspMWd2h8" target="_blank" rel="noopener noreferrer">¿Cómo exportar el listado de tus tareas en IRIS?</a>
+            </div>
+        </section>
     <?php } ?>
 
     <?php
-    // 🔹 CORRECCIÓN DEL BLOQUE DE "OTROS RECURSOS"
     $resources = Page::getActivePages()->filter(array('type'=>'other'));
     if ($resources->all()) { ?>
       <section>
