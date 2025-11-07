@@ -124,13 +124,13 @@
         if ($cfg->getClientRegistrationMode() != 'disabled'
             || !$cfg->isClientLoginRequired()) { ?>
           <a href="open.php" class="blue button">
-            <i class="fa fa-plus-circle"></i> Crear nueva solicitud
+            <i class="fa fa-plus-circle"></i> Crear nueva solicitud docentes y estudiantes
           </a>
         <?php } ?>
       </p>
       <p>
         <a href="view.php" class="green button">
-          <i class="fa fa-search"></i> Consultar estado solicitud
+          <i class="fa fa-search"></i> Consultar estado solicitud docentes y estudiantes
         </a>
       </p>
     </div>

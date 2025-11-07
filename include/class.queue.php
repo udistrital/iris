@@ -898,8 +898,14 @@ class CustomQueue extends VerySimpleModel {
             $root = $this->getRoot();
             $query = $root::objects();
         }
-        return $this->mangleQuerySet($query);
+        $qs = $this->mangleQuerySet($query);
+
+        // 🔧 Sanitizar para evitar claves numéricas conflictivas
+        self::_sanitizeQuerySet($qs);
+
+        return $qs;
     }
+
 
     /**
      * Retrieve a QuerySet instance based on the type of object (root) of
@@ -918,8 +924,7 @@ class CustomQueue extends VerySimpleModel {
             && ($qf = $this->getQuickFilterField($quick_filter))
         ) {
             $filter = @self::getOrmPath($this->getQuickFilter(), $query);
-            $query = $qf->applyQuickFilter($query, $quick_filter,
-                $filter);
+            $query = $qf->applyQuickFilter($query, $quick_filter, $filter);
         }
 
         // Apply column, annotations and conditions additions
@@ -927,6 +932,10 @@ class CustomQueue extends VerySimpleModel {
             $C->setQueue($this);
             $query = $C->mangleQuery($query, $this->getRoot());
         }
+
+        // 🔧 Sanitizar para evitar claves numéricas conflictivas
+        self::_sanitizeQuerySet($query);
+
         return $query;
     }
 
@@ -952,6 +961,47 @@ class CustomQueue extends VerySimpleModel {
             return $f;
         }
     }
+
+    /** 
+ * Normaliza un objeto Q para evitar claves numéricas que acaben
+ * tratándose como columnas (p.ej. A1.`0`). 
+ */
+ function _sanitizeQ(/* Q */ $q) {
+    if (!is_object($q) || get_class($q) !== 'Q') return;
+
+    if (isset($q->constraints) && is_array($q->constraints)) {
+        $new = array();
+        foreach ($q->constraints as $k => $v) {
+            // Si es un índice entero y no es un Q, descártalo (problemático)
+            if (is_int($k) && !(is_object($v) && get_class($v) === 'Q')) {
+                continue;
+            }
+            // Mantén el elemento
+            $new[$k] = $v;
+
+            // Sanea recursivamente si es Q
+            if (is_object($v) && get_class($v) === 'Q') {
+                self::_sanitizeQ($v);
+            }
+        }
+        $q->constraints = $new;
+    }
+}
+
+/**
+ * Recorre un QuerySet y sanea todos los Q internos.
+ */
+ function _sanitizeQuerySet(/* QuerySet */ $qs) {
+    if (!is_object($qs)) return;
+    if (isset($qs->constraints) && is_array($qs->constraints)) {
+        foreach ($qs->constraints as $idx => $q) {
+            if (is_object($q) && get_class($q) === 'Q') {
+                self::_sanitizeQ($q);
+            }
+        }
+    }
+}
+
 
     /**
      * Get a description of a field in a search. Expects an entry from the
