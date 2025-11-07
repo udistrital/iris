@@ -24,12 +24,34 @@ require_once(INCLUDE_DIR.'class.dynamic_forms.php');
 require_once(INCLUDE_DIR.'class.export.php');       // For paper sizes
 
 
-
 // Fetch ticket queues organized by root and sub-queues
-$queues = CustomQueue::getHierarchicalQueues($thisstaff);
+//$queues = CustomQueue::getHierarchicalQueues($thisstaff);
+
+
+// --- FILTRO POR ORIGEN ---
+$source = isset($_GET['source']) ? strtolower($_GET['source']) : null;
+
+//echo "<pre style='color:#0a0;background:#111;padding:5px;'>DEBUG: source = " . htmlspecialchars($source) . "</pre>";
+//error_log("DEBUG (tickets.php): source = " . $source);
+
+global $filter_source;
+$filter_source = null;
+
+if ($source == 'web') {
+    //echo "<pre style='color:#0ff;background:#222;padding:5px;'>DEBUG: Filtrando solo tickets Web</pre>";
+    error_log("DEBUG (tickets.php): Filtrando solo tickets Web");
+    $filter_source = array('source' => 'Web');
+} elseif ($source == '!web') {
+    //echo "<pre style='color:#ff0;background:#222;padding:5px;'>DEBUG: Filtrando tickets NO Web</pre>";
+    error_log("DEBUG (tickets.php): Filtrando tickets NO Web");
+    $filter_source = array('source' => 'Email');
+}
+
+
+
 
 $page='';
-$ticket = $user = null; //clean start.
+$ticket = $user = null; 
 $redirect = false;
 //LOCKDOWN...See if the id provided is actually valid and if the user has access.
 if(isset($_REQUEST['id']) || isset($_REQUEST['number'])) {
@@ -39,7 +61,7 @@ if(isset($_REQUEST['id']) || isset($_REQUEST['number'])) {
          $errors['err']=sprintf(__('%s: Unknown or invalid number.'), __('ticket'));
      elseif(!$ticket || !$ticket->checkStaffPerm($thisstaff)) {
          $errors['err']=__('Access denied. Contact admin if you believe this is in error');
-         $ticket=null; //Clear ticket obj.
+         $ticket=null; 
      }
 }
 
@@ -465,52 +487,65 @@ if (isset($_GET['clear_filter']))
 
 //Navigation
 $nav->setTabActive('tickets');
-$nav->addSubNavInfo('jb-overflowmenu', 'customQ_nav');
+// Nueva navegación estilo Tareas
+include STAFFINC_DIR . 'templates/task-navigation.tmpl.php';
+
+//$nav->addSubNavInfo('jb-overflowmenu', 'customQ_nav');
 
 // Start with all the top-level (container) queues
-foreach ($queues as $_) {
-    list($q, $children) = $_;
-    if ($q->isPrivate())
-        continue;
-    $nav->addSubMenu(function() use ($q, $queue, $children) {
+//foreach ($queues as $_) {
+  //  list($q, $children) = $_;
+  //  if ($q->isPrivate())
+  //      continue;
+   // $nav->addSubMenu(function() use ($q, $queue, $children) {
         // A queue is selected if it is the one being displayed. It is
         // "child" selected if its ID is in the path of the one selected
-        $_selected = ($queue && $queue->getId() == $q->getId());
-        $child_selected = $queue
-            && ($queue->parent_id == $q->getId()
-                || false !== strpos($queue->getPath(), "/{$q->getId()}/"));
-        include STAFFINC_DIR . 'templates/queue-navigation.tmpl.php';
+      //  $_selected = ($queue && $queue->getId() == $q->getId());
+     //   $child_selected = $queue
+        //    && ($queue->parent_id == $q->getId()
+        //        || false !== strpos($queue->getPath(), "/{$q->getId()}/"));
+       // include STAFFINC_DIR . 'templates/queue-navigation.tmpl.php';
 
-        return ($child_selected || $_selected);
-    });
-}
+       // return ($child_selected || $_selected);
+    //});
+//}
 
 // Add my advanced searches
-$nav->addSubMenu(function() use ($queue) {
-    global $thisstaff;
-    $selected = false;
+//$nav->addSubMenu(function() use ($queue) {
+  //  global $thisstaff;
+    //$selected = false;
     // A queue is selected if it is the one being displayed. It is
     // "child" selected if its ID is in the path of the one selected
-    $child_selected = $queue instanceof SavedSearch;
-    include STAFFINC_DIR . 'templates/queue-savedsearches-nav.tmpl.php';
-    return ($child_selected || $selected);
-});
+    //$child_selected = $queue instanceof SavedSearch;
+    //include STAFFINC_DIR . 'templates/queue-savedsearches-nav.tmpl.php';
+    //return ($child_selected || $selected);
+//});
+// --- SUBNAV estilo tareas ---
+$nav->setTabActive('tickets');
 
+// === SUBNAV SIMPLE: Abiertos / Cerrados con filtro de origen ===
 
+// Mantener el parámetro source en las URLs
+$source = isset($_GET['source']) ? strtolower($_GET['source']) : null;
+$source_param = $source ? "&source=" . urlencode($source) : "";
+
+// Botón de creación (mantiene el source si existe)
 if ($thisstaff->hasPerm(Ticket::PERM_CREATE, false)) {
-    $nav->addSubMenu(array('desc'=>__('New Ticket'),
-                           'title'=> __('Open a New Ticket'),
-                           'href'=>'tickets.php?a=open',
-                           'iconclass'=>'newTicket',
-                           'id' => 'new-ticket'),
-                        (isset($_REQUEST['a']) && $_REQUEST['a']=='open'));
+    $nav->addSubMenu(
+        array(
+            'desc' => __('Nuevo Ticket'),
+            'title' => __('Abrir un nuevo ticket'),
+            'href' => 'tickets.php?a=open' . $source_param,
+            'iconclass' => 'newTicket',
+            'id' => 'new-ticket'
+        ),
+        (isset($_REQUEST['a']) && $_REQUEST['a'] == 'open')
+    );
 }
-
 
 $ost->addExtraHeader('<script type="text/javascript" src="js/ticket.js"></script>');
 $ost->addExtraHeader('<script type="text/javascript" src="js/thread.js"></script>');
-$ost->addExtraHeader('<meta name="tip-namespace" content="tickets.queue" />',
-    "$('#content').data('tipNamespace', 'tickets.queue');");
+//$ost->addExtraHeader('<meta name="tip-namespace" content="tickets.queue" />',"$('#content').data('tipNamespace', 'tickets.queue');");
 
 if($ticket) {
     $ost->setPageTitle(sprintf(__('Ticket #%s'),$ticket->getNumber()));
@@ -557,6 +592,22 @@ if($ticket) {
         // XXX: Check staff access?
         $quick_filter = @$_REQUEST['filter'];
         $tickets = $queue->getQuery(false, $quick_filter);
+        // --- FILTRO FINAL DE TICKETS POR ORIGEN ---
+        global $filter_source;
+        if (isset($filter_source) && $filter_source) {
+            //echo "<pre style='color:#9ff;background:#222;padding:5px;'>DEBUG: Aplicando filtro final...</pre>";
+            error_log("DEBUG (tickets.php): Aplicando filtro final");
+
+            try {
+                $tickets = $tickets->filter($filter_source);
+                //echo "<pre style='color:#0f0;background:#111;padding:5px;'>DEBUG: Filtro aplicado correctamente (" . json_encode($filter_source) . ")</pre>";
+                error_log("DEBUG (tickets.php): Filtro aplicado correctamente " . json_encode($filter_source));
+            } catch (Exception $e) {
+                //echo "<pre style='color:#f00;background:#111;padding:5px;'>DEBUG: Error al aplicar filtro -> " . $e->getMessage() . "</pre>";
+                error_log("DEBUG (tickets.php): Error al aplicar filtro -> " . $e->getMessage());
+            }
+        }
+
     }
 
     //set refresh rate if the user has it configured
