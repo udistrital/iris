@@ -1,46 +1,52 @@
 <?php
-// Calling convention (assumed global scope):
-// $tickets - <QuerySet> with all columns and annotations necessary to
-//      render the full page
+/*************************************************************************
+  queue-tickets.tmpl.php — versión limpia con filtros de estado y origen
+*************************************************************************/
 
-
-// Impose visibility constraints
-// ------------------------------------------------------------
-//filter if limited visibility or if unlimited visibility and in a queue
+// ======================================================
+// 1️⃣ VISIBILIDAD
+// ======================================================
 $ignoreVisibility = $queue->ignoreVisibilityConstraints($thisstaff);
-if (!$ignoreVisibility || //limited visibility
-   ($ignoreVisibility && ($queue->isAQueue() || $queue->isASubQueue())) //unlimited visibility + not a search
-)
+
+if (!$ignoreVisibility ||
+   ($ignoreVisibility && ($queue->isAQueue() || $queue->isASubQueue()))
+) {
     $tickets->filter($thisstaff->getTicketsVisibility());
+}
 
-// do not show children tickets unless agent is doing a search
+// ======================================================
+// 2️⃣ FILTRO DE HIJOS
+// ======================================================
 if ($queue->isAQueue() || $queue->isASubQueue())
-    $tickets->filter(Q::any(
-            array('ticket_pid' => null, 'flags__hasbit' => TICKET::FLAG_LINKED)));
+    $tickets->filter(Q::any(array('ticket_pid' => null, 'flags__hasbit' => TICKET::FLAG_LINKED)));
 
-// Make sure the cdata materialized view is available
+// ======================================================
+// 3️⃣ VISTA CDATA
+// ======================================================
 TicketForm::ensureDynamicDataView();
 
-// Identify columns of output
+// ======================================================
+// 4️⃣ COLUMNAS
+// ======================================================
 $columns = $queue->getColumns();
 
-// Figure out REFRESH url — which might not be accurate after posting a
-// response
-// Remove some variables from query string.
+// ======================================================
+// 5️⃣ REFRESH URL
+// ======================================================
 $qsFilter = ['id'];
 if (isset($_REQUEST['a']) && ($_REQUEST['a'] !== 'search'))
     $qsFilter[] = 'a';
 $refresh_url = Http::refresh_url($qsFilter);
 
-// Establish the selected or default sorting mechanism
+// ======================================================
+// 6️⃣ SORT
+// ======================================================
 if (isset($_GET['sort']) && is_numeric($_GET['sort'])) {
     $sort = $_SESSION['sort'][$queue->getId()] = array(
         'col' => (int) $_GET['sort'],
         'dir' => (int) $_GET['dir'],
     );
-}
-elseif (isset($_GET['sort'])
-    // Drop the leading `qs-`
+} elseif (isset($_GET['sort'])
     && (strpos($_GET['sort'], 'qs-') === 0)
     && ($sort_id = substr($_GET['sort'], 3))
     && is_numeric($sort_id)
@@ -50,68 +56,84 @@ elseif (isset($_GET['sort'])
         'queuesort' => $sort,
         'dir' => (int) $_GET['dir'],
     );
-}
-elseif (isset($_SESSION['sort'][$queue->getId()])) {
+} elseif (isset($_SESSION['sort'][$queue->getId()])) {
     $sort = $_SESSION['sort'][$queue->getId()];
-}
-elseif ($queue_sort = $queue->getDefaultSort()) {
+} elseif ($queue_sort = $queue->getDefaultSort()) {
     $sort = $_SESSION['sort'][$queue->getId()] = array(
         'queuesort' => $queue_sort,
         'dir' => (int) $_GET['dir'] ?? 0,
     );
 }
 
-// Handle current sorting preferences
-
+// ======================================================
+// 7️⃣ APLICAR SORT
+// ======================================================
 $sorted = false;
 foreach ($columns as $C) {
-    // Sort by this column ?
     if (isset($sort['col']) && $sort['col'] == $C->id) {
         $tickets = $C->applySort($tickets, $sort['dir']);
         $sorted = true;
     }
 }
 
-// Apply queue sort if it's not already sorted by a column
 if (!$sorted) {
-    // Apply queue sort-dropdown selected preference
-    if (isset($sort['queuesort']))
+    if (isset($sort['queuesort'])) {
         $sort['queuesort']->applySort($tickets, $sort['dir']);
-    else // otherwise sort by created DESC
+    } else {
         $tickets->order_by('-created');
+    }
 }
 
-// Apply pagination
+// ======================================================
+// 8️⃣ APLICAR FILTROS MANUALES (status y source)
+// ======================================================
+if (!empty($_GET['status'])) {
+    $status = strtolower($_GET['status']);
+    switch ($status) {
+        case 'open':
+        case 'tramite':
+            $tickets->filter(Q::any(['status__state' => 'open']));
+            break;
+        case 'resolved':
+        case 'closed':
+            $tickets->filter(Q::any(['status__state' => 'closed']));
+            break;
+        case 'archived':
+            $tickets->filter(Q::any(['flags__hasbit' => Ticket::FLAG_ARCHIVED]));
+            break;
+        case 'deleted':
+            $tickets->filter(Q::any(['flags__hasbit' => Ticket::FLAG_DELETED]));
+            break;
+    }
+}
 
-$page = (isset($_GET['p']) && is_numeric($_GET['p']))?$_GET['p']:1;
+if (!empty($_GET['source'])) {
+    $src = strtolower($_GET['source']);
+    $negate = str_starts_with($src, '!');
+    $srcValue = ltrim($src, '!');
+    if ($negate) {
+        $tickets->filter(Q::not(['source' => ucfirst($srcValue)]));
+    } else {
+        $tickets->filter(Q::any(['source' => ucfirst($srcValue)]));
+    }
+}
+
+// ======================================================
+// 9️⃣ PAGINACIÓN
+// ======================================================
+$page = (isset($_GET['p']) && is_numeric($_GET['p'])) ? $_GET['p'] : 1;
 $pageNav = new Pagenate(PHP_INT_MAX, $page, PAGE_LIMIT);
 $tickets = $pageNav->paginateSimple($tickets);
 
-if (isset($tickets->extra['tables'])) {
-    // Creative twist here. Create a new query copying the query criteria, sort, limit,
-    // and offset. Then join this new query to the $tickets query and clear the
-    // criteria, sort, limit, and offset from the outer query.
-    $criteria = clone $tickets;
-    $criteria->limit(500);
-    $criteria->annotations = $criteria->related = $criteria->aggregated =
-        $criteria->annotations = $criteria->ordering = [];
-    $tickets->constraints = $tickets->extra = [];
-    $criteria->extra(array('select' => array('relevance' => 'Z1.relevance')));
-    $tickets = $tickets->filter(['ticket_id__in' =>
-            $criteria->values_flat('ticket_id')]);
-    $tickets->order_by(new SqlCode('relevance'), QuerySet::DESC);
-    # Index hint should be used on the $criteria query only
-    $tickets->clearOption(QuerySet::OPT_INDEX_HINT);
-}
-
-$tickets->distinct('ticket_id');
+// ======================================================
+// 🔟 QUERY PRINCIPAL
+// ======================================================
 $Q = $queue->getBasicQuery();
 
 if ($Q->constraints) {
     if (count($Q->constraints) > 1) {
         foreach ($Q->constraints as $value) {
-            if (!$value->constraints)
-                $empty = true;
+            if (!$value->constraints) $empty = true;
         }
     }
 }
@@ -123,7 +145,7 @@ if (($Q->extra && isset($Q->extra['tables'])) || !$Q->constraints || $empty) {
 
 $count = $count ?? $queue->getCount($thisstaff);
 $pageNav->setTotal($count, true);
-$pageNav->setURL('tickets.php', $args);
+$pageNav->setURL('tickets.php', $_GET);
 ?>
 
 <!-- SEARCH FORM START -->
@@ -159,6 +181,40 @@ return false;">
     </form>
 </div>
 <!-- SEARCH FORM END -->
+
+<!-- FILTERS START -->
+<div id="extra_filters" style="margin-top:10px; margin-bottom:15px;">
+  <form action="tickets.php" method="get" class="inline" onsubmit="javascript:
+    $.pjax({
+      url:$(this).attr('action') + '?' + $(this).serialize(),
+      container:'#pjax-container',
+      timeout:2000
+    });
+    return false;">
+    
+    <input type="hidden" name="_pjax" value="#pjax-container" />
+    <input type="hidden" name="queue" value="<?php echo $queue->getId(); ?>" />
+
+    <label for="status_filter"><strong>Estado:</strong></label>
+    <select name="status" id="status_filter" onchange="$(this).closest('form').submit();" style="margin-right:20px;">
+      <option value="">Todos</option>
+      <option value="open"      <?php echo ($_GET['status'] ?? '') == 'open' ? 'selected' : ''; ?>>Abierto</option>
+      <option value="resolved"  <?php echo ($_GET['status'] ?? '') == 'resolved' ? 'selected' : ''; ?>>Resuelto</option>
+      <option value="closed"    <?php echo ($_GET['status'] ?? '') == 'closed' ? 'selected' : ''; ?>>Cerrado</option>
+      <option value="archived"  <?php echo ($_GET['status'] ?? '') == 'archived' ? 'selected' : ''; ?>>Archivado</option>
+      <option value="deleted"   <?php echo ($_GET['status'] ?? '') == 'deleted' ? 'selected' : ''; ?>>Eliminado</option>
+      <option value="tramite"   <?php echo ($_GET['status'] ?? '') == 'tramite' ? 'selected' : ''; ?>>En trámite</option>
+    </select>
+
+    <label for="source_filter"><strong>Origen:</strong></label>
+    <select name="source" id="source_filter" onchange="$(this).closest('form').submit();">
+      <option value="">Todos</option>
+      <option value="web"  <?php echo ($_GET['source'] ?? '') == 'web' ? 'selected' : ''; ?>>Web</option>
+      <option value="!web" <?php echo ($_GET['source'] ?? '') == '!web' ? 'selected' : ''; ?>>No Web</option>
+    </select>
+  </form>
+</div>
+<!-- FILTERS END -->
 
 <div class="clear"></div>
 <div style="margin-bottom:20px; padding-top:5px;">
@@ -196,7 +252,6 @@ return false;">
                             <?php echo __('Add Sub Queue'); ?></a>
                         </li>
 <?php
-
 if ($queue->id > 0 && $queue->isOwner($thisstaff)) { ?>
                         <li class="danger">
                             <a class="no-pjax confirm-action" href="#"
@@ -212,7 +267,6 @@ if ($queue->id > 0 && $queue->isOwner($thisstaff)) { ?>
 
           <div class="pull-right flush-right">
             <?php
-            // TODO: Respect queue root and corresponding actions
             if ($count) {
                 Ticket::agentActions($thisstaff, array('status' => $status ?? null));
             }?>
@@ -266,8 +320,7 @@ foreach ($tickets as $T) {
         list($contents, $styles) = $C->render($T);
         if ($style = $styles ? 'style="'.$styles.'"' : '') {
             echo "<td $style><div $style>$contents</div></td>";
-        }
-        else {
+        } else {
             echo "<td>$contents</td>";
         }
     }
@@ -283,9 +336,9 @@ foreach ($tickets as $T) {
         <a id="selectAll" href="#ckb"><?php echo __('All');?></a>&nbsp;&nbsp;
         <a id="selectNone" href="#ckb"><?php echo __('None');?></a>&nbsp;&nbsp;
         <a id="selectToggle" href="#ckb"><?php echo __('Toggle');?></a>&nbsp;&nbsp;
-        <?php }else{
+        <?php } else {
             echo '<i>';
-            echo $ferror?Format::htmlchars($ferror):__('Query returned 0 results.');
+            echo $ferror ? Format::htmlchars($ferror) : __('Query returned 0 results.');
             echo '</i>';
         } ?>
       </td>
@@ -294,17 +347,14 @@ foreach ($tickets as $T) {
 </table>
 
 <?php
-    if ($count > 0 || $skipCount) { //if we actually had any tickets returned.
-?>  <div>
-      <span class="faded pull-right"><?php echo $pageNav->showing(); ?></span>
-<?php
-        echo __('Page').':'.$pageNav->getPageLinks().'&nbsp;';
-        ?>
-        <a href="#tickets/export/<?php echo $queue->getId(); ?>"
-        id="queue-export" class="no-pjax export"
-            ><?php echo __('Export'); ?></a>
-        <i class="help-tip icon-question-sign" href="#export"></i>
-    </div>
-<?php
-    } ?>
+if ($count > 0 || $skipCount) { ?>
+  <div>
+    <span class="faded pull-right"><?php echo $pageNav->showing(); ?></span>
+    <?php echo __('Page').':'.$pageNav->getPageLinks().'&nbsp;'; ?>
+    <a href="#tickets/export/<?php echo $queue->getId(); ?>"
+       id="queue-export" class="no-pjax export">
+       <?php echo __('Export'); ?></a>
+    <i class="help-tip icon-question-sign" href="#export"></i>
+  </div>
+<?php } ?>
 </form>
