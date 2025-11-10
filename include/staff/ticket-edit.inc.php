@@ -21,7 +21,7 @@ if ($_POST)
         </div>
     </div>
     <?php if (false) {?>
-    <table class="form_table" width="940" border="0" cellspacing="0" cellpadding="2">
+    <table class="form_table" width="1120" border="0" cellspacing="0" cellpadding="2">
         <tbody>
             <tr>
                 <th colspan="2">
@@ -153,13 +153,13 @@ if ($_POST)
     </tbody>
 </table>
 <?php }?>
-<table class="form_table dynamic-forms" width="940" border="0" cellspacing="0" cellpadding="2">
+<table class="form_table dynamic-forms" width="1120" border="0" cellspacing="0" cellpadding="2">
         <?php if ($forms)
             foreach ($forms as $form) {
                 $form->render(array('staff'=>true,'mode'=>'edit','width'=>160,'entry'=>$form));
         } ?>
 </table>
-<table class="form_table" width="940" border="0" cellspacing="0" cellpadding="2">
+<table class="form_table" width="1120" border="0" cellspacing="0" cellpadding="2">
     <tbody>
         <tr>
             <th colspan="2">

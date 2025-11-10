@@ -74,7 +74,7 @@ if ($instances) { ?>
  <?php csrf_token(); ?>
  <input type="hidden" name="do" value="instances-actions" >
  <input type="hidden" id="action" name="a" value="" >
-<table class="form_table fixed" width="940" border="0" cellspacing="0" cellpadding="2">
+<table class="form_table fixed" width="1120" border="0" cellspacing="0" cellpadding="2">
 <thead>
     <tr>
         <th width="28" nowrap></th>
