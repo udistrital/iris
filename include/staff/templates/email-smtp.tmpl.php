@@ -6,7 +6,7 @@ if (isset($errors['smtp_auth'])) {
 }
 ?>
 <div>
- <table class="form_table" width="940" border="0" cellspacing="0" cellpadding="2">
+ <table class="form_table" width="1120" border="0" cellspacing="0" cellpadding="2">
     <tbody>
         <tr>
             <th colspan="2">
