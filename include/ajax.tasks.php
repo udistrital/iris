@@ -161,6 +161,13 @@ class TasksAjaxAPI extends AjaxController {
 
                     $task->postNote($note, $errors, $thisstaff);
                   }
+                  if (isset($originalTask) && $originalTask instanceof Task) {
+                        $originalTask->setStatus(
+                            'closed',
+                            'Cerrada automáticamente al crear la tarea derivada #' . $task->getNumber()
+                        );
+                        $originalTask->save();
+                    }
 
                   Draft::deleteForNamespace('task.add', $thisstaff->getId());
                   Http::response(201, $task->getId());
