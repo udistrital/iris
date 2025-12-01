@@ -33,7 +33,7 @@ $canMarkAnswered = ($isManager || $role->hasPerm(Ticket::PERM_MARKANSWERED)); //
 //Useful warnings and errors the user might want to know!
 if ($ticket->isClosed() && !$ticket->isReopenable())
     $warn = sprintf(
-            __('Current ticket status (%s) does not allow the end user to reply.'),
+            __('Current tarea externa status (%s) does not allow the end user to reply.'),
             $ticket->getStatus());
 elseif ($blockReply)
     $warn = __('Child Tickets do not allow the end user or agent to reply.');
@@ -42,7 +42,7 @@ elseif ($ticket->isAssigned()
             || ($team && !$team->hasMember($thisstaff))
         ))
     $warn.= sprintf('&nbsp;&nbsp;<span class="Icon assignedTicket">%s</span>',
-            sprintf(__('Ticket is assigned to %s'),
+            sprintf(__('tarea externa is assigned to %s'),
                 implode('/', $ticket->getAssignees())
                 ));
 
@@ -91,7 +91,7 @@ if($ticket->isOverdue())
             <div id="action-dropdown-print" class="action-dropdown anchor-right">
               <ul>
                  <li title="PDF File"><a class="no-pjax" target="_blank" href="tickets.php?id=<?php echo $ticket->getId(); ?>&a=print&notes=0&events=0"><i
-                 class="icon-file-text-alt"></i> <?php echo __('Ticket Thread'); ?></a>
+                 class="icon-file-text-alt"></i> <?php echo __('Hilo tarea externa'); ?></a>
                  <li title="PDF File"><a class="no-pjax" target="_blank" href="tickets.php?id=<?php echo $ticket->getId(); ?>&a=print&notes=1&events=0"><i
                  class="icon-file-text-alt"></i> <?php echo __('Thread + Internal Notes'); ?></a>
                  <li title="PDF File"><a class="no-pjax" target="_blank" href="tickets.php?id=<?php echo $ticket->getId(); ?>&a=print&notes=1&events=1"><i
@@ -301,7 +301,7 @@ if($ticket->isOverdue())
         <div class="flush-left">
              <h2><a href="tickets.php?id=<?php echo $ticket->getId(); ?>"
              title="<?php echo __('Reload'); ?>"><i class="icon-refresh"></i>
-             <?php echo sprintf(__('Ticket #%s'), $ticket->getNumber()); ?></a>
+             <?php echo sprintf(__('Tarea externa #%s'), $ticket->getNumber()); ?></a>
             </h2>
         </div>
     </div>
@@ -768,7 +768,7 @@ $tcount = $ticket->getThreadEntries($types) ? $ticket->getThreadEntries($types)-
 ?>
 <ul  class="tabs clean threads" id="ticket_tabs" >
     <li class="active"><a id="ticket-thread-tab" href="#ticket_thread"><?php
-        echo sprintf(__('Ticket Thread (%d)'), $tcount); ?></a></li>
+        echo sprintf(__('Tarea externa Thread (%d)'), $tcount); ?></a></li>
     <li><a id="ticket-tasks-tab" href="#tasks"
             data-url="<?php
         echo sprintf('#tickets/%d/tasks', $ticket->getId()); ?>"><?php
@@ -1007,7 +1007,7 @@ if ($errors['err'] && isset($_POST['a'])) {
                     $replyTypes = array(
                             'all'   =>  __('All Active Recipients'),
                             'user'  =>  sprintf('%s (%s)',
-                                __('Ticket Owner'),
+                                __('tarea externa Owner'),
                                 Format::htmlchars($ticket->getOwner()->getEmail())),
                             'none'  =>  sprintf('&mdash; %s  &mdash;',
                                 __('Do Not Email Reply'))
@@ -1124,7 +1124,7 @@ if ($errors['err'] && isset($_POST['a'])) {
             <?php } ?>
             <tr>
                 <td>
-                    <label><?php echo __('Ticket Status');?>:</label>
+                    <label><?php echo __('Estado de la tarea externa');?>:</label>
                     <?php
                     $outstanding = false;
                     if ($role->hasPerm(Ticket::PERM_CLOSE)
@@ -1224,7 +1224,7 @@ if ($errors['err'] && isset($_POST['a'])) {
             <tr><td colspan="2">&nbsp;</td></tr>
             <tr>
                 <td width="120">
-                    <label><?php echo __('Ticket Status');?>:</label>
+                    <label><?php echo __('EStado de la tarea externa');?>:</label>
                 </td>
                 <td>
                     <div class="faded"></div>
@@ -1263,7 +1263,7 @@ if ($errors['err'] && isset($_POST['a'])) {
  </div>
 </div>
 <div style="display:none;" class="dialog" id="print-options">
-    <h3><?php echo __('Ticket Print Options');?></h3>
+    <h3><?php echo __('Tarea externa Print Options');?></h3>
     <a class="close" href=""><i class="icon-remove-circle"></i></a>
     <hr/>
     <form action="tickets.php?id=<?php echo $ticket->getId(); ?>"
@@ -1317,30 +1317,30 @@ if ($errors['err'] && isset($_POST['a'])) {
         <?php echo sprintf(__('Are you sure you want to <b>claim</b> (self assign) %s?'), __('this ticket'));?>
     </p>
     <p class="confirm-action" style="display:none;" id="answered-confirm">
-        <?php echo __('Are you sure you want to flag the ticket as <b>answered</b>?');?>
+        <?php echo __('Are you sure you want to flag the tarea externa as <b>answered</b>?');?>
     </p>
     <p class="confirm-action" style="display:none;" id="unanswered-confirm">
-        <?php echo __('Are you sure you want to flag the ticket as <b>unanswered</b>?');?>
+        <?php echo __('Are you sure you want to flag the tarea externa as <b>unanswered</b>?');?>
     </p>
     <p class="confirm-action" style="display:none;" id="overdue-confirm">
-        <?php echo __('Are you sure you want to flag the ticket as <font color="red"><b>overdue</b></font>?');?>
+        <?php echo __('Are you sure you want to flag the tarea externa as <font color="red"><b>overdue</b></font>?');?>
     </p>
     <p class="confirm-action" style="display:none;" id="banemail-confirm">
         <?php echo sprintf(__('Are you sure you want to <b>ban</b> %s?'), $ticket->getEmail());?> <br><br>
-        <?php echo __('New tickets from the email address will be automatically rejected.');?>
+        <?php echo __('New tarea externa from the email address will be automatically rejected.');?>
     </p>
     <p class="confirm-action" style="display:none;" id="unbanemail-confirm">
         <?php echo sprintf(__('Are you sure you want to <b>remove</b> %s from ban list?'), $ticket->getEmail()); ?>
     </p>
     <p class="confirm-action" style="display:none;" id="release-confirm">
-        <?php echo sprintf(__('Are you sure you want to <b>unassign</b> ticket from <b>%s</b>?'), $ticket->getAssigned()); ?>
+        <?php echo sprintf(__('Are you sure you want to <b>unassign</b> tarea externa from <b>%s</b>?'), $ticket->getAssigned()); ?>
     </p>
     <p class="confirm-action" style="display:none;" id="changeuser-confirm">
         <span id="msg_warning" style="display:block;vertical-align:top">
         <?php echo sprintf(Format::htmlchars(__('%s <%s> will no longer have access to the ticket')),
             '<b>'.Format::htmlchars($ticket->getName()).'</b>', Format::htmlchars($ticket->getEmail())); ?>
         </span>
-        <?php echo sprintf(__('Are you sure you want to <b>change</b> ticket owner to %s?'),
+        <?php echo sprintf(__('Are you sure you want to <b>change</b> tarea externa owner to %s?'),
             '<b><span id="newuser">this guy</span></b>'); ?>
     </p>
     <p class="confirm-action" style="display:none;" id="delete-confirm">

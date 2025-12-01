@@ -2348,7 +2348,7 @@ implements RestrictedAccess, Threadable, Searchable {
                 'label' => __('Help Topic'),
             )),
             'source' => new TicketSourceChoiceField(array(
-                'label' => __('Ticket Source'),
+                'label' => __('Solicitud'),
             )),
             'isoverdue' => new BooleanField(array(
                 'label' => __('Overdue'),
@@ -2468,8 +2468,8 @@ implements RestrictedAccess, Threadable, Searchable {
         $this->setSort(1);
         $this->setFlag(Ticket::FLAG_LINKED, false);
         $this->save();
-        $this->logEvent('unlinked', array('ticket' => sprintf('Ticket #%s', $parent->getNumber()), 'id' => $parent->getId()));
-        $parent->logEvent('unlinked', array('ticket' => sprintf('Ticket #%s', $this->getNumber()), 'id' => $this->getId()));
+        $this->logEvent('unlinked', array('ticket' => sprintf('Tarea externa #%s', $parent->getNumber()), 'id' => $parent->getId()));
+        $parent->logEvent('unlinked', array('ticket' => sprintf('Tarea externa #%s', $this->getNumber()), 'id' => $this->getId()));
     }
 
     function unlink() {
@@ -2535,8 +2535,8 @@ implements RestrictedAccess, Threadable, Searchable {
                     if ($parent && $parent->getId() != $ticket->getId()) {
                         if (($changeParent) || ($parent->isParent() && $ticket->getMergeType() == 'visual' && !$ticket->isChild()) || //adding to link/merge
                            (!$parent->isParent() && !$ticket->isChild())) { //creating fresh link/merge
-                               $parent->logEvent($eventName, array('ticket' => sprintf('Ticket #%s', $ticket->getNumber()),  'id' => $ticket->getId()));
-                               $ticket->logEvent($eventName, array('ticket' => sprintf('Ticket #%s', $parent->getNumber()),  'id' => $parent->getId()));
+                               $parent->logEvent($eventName, array('ticket' => sprintf('Tarea externa #%s', $ticket->getNumber()),  'id' => $ticket->getId()));
+                               $ticket->logEvent($eventName, array('ticket' => sprintf('Tarea externa #%s', $parent->getNumber()),  'id' => $parent->getId()));
                                if ($ticket->getPid() != $parent->getId())
                                    $ticket->setPid($parent->getId());
                                $parent->setMergeType($tickets['combine'], true);
@@ -3646,7 +3646,7 @@ implements RestrictedAccess, Threadable, Searchable {
             $this->cdata->delete();
 
         // Log delete
-        $log = sprintf(__('Ticket #%1$s deleted by %2$s'),
+        $log = sprintf(__('Tarea externa #%1$s eliminada por %2$s'),
             $this->getNumber(),
             $thisstaff ? $thisstaff->getName() : __('SYSTEM')
         );
@@ -3654,7 +3654,7 @@ implements RestrictedAccess, Threadable, Searchable {
             $log .= sprintf('<hr>%s', $comments);
 
         $ost->logDebug(
-            sprintf( __('Ticket #%s deleted'), $this->getNumber()),
+            sprintf( __('Tarea externa #%s eliminada'), $this->getNumber()),
             $log
         );
         return true;
@@ -3767,7 +3767,7 @@ implements RestrictedAccess, Threadable, Searchable {
 
         $vars['note'] = ThreadEntryBody::clean($vars['note']);
         if ($vars['note'])
-            $this->logNote(_S('Ticket Updated'), $vars['note'], $thisstaff);
+            $this->logNote(_S('Tarea externa actualizada'), $vars['note'], $thisstaff);
 
         // Update dynamic meta-data
         foreach ($forms as $form) {
@@ -4084,7 +4084,7 @@ implements RestrictedAccess, Threadable, Searchable {
             $errors = array(
                 'errno' => 403,
                 'err' => __('This help desk is for use by authorized users only'));
-            $ost->logWarning(_S('Ticket denied'), $message, false);
+            $ost->logWarning(_S('Tarea externa denied'), $message, false);
             return 0;
         };
 
@@ -4117,14 +4117,14 @@ implements RestrictedAccess, Threadable, Searchable {
                 $fields['topicId']  = array('type'=>'int',  'required'=>1, 'error'=>__('Help topic selection is required'));
                 $fields['duedate']  = array('type'=>'date', 'required'=>0, 'error'=>__('Invalid date format - must be MM/DD/YY'));
             case 'api':
-                $fields['source']   = array('type'=>'string', 'required'=>1, 'error'=>__('Indicate ticket source'));
+                $fields['source']   = array('type'=>'string', 'required'=>1, 'error'=>__('Indicate Tarea externa source'));
                 break;
             case 'email':
                 $fields['emailId']  = array('type'=>'int',  'required'=>1, 'error'=>__('Unknown system email'));
                 break;
             default:
                 # TODO: Return error message
-                $errors['err']=$errors['origin'] = __('Invalid ticket origin given');
+                $errors['err']=$errors['origin'] = __('Invalid Tarea externa origin given');
         }
 
         if(!Validator::process($fields, $vars, $errors) && !$errors['err'])
@@ -4182,7 +4182,7 @@ implements RestrictedAccess, Threadable, Searchable {
             }
             catch (RejectedException $ex) {
                 return $reject_ticket(
-                    sprintf(_S('Ticket rejected (%s) by filter "%s"'),
+                    sprintf(_S('Tarea externa rejected (%s) by filter "%s"'),
                     $ex->vars['email'], $ex->getRejectingFilter()->getName())
                 );
             }
@@ -4195,8 +4195,8 @@ implements RestrictedAccess, Threadable, Searchable {
                     && ($openTickets>=$cfg->getMaxOpenTickets()) ) {
 
                 $errors = array('err' => __("You've reached the maximum open tickets allowed."));
-                $ost->logWarning(sprintf(_S('Ticket denied - %s'), $vars['email']),
-                        sprintf(_S('Max open tickets (%1$d) reached for %2$s'),
+                $ost->logWarning(sprintf(_S('Tarea externa denied - %s'), $vars['email']),
+                        sprintf(_S('Max open Tarea externa (%1$d) reached for %2$s'),
                             $cfg->getMaxOpenTickets(), $vars['email']),
                         false);
 
@@ -4218,7 +4218,7 @@ implements RestrictedAccess, Threadable, Searchable {
                     // are still acceptable
                     if (!Organization::forDomain($domain)) {
                         return $reject_ticket(
-                            sprintf(_S('Ticket rejected (%s) (unregistered client)'),
+                            sprintf(_S('Tarea externa rejected (%s) (unregistered client)'),
                                 $vars['email']));
                     }
                 }
@@ -4465,10 +4465,10 @@ implements RestrictedAccess, Threadable, Searchable {
               $oldTicket ? $oldTicket->getNumber() : $oldTask->getNumber());
 
           $note = array(
-                  'title' => __('Ticket Created From Thread Entry'),
+                  'title' => __('Tarea externaCreated From Thread Entry'),
                   'body' => sprintf(__(
                         // %1$s is the word Ticket or Task, %2$s will be a link to it
-                        'This Ticket was created from %1$s %2$s'),
+                        'This Tarea externa was created from %1$s %2$s'),
                         $oldTicket ? __('Ticket') : __('Task'), $link)
                   );
 
@@ -4485,14 +4485,14 @@ implements RestrictedAccess, Threadable, Searchable {
               Format::datetime($_SESSION[':form-data']['timestamp']));
 
           $ticketNote = array(
-              'title' => __('Ticket Created From Thread Entry'),
-              'body' => sprintf(__('Ticket %1$s<br/> Thread Entry: %2$s'),
+              'title' => __('Tarea externa Created From Thread Entry'),
+              'body' => sprintf(__('Tarea externa %1$s<br/> Thread Entry: %2$s'),
                 $ticketLink, $entryLink)
           );
 
           $taskNote = array(
-              'title' => __('Ticket Created From Thread Entry'),
-              'note' => sprintf(__('Ticket %1$s<br/> Thread Entry: %2$s'),
+              'title' => __('Tarea externa Created From Thread Entry'),
+              'note' => sprintf(__('Tarea externa %1$s<br/> Thread Entry: %2$s'),
                 $ticketLink, $entryLink)
           );
 
@@ -4527,7 +4527,7 @@ implements RestrictedAccess, Threadable, Searchable {
             else {
                 // Auto assign staff or team - auto assignment based on filter
                 // rules. Both team and staff can be assigned
-                $username = __('Ticket Filter');
+                $username = __('Tarea externa Filter');
                 if ($vars['staffId'])
                      $ticket->assignToStaff($vars['staffId'], false, true, $username);
                 if ($vars['teamId'])
@@ -4603,7 +4603,7 @@ implements RestrictedAccess, Threadable, Searchable {
             && ($role = $thisstaff->getRole($dept))
             && !$role->hasPerm(Ticket::PERM_CREATE)
         ) {
-            $errors['err'] = sprintf(__('You do not have permission to create a ticket in %s'), __('this department'));
+            $errors['err'] = sprintf(__('You do not have permission to create a Tarea externa in %s'), __('this department'));
             return false;
         }
 
@@ -4629,7 +4629,7 @@ implements RestrictedAccess, Threadable, Searchable {
             ? ($role->hasPerm(Ticket::PERM_ASSIGN) || $role->__new__)
             : $thisstaff->hasPerm(Ticket::PERM_ASSIGN, false)
         )) {
-            $errors['assignId'] = __('Action Denied. You are not allowed to assign/reassign tickets.');
+            $errors['assignId'] = __('Action Denied. You are not allowed to assign/reassign Tarea externa.');
         }
 
         // TODO: Deny action based on selected department.
@@ -4664,7 +4664,7 @@ implements RestrictedAccess, Threadable, Searchable {
         if (!$vars['assignId'] && $vars['note']) {
             if (!$cfg->isRichTextEnabled())
                 $vars['note'] = new TextThreadEntryBody($vars['note']);
-            $ticket->logNote(_S('New Ticket'), $vars['note'], $thisstaff, false);
+            $ticket->logNote(_S('Nueva Tarea externa'), $vars['note'], $thisstaff, false);
         }
 
         if (!$cfg->notifyONNewStaffTicket()
