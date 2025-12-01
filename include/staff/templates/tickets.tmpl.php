@@ -81,7 +81,7 @@ TicketForm::ensureDynamicDataView();
         <?php
         if ($user) { ?>
             <a class="green button action-button" href="tickets.php?a=open&uid=<?php echo $user->getId(); ?>">
-                <i class="icon-plus"></i> <?php print __('Create New Ticket'); ?></a>
+                <i class="icon-plus"></i> <?php print __('Crear Tarea externa'); ?></a>
         <?php
         } ?>
     </div>

@@ -22,7 +22,7 @@ $showing = $pageNav->showing().' '._N('task', 'tasks', $count);
     if ($count) {
         echo '<strong>'.$showing.'</strong>';
     } else {
-        echo sprintf(__('%s does not have any tasks'), $ticket? __('This ticket') :
+        echo sprintf(__('%s does not have any tasks'), $ticket? __('ESta tarea externa') :
                 __('System'));
     }
    ?>
