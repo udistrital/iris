@@ -43,19 +43,19 @@ if ($_POST) {
     Draft::deleteForNamespace('ticket.client.'.substr(session_id(), -12));
     //Ticket::create...checks for errors..
     if(($ticket=Ticket::create($vars, $errors, SOURCE))){
-        $msg=__('Support ticket request created');
+        $msg=__('Solicitud de soporte creada');
         // Drop session-backed form data
         unset($_SESSION[':form-data']);
         //Logged in...simply view the newly created ticket.
         if ($thisclient && $thisclient->isValid()) {
-            // Regenerate session id
+            // Regenerate session idsa
             $thisclient->regenerateSession();
             @header('Location: tickets.php?id='.$ticket->getId());
         } else
             $ost->getCSRF()->rotate();
     }else{
         $errors['err'] = $errors['err'] ?: sprintf('%s %s',
-            __('Unable to create a ticket.'),
+            __('No se puede crear la solicitud'),
             __('Correct any errors below and try again.'));
     }
 }

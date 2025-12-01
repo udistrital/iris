@@ -62,7 +62,7 @@ if ($_POST)
  <input type="hidden" name="a" value="open">
 <div style="margin-bottom:20px; padding-top:5px;">
     <div class="pull-left flush-left">
-        <h2><?php echo __('Open a New Ticket');?></h2>
+        <h2><?php echo __('Abrir una nueva Tarea externa');?></h2>
     </div>
 </div>
  <table class="form_table fixed" width="1120" border="0" cellspacing="0" cellpadding="2">
@@ -192,14 +192,14 @@ if ($_POST)
     <tbody>
         <tr>
             <th colspan="2">
-                <em><strong><?php echo __('Ticket Information and Options');?></strong>:</em>
+                <em><strong><?php echo __('Informacion de la tarea externa');?></strong>:</em>
             </th>
         </tr>
         <tr>
             <input type="hidden" name="source" value="Email">
             <?php if (false) {?>
             <td width="160" class="required">
-                <?php echo __('Ticket Source');?>:
+                <?php echo __('Fuente tarea externa');?>:
             </td>
             <td>
                 <select name="source">
@@ -415,7 +415,7 @@ if ($_POST)
                         ?> draft draft-delete" data-signature="<?php
                         echo Format::viewableImages(Format::htmlchars($signature, true)); ?>"
                     data-signature-field="signature" data-dept-field="deptId"
-                    placeholder="<?php echo __('Initial response for the ticket'); ?>"
+                    placeholder="<?php echo __('Respuesta inicial para la Tarea Externa'); ?>"
                     name="response" id="response" cols="21" rows="8"
                     style="width:80%;" <?php
     list($draft, $attrs) = Draft::getDraftAndDataAttrs('ticket.staff.response', false, $info['response']);
@@ -429,7 +429,7 @@ print $response_form->getField('attachments')->render();
 
                 <table border="0" cellspacing="0" cellpadding="2" width="100%">
             <tr>
-                <td width="100"><?php echo __('Ticket Status');?>:</td>
+                <td width="100"><?php echo __('Estado tarea externa');?>:</td>
                 <td>
                     <select name="statusId">
                     <?php
