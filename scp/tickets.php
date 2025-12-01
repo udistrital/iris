@@ -533,8 +533,8 @@ $source_param = $source ? "&source=" . urlencode($source) : "";
 if ($thisstaff->hasPerm(Ticket::PERM_CREATE, false)) {
     $nav->addSubMenu(
         array(
-            'desc' => __('Nuevo Ticket'),
-            'title' => __('Abrir un nuevo ticket'),
+            'desc' => __('Nueva tarea externa o expediente'),
+            'title' => __('Abrir un nueva tarea externa o expediente'),
             'href' => 'tickets.php?a=open' . $source_param,
             'iconclass' => 'newTicket',
             'id' => 'new-ticket'

@@ -136,7 +136,7 @@ class StaffNav {
                 );
             }
             $this->tabs['tasks'] = array('desc'=>__('Tasks'), 'href'=>'tasks.php', 'title'=>__('Task Queue'));
-            $this->tabs['tickets'] = array('desc'=>__('Tickets'),'href'=>'tickets.php','title'=>__('Ticket Queue'));
+            $this->tabs['tickets'] = array('desc'=>__('Tickets'),'href'=>'tickets.php','title'=>__('Tarea externa Queue'));
 
             $this->tabs['kbase'] = array('desc'=>__('Knowledgebase'),'href'=>'kb.php','title'=>__('Knowledgebase'));
             if (!is_null($this->getRegisteredApps()))
@@ -155,7 +155,7 @@ class StaffNav {
             $subnav=array();
             switch(strtolower($k)){
                 case 'tasks':
-                    $subnav[]=array('desc'=>__('Tasks'), 'href'=>'tasks.php', 'iconclass'=>'Ticket', 'droponly'=>true);
+                    $subnav[]=array('desc'=>__('Tareas externas'), 'href'=>'tasks.php', 'iconclass'=>'Ticket', 'droponly'=>true);
                     break;
                 case 'dashboard':
                     $subnav[]=array('desc'=>__('Dashboard'),'href'=>'dashboard.php','iconclass'=>'logs');
@@ -338,19 +338,19 @@ class UserNav {
             // possible for web clients.
             if ($cfg->getClientRegistrationMode() != 'disabled'
                     || !$cfg->isClientLoginRequired())
-                $navs['new']=array('desc'=>__('Open a New Ticket'),'href'=>'open.php','title'=>'');
+                $navs['new']=array('desc'=>__('Abrir nueva tarea externa'),'href'=>'open.php','title'=>'');
             if($user && $user->isValid()) {
                 if(!$user->isGuest()) {
-                    $navs['tickets']=array('desc'=>sprintf(__('Tickets (%d)'),$user->getNumTickets($user->canSeeOrgTickets())),
+                    $navs['tickets']=array('desc'=>sprintf(__('Tarea externa (%d)'),$user->getNumTickets($user->canSeeOrgTickets())),
                                            'href'=>'tickets.php',
-                                            'title'=>__('Show all tickets'));
+                                            'title'=>__('Mostrar todas las tareas externas'));
                 } else {
                     $navs['tickets']=array('desc'=>__('View Ticket Thread'),
                                            'href'=>sprintf('tickets.php?id=%d',$user->getTicketId()),
-                                           'title'=>__('View ticket status'));
+                                           'title'=>__('Ver tareas externas'));
                 }
             } else {
-                $navs['status']=array('desc'=>__('Check Ticket Status'),'href'=>'view.php','title'=>'');
+                $navs['status']=array('desc'=>__('Ver estado tareas externass'),'href'=>'view.php','title'=>'');
             }
             $this->navs=$navs;
         }
