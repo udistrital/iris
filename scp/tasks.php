@@ -10,6 +10,7 @@
     See LICENSE.TXT for details.
 
     vim: expandtab sw=4 ts=4 sts=4:
+    vi was here
  **********************************************************************/
 
 require('staff.inc.php');
@@ -143,6 +144,163 @@ endif;
 /*... Quick stats ...*/
 $stats = $thisstaff->getTasksStats();
 
+function iris_task_queue_count($queue_name, $thisstaff) {
+    $tasks = Task::objects();
+
+    $staffId = $thisstaff->getId();
+    $deptId = $thisstaff->getDept()->getID();
+    $adminDeptIds = $thisstaff->getAdminDepartments();
+    $status = null;
+
+    switch ($queue_name) {
+        case 'assigned':
+            $status = 'open';
+            $tasks->filter(['staff_id' => $staffId]);
+            break;
+
+        case 'open_me':
+            $tasks->filter([
+                'thread__events__agent' => $staffId,
+                'thread__events__event__name' => 'created',
+            ]);
+            break;
+
+        case 'involved':
+            $tasks->distinct('id');
+            $tasks->filter([
+                'thread__entries__type__in' => ['N','R'],
+                'thread__entries__staff__staff_id' => $staffId,
+                'staff_id__notequal' => $staffId,
+            ]);
+            break;
+
+        case 'thread_me':
+            $tasks->distinct('id');
+            $tasks->filter([
+                'thread__events__agent' => $staffId,
+                'thread__events__event__name' => 'assigned',
+                'thread__events__staff__staff_id__notequal' => $staffId,
+            ]);
+            break;
+
+        case 'closed':
+            $status = 'closed';
+            $tasks->filter(['staff_id' => $staffId]);
+            break;
+
+        case 'transferred_me':
+            $tasks->distinct('id');
+            $tasks->filter([
+                'thread__events__event__name' => 'transferred',
+                'thread__events__agent' => $staffId,
+            ]);
+            break;
+
+        case 'cc':
+            $userId = $thisstaff->getUserIdStaff();
+            if ($userId) {
+                $tasks->filter([
+                    'thread__collaborators__user' => $userId,
+                    'thread__events__event__name' => 'created',
+                    'thread__events__agent__notequal' => $staffId,
+                ]);
+            } else {
+                $tasks->filter(['id' => 0]);
+            }
+            break;
+
+        case 'assigned_mteams':
+            $status = 'open';
+            $tasks->filter(['team_id__in' => $thisstaff->teams->values_flat('team_id')]);
+            break;
+
+        case 'closed_mteams':
+            $status = 'closed';
+            $tasks->filter(['team_id__in' => $thisstaff->teams->values_flat('team_id')]);
+            break;
+
+        case 'created_pairs':
+            if ($teams = $thisstaff->getTeams()) {
+                $pairs = TeamMember::objects()
+                    ->distinct('staff_id')
+                    ->filter([
+                        'team_id__in' => $teams,
+                        'staff_id__notequal' => $staffId,
+                    ])
+                    ->values('staff_id');
+            }
+            if (!$teams || !$pairs) $tasks->filter(['id' => 0]);
+            else $tasks->filter([
+                'thread__events__agent__in' => $pairs,
+                'thread__events__event__name' => 'created',
+            ]);
+            break;
+
+        case 'dept':
+            $tasks->filter(['dept_id__in' => [$adminDeptIds]]);
+            break;
+
+        case 'assigned_dept':
+            $status = 'open';
+            $tasks->filter(['dept_id__in' => [$adminDeptIds]]);
+            break;
+
+        case 'closed_dept':
+            $status = 'closed';
+            $tasks->filter(['dept_id__in' => [$adminDeptIds]]);
+            break;
+
+        case 'created_dep':
+            $tasks->filter([
+                'thread__events__agent__dept_id__in' => [$adminDeptIds],
+                'thread__events__event__name' => 'created',
+            ]);
+            break;
+
+        case 'unassigned_dept':
+            $status = 'open';
+            $tasks->filter(['staff_id' => 0, 'team_id' => 0]);
+            if (count($adminDeptIds)) $tasks->filter(['dept_id__in' => [$adminDeptIds]]);
+            else if ($thisstaff->getLeadedTeams()) $tasks->filter(['dept_id' => $deptId]);
+            else $tasks->filter(['id' => 0]);
+            break;
+
+        case 'unassigned':
+            $status = 'open';
+            $tasks->filter(['staff_id' => 0]);
+            if (count($adminDeptIds)) {
+                $tasks->filter(['dept_id__in' => [$adminDeptIds], 'team_id__gt' => 0]);
+            } else if ($thisstaff->getLeadedTeams()) {
+                $tasks->filter(['team_id__in' => $thisstaff->teams->values_flat('team_id')]);
+            } else {
+                $tasks->filter(['id' => 0]);
+            }
+            break;
+
+        default:
+            $tasks->filter(['id' => 0]);
+    }
+
+    // filtro por estado (open/closed) igual que tasks.inc.php
+    if ($status) {
+        $SQ = new Q(['flags__hasbit' => TaskModel::ISOPEN]);
+        if (!strcasecmp($status, 'closed')) $SQ->negate();
+        $tasks->filter($SQ);
+    }
+
+    // visibilidad igual a include/staff/tasks.inc.php
+    $visibility = Q::any(new Q(['flags__hasbit' => TaskModel::ISOPEN, 'staff_id' => $staffId]));
+    $visibility->add(new Q(['ticket__staff_id' => $staffId, 'ticket__status__state' => 'open']));
+    if (!$thisstaff->showAssignedOnly() && ($depts = $thisstaff->getDepts()))
+        $visibility->add(new Q(['dept_id__in' => $depts]));
+    if (($teams = $thisstaff->getTeams()) && count(array_filter($teams)))
+        $visibility->add(new Q(['team_id__in' => array_filter($teams), 'flags__hasbit' => TaskModel::ISOPEN]));
+    $tasks->filter(new Q($visibility));
+
+    return (int) $tasks->count();
+}
+
+
 // Clear advanced search upon request
 if (isset($_GET['clear_filter']))
     unset($_SESSION['advsearch:tasks']);
@@ -175,15 +333,18 @@ $open_name = _P(
     'assigned'
 ); // cambio de nombre a la cola
 
+$assignedCount = iris_task_queue_count('assigned', $thisstaff);
+
 $nav->addSubMenu(
-    array(
-        'desc' => __('Asignados a mí'),
-        'title' => __('Casos asignados'),
-        'href' => 'tasks.php?status=assigned',
-        'iconclass' => 'assignedTickets'
-    ),
-    ($_REQUEST['status'] == 'assigned')
+  array(
+    'desc' => sprintf('%s (%s)', __('Asignados a mí'), number_format($assignedCount)),
+    'title' => __('Casos asignados'),
+    'href' => 'tasks.php?status=assigned',
+    'iconclass' => 'assignedTickets'
+  ),
+  ($_REQUEST['status'] == 'assigned')
 );
+
 
 $nav->addSubMenu(
     array(
@@ -235,27 +396,28 @@ $nav->addSubMenu(
     ($_REQUEST['status'] == 'transferred_me')
 );
 
+$ccCount = iris_task_queue_count('cc', $thisstaff);
 $nav->addSubMenu(
     array(
-        'desc' => __('Con Copia'),
-        'title' => __('Casos con copia a mí'),
-        'href' => 'tasks.php?status=cc',
-        'iconclass' => 'closedTickets'
+        'desc'      => sprintf('%s (%s)', __('Con Copia'), number_format($ccCount)),
+        'title'     => __('Casos con copia a mí'),
+        'href'      => 'tasks.php?status=cc',
+        'iconclass' => 'closedTickets',
     ),
-    ($_REQUEST['status'] == 'cc')
+    (isset($_REQUEST['status']) && $_REQUEST['status'] == 'cc')
 );
 
 // Queue for team members
 if ($thisstaff->getTeams()) {
+    $myTeamsCount = iris_task_queue_count('assigned_mteams', $thisstaff);
     $nav->addSubMenu(
         array(
-            'desc' => __('Mis equipos'),
-            'title' => __('Casos asignados a mis equipos'),
-            'href' => 'tasks.php?status=assigned_mteams',
-            'class' => 'team_queue',
-            'iconclass' => 'teams'
+            'desc'      => sprintf('%s (%s)', __('Mis equipos'), number_format($myTeamsCount)),
+            'title'     => __('Casos asignados a mis equipos'),
+            'href'      => 'tasks.php?status=assigned_mteams',
+            'iconclass' => 'teams',
         ),
-        ($_REQUEST['status'] == 'assigned_mteams')
+        (isset($_REQUEST['status']) && $_REQUEST['status'] == 'assigned_mteams')
     );
 
     $nav->addSubMenu(
@@ -352,26 +514,26 @@ if ($thisstaff->getManagedDepartments()) {
 }
 
 if (count($thisstaff->getAdminDepartments()) || $thisstaff->getLeadedTeams()) {
+    $unassignedDeptCount = iris_task_queue_count('unassigned_dept', $thisstaff);
     $nav->addSubMenu(
         array(
-            'desc' => __('Sin Revisar'),
-            'title' => __('Casos sin asignar en mi dependencia'),
-            'href' => 'tasks.php?status=unassigned_dept',
-            'class' => 'admin_queue',
-            'iconclass' => 'overdueTickets'
+            'desc'      => sprintf('%s (%s)', __('Sin Revisar'), number_format($unassignedDeptCount)),
+            'title'     => __('Casos sin asignar en mi dependencia'),
+            'href'      => 'tasks.php?status=unassigned_dept',
+            'iconclass' => 'overdueTickets',
         ),
-        ($_REQUEST['status'] == 'unassigned_dept')
+        (isset($_REQUEST['status']) && $_REQUEST['status'] == 'unassigned_dept')
     );
 
+    $unassignedCount = iris_task_queue_count('unassigned', $thisstaff);
     $nav->addSubMenu(
         array(
-            'desc' => __('Sin asignar'),
-            'title' => __('Casos sin asignar a un agente'),
-            'href' => 'tasks.php?status=unassigned',
-            'class' => 'admin_queue',
-            'iconclass' => 'overdueTickets'
+            'desc'      => sprintf('%s (%s)', __('Sin asignar'), number_format($unassignedCount)),
+            'title'     => __('Casos sin asignar a un agente'),
+            'href'      => 'tasks.php?status=unassigned',
+            'iconclass' => 'overdueTickets',
         ),
-        ($_REQUEST['status'] == 'unassigned')
+        (isset($_REQUEST['status']) && $_REQUEST['status'] == 'unassigned')
     );
 }
 
