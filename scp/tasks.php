@@ -157,13 +157,33 @@ function iris_task_queue_count($queue_name, $thisstaff) {
             $status = 'open';
             $tasks->filter(['staff_id' => $staffId]);
             break;
-
         case 'open_me':
+            $status = 'open';  
             $tasks->filter([
                 'thread__events__agent' => $staffId,
                 'thread__events__event__name' => 'created',
             ]);
             break;
+
+        case 'cc':
+            $status = 'open';  
+            $userId = $thisstaff->getUserIdStaff();
+            if ($userId) {
+                $tasks->filter([
+                    'thread__collaborators__user' => $userId,
+                    'thread__events__event__name' => 'created',
+                    'thread__events__agent__notequal' => $staffId,
+                ]);
+            } else {
+                $tasks->filter(['id' => 0]);
+            }
+            break;
+
+        case 'dept':
+            $status = 'open';  
+            $tasks->filter(['dept_id__in' => [$adminDeptIds]]);
+            break;
+
 
         case 'involved':
             $tasks->distinct('id');
@@ -196,18 +216,6 @@ function iris_task_queue_count($queue_name, $thisstaff) {
             ]);
             break;
 
-        case 'cc':
-            $userId = $thisstaff->getUserIdStaff();
-            if ($userId) {
-                $tasks->filter([
-                    'thread__collaborators__user' => $userId,
-                    'thread__events__event__name' => 'created',
-                    'thread__events__agent__notequal' => $staffId,
-                ]);
-            } else {
-                $tasks->filter(['id' => 0]);
-            }
-            break;
 
         case 'assigned_mteams':
             $status = 'open';
@@ -234,10 +242,6 @@ function iris_task_queue_count($queue_name, $thisstaff) {
                 'thread__events__agent__in' => $pairs,
                 'thread__events__event__name' => 'created',
             ]);
-            break;
-
-        case 'dept':
-            $tasks->filter(['dept_id__in' => [$adminDeptIds]]);
             break;
 
         case 'assigned_dept':
@@ -346,14 +350,15 @@ $nav->addSubMenu(
 );
 
 
+$createdByMeOpen = iris_task_queue_count('open_me', $thisstaff);
 $nav->addSubMenu(
     array(
-        'desc' => __('Creados por mí'),
-        'title' => __('Casos abiertos y cerrados'),
-        'href' => 'tasks.php?status=open_me',
-        'iconclass' => 'assignedTickets'
+        'desc'      => sprintf('%s (%s)', __('Creados por mí'), number_format($createdByMeOpen)),
+        'title'     => __('Casos abiertos (creados por mí)'),
+        'href'      => 'tasks.php?status=open_me',
+        'iconclass' => 'assignedTickets',
     ),
-    ($_REQUEST['status'] == 'open_me')
+    (isset($_REQUEST['status']) && $_REQUEST['status'] == 'open_me')
 );
 
 $nav->addSubMenu(
@@ -396,11 +401,11 @@ $nav->addSubMenu(
     ($_REQUEST['status'] == 'transferred_me')
 );
 
-$ccCount = iris_task_queue_count('cc', $thisstaff);
+$ccOpen = iris_task_queue_count('cc', $thisstaff);
 $nav->addSubMenu(
     array(
-        'desc'      => sprintf('%s (%s)', __('Con Copia'), number_format($ccCount)),
-        'title'     => __('Casos con copia a mí'),
+        'desc'      => sprintf('%s (%s)', __('Con Copia'), number_format($ccOpen)),
+        'title'     => __('Casos abiertos con copia a mí'),
         'href'      => 'tasks.php?status=cc',
         'iconclass' => 'closedTickets',
     ),
@@ -444,15 +449,15 @@ if ($thisstaff->getTeams()) {
 }
 
 if (count($thisstaff->getAdminDepartments())) {
+    $deptOpen = iris_task_queue_count('dept', $thisstaff);
     $nav->addSubMenu(
         array(
-            'desc' => __('Todo dependencia'),
-            'title' => __('Todos los casos en Mi Dependencia'),
-            'href' => 'tasks.php?status=dept',
-            'class' => 'admin_queue',
-            'iconclass' => 'assignedTickets'
+            'desc'      => sprintf('%s (%s)', __('Todo dependencia'), number_format($deptOpen)),
+            'title'     => __('Todos los casos abiertos en Mi Dependencia'),
+            'href'      => 'tasks.php?status=dept',
+            'iconclass' => 'assignedTickets',
         ),
-        ($_REQUEST['status'] == 'dept')
+        (isset($_REQUEST['status']) && $_REQUEST['status'] == 'dept')
     );
 
     $nav->addSubMenu(
