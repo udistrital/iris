@@ -111,7 +111,8 @@ $(function() {
         type: 'GET',
         dataType: 'json',
         success: function(data) {
-            if (!data || data.length === 0) return;
+            if (!data || !data.tasks || data.tasks.length === 0) return;
+            var tasks = data.tasks;
 
             var html = '<div id="weekly-summary-banner" style="'
                 + 'background:#eef4fb;border:1px solid #b8d4ee;border-radius:4px;'
@@ -119,8 +120,8 @@ $(function() {
                 + '<div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:8px;">'
                 + '<span style="font-weight:bold;font-size:14px;color:#1a3e5c;">'
                 + '<i class="icon-tasks"></i> Resumen semanal: '
-                + data.length + ' tarea' + (data.length !== 1 ? 's' : '')
-                + ' creada' + (data.length !== 1 ? 's' : '')
+                + tasks.length + ' tarea' + (tasks.length !== 1 ? 's' : '')
+                + ' creada' + (tasks.length !== 1 ? 's' : '')
                 + ' en los últimos 7 días</span>'
                 + '<button type="button" id="dismiss-weekly-summary" style="'
                 + 'background:#2a6496;color:#fff;border:none;border-radius:3px;'
@@ -136,7 +137,7 @@ $(function() {
                 + '<th style="padding:6px 8px;text-align:left;border-bottom:1px solid #d0d8e0;">Última actualización</th>'
                 + '</tr></thead><tbody>';
 
-            $.each(data, function(i, t) {
+            $.each(tasks, function(i, t) {
                 var bg = (i % 2 === 0) ? '#fff' : '#f8fafb';
                 html += '<tr style="background:' + bg + ';">';
                 html += '<td style="padding:5px 8px;border-bottom:1px solid #eaeef2;">'
