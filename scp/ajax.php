@@ -218,6 +218,7 @@ $dispatcher = patterns('',
         ))
     )),
     url('^/tasks/', patterns('ajax.tasks.php:TasksAjaxAPI',
+        url_get('^my-weekly-summary$', 'weeklySummary'),
         url_get('^(?P<tid>\d+)/preview$', 'preview'),
         url_get('^(?P<tid>\d+)/edit', 'edit'),
         url_post('^(?P<tid>\d+)/edit$', 'edit'),
