@@ -984,13 +984,11 @@ class TasksAjaxAPI extends AjaxController {
 
         $staffId = $thisstaff->getId();
 
-        // Fecha de hace 7 días en zona horaria de Bogotá
         $tz = new DateTimeZone('America/Bogota');
         $sevenDaysAgo = new DateTime('now', $tz);
         $sevenDaysAgo->modify('-7 days');
         $dateLimit = $sevenDaysAgo->format('Y-m-d H:i:s');
 
-        // Consultar tareas creadas por este agente en los últimos 7 días
         $tasks = Task::objects()
             ->filter([
                 'thread__events__event__name' => 'created',
@@ -1011,9 +1009,8 @@ class TasksAjaxAPI extends AjaxController {
             ];
         }
 
-        Http::response(200,
-            JsonDataEncoder::encode($result),
-            'application/json');
+        // Envolver en objeto para que el dispatcher detecte JSON
+        return $this->json_encode(['tasks' => $result]);
     }
 }
 ?>
