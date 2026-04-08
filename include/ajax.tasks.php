@@ -975,5 +975,45 @@ class TasksAjaxAPI extends AjaxController {
 
         include STAFFINC_DIR . 'templates/task-view.tmpl.php';
     }
+
+    function weeklySummary() {
+        global $thisstaff;
+
+        if (!$thisstaff || !$thisstaff->getId())
+            Http::response(403, 'Acceso denegado');
+
+        $staffId = $thisstaff->getId();
+
+        // Fecha de hace 7 días en zona horaria de Bogotá
+        $tz = new DateTimeZone('America/Bogota');
+        $sevenDaysAgo = new DateTime('now', $tz);
+        $sevenDaysAgo->modify('-7 days');
+        $dateLimit = $sevenDaysAgo->format('Y-m-d H:i:s');
+
+        // Consultar tareas creadas por este agente en los últimos 7 días
+        $tasks = Task::objects()
+            ->filter([
+                'thread__events__event__name' => 'created',
+                'thread__events__agent' => $staffId,
+                'created__gte' => $dateLimit,
+            ])
+            ->order_by('-created')
+            ->limit(50);
+
+        $result = [];
+        foreach ($tasks as $task) {
+            $result[] = [
+                'number'  => $task->getNumber(),
+                'title'   => $task->getTitle() ?: '(Sin título)',
+                'status'  => $task->getStatus(),
+                'updated' => Format::datetime($task->updated),
+                'id'      => $task->getId(),
+            ];
+        }
+
+        Http::response(200,
+            JsonDataEncoder::encode($result),
+            'application/json');
+    }
 }
 ?>

@@ -69,7 +69,10 @@ if ($_POST && isset($_POST['userid'])) {
     // Lookup support backends for this staff
     $username = trim($_POST['userid']);
     if ($user = StaffAuthenticationBackend::process($username,
-            substr($_POST['passwd'], 0, 128), $errors)) {
+        substr($_POST['passwd'], 0, 128), $errors)) {
+        if ($user->isValid()) {
+            $_SESSION['_staff']['just_logged_in'] = true;
+        }
         $redirect($user->isValid() ? $dest : 'login.php');
     }
 
@@ -92,8 +95,10 @@ elseif ($_POST
 
     try {
         $form = $auth->getInputForm($_POST);
-        if ($form->isValid() && $auth->validate($form, $thisstaff))
+        if ($form->isValid() && $auth->validate($form, $thisstaff)) {
+            $_SESSION['_staff']['just_logged_in'] = true;
             $redirect($dest);
+        }
     } catch (ExpiredOTP $ex) {
         // Expired or too many attempts
         $thisstaff->logOut();
@@ -127,7 +132,8 @@ elseif (!$thisstaff || !($thisstaff->getId() || $thisstaff->isValid())) {
         $msg = $_SESSION['_staff']['auth']['msg'];
     }
 }
-elseif ($thisstaff && $thisstaff->isValid()) {
+ elseif ($thisstaff && $thisstaff->isValid()) {
+    $_SESSION['_staff']['just_logged_in'] = true;
     Http::redirect($dest);
 }
 
