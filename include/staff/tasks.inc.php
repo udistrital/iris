@@ -339,6 +339,14 @@ if ($_REQUEST['assignee']) {
     ));
 }
 
+if ($_REQUEST['text_search']) {
+    $tasks->distinct('id');
+    $filters[] = Q::any(array(
+        'cdata__title__contains' => $_REQUEST['text_search'],
+        'thread__entries__body__contains' => $_REQUEST['text_search'],
+    ));
+}
+
 if ($status) {
     $SQ = new Q(array('flags__hasbit' => TaskModel::ISOPEN));
     if (!strcasecmp($status, 'closed'))
@@ -600,6 +608,12 @@ if ($thisstaff->hasPerm(Task::PERM_DELETE, false)) {
             <button class="green button action-button muted" type="submit">
                 <?php echo __( 'Buscar');?>
             </button>
+            <label>
+                <?php echo __('Buscar en contenido'); ?>:
+                <input type="text" class="input-medium search-query" name="text_search"
+                    placeholder="Título o contenido..."
+                    value="<?php echo Format::htmlchars($_REQUEST['text_search'], true); ?>" form="query"/>
+            </label>
         </div>
     </form>
     <form action="tasks.php" method="POST" name='tasks' id="tasks">
