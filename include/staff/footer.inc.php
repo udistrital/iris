@@ -99,10 +99,9 @@ if ($thisstaff
   document.addEventListener("keydown", resetTimers);
 </script>
 <?php
-// Popup de resumen semanal: solo al iniciar sesión
+// Banner de resumen semanal: solo al iniciar sesión
 if (is_object($thisstaff) && $thisstaff->isStaff()
         && !empty($_SESSION['_staff']['just_logged_in'])) {
-    // Consumir el flag para que no se repita
     unset($_SESSION['_staff']['just_logged_in']);
 ?>
 <script type="text/javascript">
@@ -114,44 +113,52 @@ $(function() {
         success: function(data) {
             if (!data || data.length === 0) return;
 
-            var html = '<div style="max-height:400px;overflow-y:auto;">';
-            html += '<p>Tareas creadas por ti en los últimos 7 días:</p>';
-            html += '<table class="list" width="100%" border="0" cellspacing="1" cellpadding="2">';
-            html += '<thead><tr>';
-            html += '<th>Número</th>';
-            html += '<th>Título</th>';
-            html += '<th>Estado</th>';
-            html += '<th>Última actualización</th>';
-            html += '</tr></thead><tbody>';
+            var html = '<div id="weekly-summary-banner" style="'
+                + 'background:#eef4fb;border:1px solid #b8d4ee;border-radius:4px;'
+                + 'margin:10px 0 15px;padding:12px 15px;position:relative;">'
+                + '<div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:8px;">'
+                + '<span style="font-weight:bold;font-size:14px;color:#1a3e5c;">'
+                + '<i class="icon-tasks"></i> Resumen semanal: '
+                + data.length + ' tarea' + (data.length !== 1 ? 's' : '')
+                + ' creada' + (data.length !== 1 ? 's' : '')
+                + ' en los últimos 7 días</span>'
+                + '<button type="button" id="dismiss-weekly-summary" style="'
+                + 'background:#2a6496;color:#fff;border:none;border-radius:3px;'
+                + 'padding:4px 14px;cursor:pointer;font-size:12px;">Aceptar</button>'
+                + '</div>'
+                + '<div style="max-height:250px;overflow-y:auto;">'
+                + '<table class="list" width="100%" border="0" cellspacing="0" cellpadding="0" style="'
+                + 'background:#fff;border:1px solid #d0d8e0;font-size:13px;">'
+                + '<thead><tr style="background:#f0f3f6;">'
+                + '<th style="padding:6px 8px;text-align:left;border-bottom:1px solid #d0d8e0;">Número</th>'
+                + '<th style="padding:6px 8px;text-align:left;border-bottom:1px solid #d0d8e0;">Título</th>'
+                + '<th style="padding:6px 8px;text-align:left;border-bottom:1px solid #d0d8e0;">Estado</th>'
+                + '<th style="padding:6px 8px;text-align:left;border-bottom:1px solid #d0d8e0;">Última actualización</th>'
+                + '</tr></thead><tbody>';
 
             $.each(data, function(i, t) {
-                html += '<tr>';
-                html += '<td><a href="tasks.php?id=' + t.id + '">#' + t.number + '</a></td>';
-                html += '<td>' + t.title + '</td>';
-                html += '<td>' + t.status + '</td>';
-                html += '<td>' + t.updated + '</td>';
+                var bg = (i % 2 === 0) ? '#fff' : '#f8fafb';
+                html += '<tr style="background:' + bg + ';">';
+                html += '<td style="padding:5px 8px;border-bottom:1px solid #eaeef2;">'
+                    + '<a href="tasks.php?id=' + t.id + '">#' + t.number + '</a></td>';
+                html += '<td style="padding:5px 8px;border-bottom:1px solid #eaeef2;">' + t.title + '</td>';
+                html += '<td style="padding:5px 8px;border-bottom:1px solid #eaeef2;">' + t.status + '</td>';
+                html += '<td style="padding:5px 8px;border-bottom:1px solid #eaeef2;">' + t.updated + '</td>';
                 html += '</tr>';
             });
 
-            html += '</tbody></table></div>';
+            html += '</tbody></table></div></div>';
 
-            var $dialog = $('.dialog#alert');
-            if ($dialog.length) {
-                $.toggleOverlay(true);
-                $('#title', $dialog).html(
-                    '<i class="icon-tasks"></i> Resumen semanal (' + data.length + ' tarea' + (data.length !== 1 ? 's' : '') + ')'
-                );
-                $('#body', $dialog).html(html);
-                $dialog.css({'width': '650px', 'margin-left': '-325px'}).show();
-                $dialog.find('input.ok.close').off('click.weekly').on('click.weekly', function() {
-                    $dialog.hide().removeAttr('style');
-                    $.toggleOverlay(false);
+            var $banner = $(html);
+            $('#content').prepend($banner);
+
+            $('#dismiss-weekly-summary').on('click', function() {
+                $('#weekly-summary-banner').slideUp(300, function() {
+                    $(this).remove();
                 });
-            }
+            });
         },
-        error: function() {
-            // Fallo silencioso: no interrumpir la experiencia del agente
-        }
+        error: function() { }
     });
 });
 </script>
