@@ -98,7 +98,64 @@ if ($thisstaff
   document.addEventListener("mousemove", resetTimers);
   document.addEventListener("keydown", resetTimers);
 </script>
+<?php
+// Popup de resumen semanal: solo al iniciar sesión
+if (is_object($thisstaff) && $thisstaff->isStaff()
+        && !empty($_SESSION['_staff']['just_logged_in'])) {
+    // Consumir el flag para que no se repita
+    unset($_SESSION['_staff']['just_logged_in']);
+?>
+<script type="text/javascript">
+$(function() {
+    $.ajax({
+        url: 'ajax.php/tasks/my-weekly-summary',
+        type: 'GET',
+        dataType: 'json',
+        success: function(data) {
+            if (!data || data.length === 0) return;
 
+            var html = '<div style="max-height:400px;overflow-y:auto;">';
+            html += '<p>Tareas creadas por ti en los últimos 7 días:</p>';
+            html += '<table class="list" width="100%" border="0" cellspacing="1" cellpadding="2">';
+            html += '<thead><tr>';
+            html += '<th>Número</th>';
+            html += '<th>Título</th>';
+            html += '<th>Estado</th>';
+            html += '<th>Última actualización</th>';
+            html += '</tr></thead><tbody>';
+
+            $.each(data, function(i, t) {
+                html += '<tr>';
+                html += '<td><a href="tasks.php?id=' + t.id + '">#' + t.number + '</a></td>';
+                html += '<td>' + t.title + '</td>';
+                html += '<td>' + t.status + '</td>';
+                html += '<td>' + t.updated + '</td>';
+                html += '</tr>';
+            });
+
+            html += '</tbody></table></div>';
+
+            var $dialog = $('.dialog#alert');
+            if ($dialog.length) {
+                $.toggleOverlay(true);
+                $('#title', $dialog).html(
+                    '<i class="icon-tasks"></i> Resumen semanal (' + data.length + ' tarea' + (data.length !== 1 ? 's' : '') + ')'
+                );
+                $('#body', $dialog).html(html);
+                $dialog.css({'width': '650px', 'margin-left': '-325px'}).show();
+                $dialog.find('input.ok.close').off('click.weekly').on('click.weekly', function() {
+                    $dialog.hide().removeAttr('style');
+                    $.toggleOverlay(false);
+                });
+            }
+        },
+        error: function() {
+            // Fallo silencioso: no interrumpir la experiencia del agente
+        }
+    });
+});
+</script>
+<?php } ?>
 </body>
 </html>
 <?php } # endif X_PJAX ?>
