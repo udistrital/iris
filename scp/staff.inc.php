@@ -112,6 +112,10 @@ if ($_POST  && !$ost->checkCSRFToken()) {
 
 //Add token to the header - used on ajax calls [DO NOT CHANGE THE NAME]
 $ost->addExtraHeader('<meta name="csrf_token" content="'.$ost->getCSRFToken().'" />');
+// Tema moderno desactivado. Descomentar estas líneas para volver a activarlo.
+// $ost->addExtraHeader('<link rel="stylesheet" href="'.ROOT_PATH.'custom/modern/v1/staff-modern.css?v=45" media="all">');
+// $ost->addExtraHeader('<script type="text/javascript" src="'.ROOT_PATH.'custom/modern/v1/tasks-modern.js?v=45"></script>');
+// $ost->addExtraHeader('<script type="text/javascript">(function(){var p=location.pathname;if(/\\/scp\\/(tasks|index)\\.php$/i.test(p)){document.documentElement.classList.add("iris-modern-tasks-page");}})();</script>');
 
 // Load the navigation after the user in case some things are hidden
 require_once(INCLUDE_DIR.'class.nav.php');
