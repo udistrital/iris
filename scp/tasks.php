@@ -420,6 +420,7 @@ if ($thisstaff->getTeams()) {
             'desc'      => sprintf('%s (%s)', __('Mis equipos'), number_format($myTeamsCount)),
             'title'     => __('Casos asignados a mis equipos'),
             'href'      => 'tasks.php?status=assigned_mteams',
+            'class'     => 'team_queue',
             'iconclass' => 'teams',
         ),
         (isset($_REQUEST['status']) && $_REQUEST['status'] == 'assigned_mteams')

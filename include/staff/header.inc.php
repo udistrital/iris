@@ -80,6 +80,11 @@ if (osTicket::is_ie())
             <?php } ?>
             | <a href="<?php echo ROOT_PATH ?>scp/profile.php"><?php echo __('Profile'); ?></a>
             | <a href="<?php echo ROOT_PATH ?>scp/logout.php?auth=<?php echo $ost->getLinkToken(); ?>" class="no-pjax"><?php echo __('Log Out'); ?></a>
+            | <button type="button" id="iris-theme-toggle" class="iris-theme-toggle"
+                aria-label="Activar tema oscuro" aria-pressed="false" title="Activar tema oscuro">
+                <i class="icon-moon" aria-hidden="true"></i>
+                <span class="iris-theme-label">Tema oscuro</span>
+              </button>
         </p>
         <a href="<?php echo ROOT_PATH ?>scp/index.php" class="no-pjax" id="logo">
             <span class="valign-helper"></span>

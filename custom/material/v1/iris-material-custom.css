@@ -84,6 +84,42 @@ body.iris-material-ui #header #info a {
     transition: background-color 120ms ease, color 120ms ease;
 }
 body.iris-material-ui #header #info a:hover { background: var(--iris-primary-soft); color: var(--iris-primary-dark); }
+body.iris-material-ui #header #info .iris-theme-toggle {
+    display: inline-flex;
+    width: 34px;
+    min-height: 32px;
+    align-items: center;
+    justify-content: center;
+    gap: var(--iris-space-1);
+    margin: 0;
+    padding: 4px;
+    background: transparent;
+    border: 1px solid var(--iris-border);
+    border-radius: 16px;
+    box-shadow: none;
+    color: var(--iris-primary);
+    font-size: 12px;
+    font-weight: 600;
+    line-height: 20px;
+    vertical-align: middle;
+}
+body.iris-material-ui #header #info .iris-theme-toggle .iris-theme-label {
+    position: absolute;
+    width: 1px;
+    height: 1px;
+    padding: 0;
+    margin: -1px;
+    overflow: hidden;
+    clip: rect(0, 0, 0, 0);
+    white-space: nowrap;
+    border: 0;
+}
+body.iris-material-ui #header #info .iris-theme-toggle:hover {
+    background: var(--iris-primary-soft);
+    border-color: var(--iris-primary);
+    box-shadow: none;
+}
+body.iris-material-ui #header #info .iris-theme-toggle i { font-size: 14px; }
 body.iris-material-ui #pjax-container {
     width: 100%;
     min-width: 0;
@@ -517,6 +553,767 @@ body.iris-material-ui #popup {
     border-color: var(--iris-border);
     border-radius: var(--iris-radius-md);
     box-shadow: var(--iris-shadow-2);
+}
+
+/* Tema oscuro opcional. Se activa en <html> antes de pintar el body. */
+html.iris-theme-dark body.iris-material-ui {
+    --iris-primary: #39ff88;
+    --iris-primary-dark: #68ffa5;
+    --iris-primary-light: rgba(57,255,136,.16);
+    --iris-primary-soft: rgba(57,255,136,.10);
+    --iris-accent: #b45cff;
+    --iris-accent-hover: #cb8aff;
+    --iris-accent-soft: rgba(180,92,255,.10);
+    --iris-primary-border: rgba(57,255,136,.65);
+    --iris-accent-border: rgba(180,92,255,.65);
+    --iris-primary-glow: 0 0 10px rgba(57,255,136,.20);
+    --iris-accent-glow: 0 0 10px rgba(180,92,255,.20);
+    --iris-bg: #12171d;
+    --iris-surface: #1c232b;
+    --iris-border: #46515c;
+    --iris-border-soft: #343e48;
+    --iris-text: #f1f4f6;
+    --iris-text-secondary: #c5cdd4;
+    --iris-disabled: #8d98a3;
+    --iris-shadow-1: 0 1px 2px rgba(0,0,0,.3), 0 3px 10px rgba(0,0,0,.2);
+    --iris-shadow-2: 0 8px 22px rgba(0,0,0,.32);
+}
+html.iris-theme-dark body.iris-material-ui #header,
+html.iris-theme-dark body.iris-material-ui #pjax-container,
+html.iris-theme-dark body.iris-material-ui #nav,
+html.iris-theme-dark body.iris-material-ui #content > div[style*="overflow-x"],
+html.iris-theme-dark body.iris-material-ui table.list,
+html.iris-theme-dark body.iris-material-ui table.list tbody td {
+    background-color: var(--iris-surface);
+    color: var(--iris-text);
+}
+html.iris-theme-dark body.iris-material-ui #header #info {
+    background: transparent;
+    border-color: transparent;
+    color: var(--iris-text-secondary);
+}
+html.iris-theme-dark body.iris-material-ui #content { background: var(--iris-bg); }
+html.iris-theme-dark body.iris-material-ui #content {
+    border-color: var(--iris-border-soft);
+    border-bottom-color: var(--iris-border-soft);
+}
+html.iris-theme-dark body.iris-material-ui #sub_nav,
+html.iris-theme-dark body.iris-material-ui form#query #basic_search,
+html.iris-theme-dark body.iris-material-ui table.list tfoot td {
+    background: #171e25;
+    color: var(--iris-text-secondary);
+}
+html.iris-theme-dark body.iris-material-ui #sub_nav > li > a,
+html.iris-theme-dark body.iris-material-ui input[type="text"],
+html.iris-theme-dark body.iris-material-ui input[type="date"],
+html.iris-theme-dark body.iris-material-ui input[type="email"],
+html.iris-theme-dark body.iris-material-ui input[type="password"],
+html.iris-theme-dark body.iris-material-ui input[type="search"],
+html.iris-theme-dark body.iris-material-ui select,
+html.iris-theme-dark body.iris-material-ui textarea,
+html.iris-theme-dark body.iris-material-ui .button,
+html.iris-theme-dark body.iris-material-ui button,
+html.iris-theme-dark body.iris-material-ui .action-button {
+    background-color: #222b34;
+    border-color: var(--iris-border);
+    color: var(--iris-text);
+}
+html.iris-theme-dark body.iris-material-ui input:focus,
+html.iris-theme-dark body.iris-material-ui select:focus,
+html.iris-theme-dark body.iris-material-ui textarea:focus {
+    border-color: var(--iris-accent);
+    box-shadow: 0 0 0 2px rgba(180,92,255,.18), var(--iris-accent-glow);
+}
+html.iris-theme-dark body.iris-material-ui .green.button,
+html.iris-theme-dark body.iris-material-ui button.green,
+html.iris-theme-dark body.iris-material-ui input[type="submit"].primary {
+    background: rgba(57,255,136,.13);
+    border-color: var(--iris-primary-border);
+    color: var(--iris-primary);
+    box-shadow: var(--iris-primary-glow);
+}
+html.iris-theme-dark body.iris-material-ui table.list thead th {
+    background: #252e37;
+    border-color: var(--iris-border);
+    color: var(--iris-text);
+}
+html.iris-theme-dark body.iris-material-ui table.list thead th a,
+html.iris-theme-dark body.iris-material-ui table.list tbody a.preview { color: var(--iris-primary); }
+html.iris-theme-dark body.iris-material-ui table.list thead th a.asc,
+html.iris-theme-dark body.iris-material-ui table.list thead th a.desc {
+    background-color: #34414d;
+    color: var(--iris-primary-dark);
+}
+html.iris-theme-dark body.iris-material-ui table.list tbody tr:nth-child(2n+1) td {
+    background: var(--iris-surface);
+}
+html.iris-theme-dark body.iris-material-ui table.list tbody tr:hover td { background: #25384a; }
+html.iris-theme-dark body.iris-material-ui table.list tbody td + td,
+html.iris-theme-dark body.iris-material-ui table.list tfoot td + td {
+    border-left-color: var(--iris-border-soft);
+}
+html.iris-theme-dark body.iris-material-ui .dropdown-menu,
+html.iris-theme-dark body.iris-material-ui ul.tabs.clean,
+html.iris-theme-dark body.iris-material-ui #popup,
+html.iris-theme-dark body.iris-material-ui .ui-dialog,
+html.iris-theme-dark body.iris-material-ui .ui-dialog-content,
+html.iris-theme-dark body.iris-material-ui .select2-dropdown,
+html.iris-theme-dark body.iris-material-ui .select2-selection {
+    background-color: #222b34;
+    border-color: var(--iris-border);
+    color: var(--iris-text);
+}
+html.iris-theme-dark body.iris-material-ui #header #info .iris-theme-toggle {
+    background: #263340;
+    border-color: #526579;
+    color: #f2c94c;
+}
+html.iris-theme-dark body.iris-material-ui #sub_nav .team_queue,
+html.iris-theme-dark body.iris-material-ui #customQ_nav .team_queue {
+    background: #49351d;
+    border-color: #9b6a2d;
+}
+html.iris-theme-dark body.iris-material-ui #sub_nav .admin_queue,
+html.iris-theme-dark body.iris-material-ui #customQ_nav .admin_queue {
+    background: #1c3850;
+    border-color: #397eaf;
+}
+html.iris-theme-dark body.iris-material-ui #sub_nav .team_queue > a,
+html.iris-theme-dark body.iris-material-ui #customQ_nav .team_queue > a { color: #ffd08a; }
+html.iris-theme-dark body.iris-material-ui #sub_nav .admin_queue > a,
+html.iris-theme-dark body.iris-material-ui #customQ_nav .admin_queue > a { color: #9ed7ff; }
+
+/* Cobertura de superficies legacy en vistas de detalle y configuración. */
+html.iris-theme-dark body.iris-material-ui .table td:not(:empty),
+html.iris-theme-dark body.iris-material-ui .form_table td,
+html.iris-theme-dark body.iris-material-ui .form_table th,
+html.iris-theme-dark body.iris-material-ui .form-table td,
+html.iris-theme-dark body.iris-material-ui .form-table th,
+html.iris-theme-dark body.iris-material-ui .ticket_info,
+html.iris-theme-dark body.iris-material-ui .ticket_info.custom-data thead th,
+html.iris-theme-dark body.iris-material-ui fieldset,
+html.iris-theme-dark body.iris-material-ui .tab_content,
+html.iris-theme-dark body.iris-material-ui .quicknote,
+html.iris-theme-dark body.iris-material-ui .freetext-files,
+html.iris-theme-dark body.iris-material-ui div.selected-signature,
+html.iris-theme-dark body.iris-material-ui .sticky.bar.fixed,
+html.iris-theme-dark body.iris-material-ui .message.bar {
+    background-color: var(--iris-surface);
+    border-color: var(--iris-border);
+    color: var(--iris-text);
+}
+
+html.iris-theme-dark body.iris-material-ui .form_table,
+html.iris-theme-dark body.iris-material-ui .form-table,
+html.iris-theme-dark body.iris-material-ui .table tr,
+html.iris-theme-dark body.iris-material-ui .ticket_info,
+html.iris-theme-dark body.iris-material-ui .custom-data th,
+html.iris-theme-dark body.iris-material-ui .custom-data td {
+    border-color: var(--iris-border-soft);
+}
+
+html.iris-theme-dark body.iris-material-ui #popup #task-form .form-table th,
+html.iris-theme-dark body.iris-material-ui #popup #task-form .form-table td {
+    background: #1b232b;
+    border-color: var(--iris-border);
+    color: var(--iris-text);
+}
+html.iris-theme-dark body.iris-material-ui #popup #task-form .form-table th {
+    font-weight: 600;
+}
+
+html.iris-theme-dark body.iris-material-ui ul.tabs li,
+html.iris-theme-dark body.iris-material-ui ul.tabs li.active,
+html.iris-theme-dark body.iris-material-ui ul.tabs.clean li.active,
+html.iris-theme-dark body.iris-material-ui #response_options > form {
+    background: #202830;
+    border-color: var(--iris-border);
+    color: var(--iris-text);
+}
+html.iris-theme-dark body.iris-material-ui ul.tabs,
+html.iris-theme-dark body.iris-material-ui #task_response_options > ul.tabs {
+    background: #171e25;
+    border-color: var(--iris-border);
+    box-shadow: inset 0 -5px 10px -9px rgba(0,0,0,.8);
+}
+html.iris-theme-dark body.iris-material-ui #task_response_options,
+html.iris-theme-dark body.iris-material-ui #task_response_options > form,
+html.iris-theme-dark body.iris-material-ui #task_response_options .tab_content {
+    background: #1b232b;
+    border-color: var(--iris-border);
+    color: var(--iris-text);
+}
+html.iris-theme-dark body.iris-material-ui ul.tabs li a,
+html.iris-theme-dark body.iris-material-ui ul.tabs li.active a { color: var(--iris-text); }
+
+html.iris-theme-dark body.iris-material-ui .thread-entry,
+html.iris-theme-dark body.iris-material-ui .thread-entry .header,
+html.iris-theme-dark body.iris-material-ui .thread-entry .thread-body,
+html.iris-theme-dark body.iris-material-ui .thread-preview-entry,
+html.iris-theme-dark body.iris-material-ui .thread-preview-entry .header,
+html.iris-theme-dark body.iris-material-ui #ticket_notes td,
+html.iris-theme-dark body.iris-material-ui #ticket_notes .info,
+html.iris-theme-dark body.iris-material-ui .thread-entry .info {
+    background-color: #202830;
+    border-color: var(--iris-border);
+    color: var(--iris-text);
+}
+html.iris-theme-dark body.iris-material-ui #thread-items {
+    background: var(--iris-bg);
+    color: var(--iris-text);
+}
+html.iris-theme-dark body.iris-material-ui .thread-entry::before,
+html.iris-theme-dark body.iris-material-ui .thread-entry::after {
+    border-color: var(--iris-border-soft);
+}
+html.iris-theme-dark body.iris-material-ui .thread-entry .thread-body {
+    border-color: var(--iris-border);
+    border-bottom-color: var(--iris-border);
+}
+html.iris-theme-dark body.iris-material-ui .thread-body .attachments {
+    background-color: #19222b;
+    border-top-color: var(--iris-border);
+    color: var(--iris-text-secondary);
+}
+html.iris-theme-dark body.iris-material-ui .thread-body .attachment-info,
+html.iris-theme-dark body.iris-material-ui .thread-body .attachment-info .filesize {
+    color: var(--iris-text-secondary);
+}
+html.iris-theme-dark body.iris-material-ui .thread-body .attachment-info a {
+    color: var(--iris-primary);
+}
+html.iris-theme-dark body.iris-material-ui .thread-entry .header,
+html.iris-theme-dark body.iris-material-ui .thread-entry .header a,
+html.iris-theme-dark body.iris-material-ui .thread-entry .header time,
+html.iris-theme-dark body.iris-material-ui .thread-entry .header .title,
+html.iris-theme-dark body.iris-material-ui .thread-entry .header .textra {
+    color: var(--iris-text-secondary);
+}
+html.iris-theme-dark body.iris-material-ui .thread-entry .header b,
+html.iris-theme-dark body.iris-material-ui .thread-entry .header strong {
+    color: var(--iris-text);
+}
+html.iris-theme-dark body.iris-material-ui .thread-entry .header > * {
+    color: inherit;
+}
+html.iris-theme-dark body.iris-material-ui .thread-entry.note .header,
+html.iris-theme-dark body.iris-material-ui .thread-preview-entry.note .header {
+    background-color: #3b3821;
+    color: #f4edbc;
+}
+html.iris-theme-dark body.iris-material-ui .thread-entry.note .header a,
+html.iris-theme-dark body.iris-material-ui .thread-entry.note .header time,
+html.iris-theme-dark body.iris-material-ui .thread-entry.note .header .title,
+html.iris-theme-dark body.iris-material-ui .thread-entry.response .header a,
+html.iris-theme-dark body.iris-material-ui .thread-entry.response .header time,
+html.iris-theme-dark body.iris-material-ui .thread-entry.response .header .title {
+    color: inherit;
+}
+
+/* Títulos y enlaces del hilo alineados con la paleta neón. */
+html.iris-theme-dark body.iris-material-ui #task_thread_container .thread-entry .header .title,
+html.iris-theme-dark body.iris-material-ui #task_thread_container .thread-entry .header .title a,
+html.iris-theme-dark body.iris-material-ui #task_thread_container .thread-name,
+html.iris-theme-dark body.iris-material-ui #task_thread_container .thread-name a,
+html.iris-theme-dark body.iris-material-ui #task_thread_container .thread-body a,
+html.iris-theme-dark body.iris-material-ui #task_thread_container .attachment-info a,
+html.iris-theme-dark body.iris-material-ui #task_thread_container h2 a,
+html.iris-theme-dark body.iris-material-ui #task_thread_container h3 a {
+    color: var(--iris-primary);
+}
+html.iris-theme-dark body.iris-material-ui #task_thread_container .thread-entry .header .title a:hover,
+html.iris-theme-dark body.iris-material-ui #task_thread_container .thread-name a:hover,
+html.iris-theme-dark body.iris-material-ui #task_thread_container .thread-body a:hover,
+html.iris-theme-dark body.iris-material-ui #task_thread_container .attachment-info a:hover,
+html.iris-theme-dark body.iris-material-ui #task_thread_container h2 a:hover,
+html.iris-theme-dark body.iris-material-ui #task_thread_container h3 a:hover {
+    color: var(--iris-primary-dark);
+    text-shadow: 0 0 8px rgba(57,255,136,.16);
+}
+html.iris-theme-dark body.iris-material-ui #task_thread_container .thread-entry.note .header .title,
+html.iris-theme-dark body.iris-material-ui #task_thread_container .thread-entry.note .header .title a,
+html.iris-theme-dark body.iris-material-ui #task_thread_container .thread-event a {
+    color: var(--iris-accent-hover);
+}
+html.iris-theme-dark body.iris-material-ui #task_thread_container .thread-event a:hover {
+    color: #dfb5ff;
+    text-shadow: 0 0 8px rgba(180,92,255,.18);
+}
+
+/* La misma cobertura cuando el hilo pertenece a un ticket. */
+html.iris-theme-dark body.iris-material-ui #ticket_thread .thread-entry .header .title,
+html.iris-theme-dark body.iris-material-ui #ticket_thread .thread-entry .header .title a,
+html.iris-theme-dark body.iris-material-ui #ticket_thread .thread-body a,
+html.iris-theme-dark body.iris-material-ui #ticket_thread .attachment-info a,
+html.iris-theme-dark body.iris-material-ui #ticket_thread_container .thread-entry .header .title,
+html.iris-theme-dark body.iris-material-ui #ticket_thread_container .thread-body a {
+    color: var(--iris-primary);
+}
+html.iris-theme-dark body.iris-material-ui #ticket_thread .thread-entry.note .header .title,
+html.iris-theme-dark body.iris-material-ui #ticket_thread .thread-event a,
+html.iris-theme-dark body.iris-material-ui #ticket_thread_container .thread-entry.note .header .title,
+html.iris-theme-dark body.iris-material-ui #ticket_thread_container .thread-event a {
+    color: var(--iris-accent-hover);
+}
+
+/* Título descriptivo principal de tareas y tickets. */
+html.iris-theme-dark body.iris-material-ui .tixTitle h3,
+html.iris-theme-dark body.iris-material-ui .tixTitle h3 * {
+    color: var(--iris-primary);
+    text-shadow: 0 0 8px rgba(57,255,136,.14);
+}
+
+/* thread.css fuerza azul con !important; se limita el override al modo oscuro. */
+html.iris-theme-dark body.iris-material-ui .thread-body a:not(.button),
+html.iris-theme-dark body.iris-material-ui .thread-body a:not(.button):visited,
+html.iris-theme-dark body.iris-material-ui .thread-body a.filename,
+html.iris-theme-dark body.iris-material-ui .thread-body a[download] {
+    color: var(--iris-primary) !important;
+    text-decoration-color: rgba(57,255,136,.48);
+    text-underline-offset: 2px;
+}
+html.iris-theme-dark body.iris-material-ui .thread-body a:not(.button):hover,
+html.iris-theme-dark body.iris-material-ui .thread-body a:not(.button):focus,
+html.iris-theme-dark body.iris-material-ui .thread-body a.filename:hover,
+html.iris-theme-dark body.iris-material-ui .thread-body a[download]:hover {
+    color: var(--iris-primary-dark) !important;
+    text-decoration-color: var(--iris-primary-dark);
+    text-shadow: 0 0 8px rgba(57,255,136,.18);
+}
+html.iris-theme-dark body.iris-material-ui .thread-body .attachment-info,
+html.iris-theme-dark body.iris-material-ui .thread-body .attachment-info .filesize {
+    color: var(--iris-text-secondary);
+}
+html.iris-theme-dark body.iris-material-ui .thread-body .attachment-info > i,
+html.iris-theme-dark body.iris-material-ui .thread-body .icon-paperclip,
+html.iris-theme-dark body.iris-material-ui .freetext-files .file > i,
+html.iris-theme-dark body.iris-material-ui a[download] > i {
+    color: var(--iris-accent-hover);
+}
+html.iris-theme-dark body.iris-material-ui .freetext-files a,
+html.iris-theme-dark body.iris-material-ui .attachments a,
+html.iris-theme-dark body.iris-material-ui .files a {
+    color: var(--iris-primary);
+}
+html.iris-theme-dark body.iris-material-ui .freetext-files a:hover,
+html.iris-theme-dark body.iris-material-ui .attachments a:hover,
+html.iris-theme-dark body.iris-material-ui .files a:hover {
+    color: var(--iris-primary-dark);
+}
+html.iris-theme-dark body.iris-material-ui .thread-entry.response .header,
+html.iris-theme-dark body.iris-material-ui .thread-preview-entry.response .header {
+    background-color: #463421;
+    color: #f6d7b3;
+}
+html.iris-theme-dark body.iris-material-ui .thread-event {
+    color: var(--iris-text);
+}
+html.iris-theme-dark body.iris-material-ui .thread-event .description,
+html.iris-theme-dark body.iris-material-ui .thread-event .description span,
+html.iris-theme-dark body.iris-material-ui .thread-event .description a,
+html.iris-theme-dark body.iris-material-ui .thread-event .description time,
+html.iris-theme-dark body.iris-material-ui .thread-event a,
+html.iris-theme-dark body.iris-material-ui .thread-event time {
+    color: var(--iris-text);
+}
+html.iris-theme-dark body.iris-material-ui .thread-event b,
+html.iris-theme-dark body.iris-material-ui .thread-event strong {
+    color: var(--iris-text);
+}
+html.iris-theme-dark body.iris-material-ui .thread-event .type-icon {
+    background-color: #2a343e;
+    border-color: var(--iris-border);
+    color: #fff;
+}
+html.iris-theme-dark body.iris-material-ui .thread-event .type-icon::after {
+    border-color: var(--iris-bg);
+}
+html.iris-theme-dark body.iris-material-ui #thread-items i[class^="icon-"],
+html.iris-theme-dark body.iris-material-ui #thread-items i[class*=" icon-"],
+html.iris-theme-dark body.iris-material-ui .thread-entry i[class^="icon-"],
+html.iris-theme-dark body.iris-material-ui .thread-entry i[class*=" icon-"],
+html.iris-theme-dark body.iris-material-ui .thread-event i[class^="icon-"],
+html.iris-theme-dark body.iris-material-ui .thread-event i[class*=" icon-"] {
+    color: #fff;
+}
+html.iris-theme-dark body.iris-material-ui .thread-body table table {
+    background-color: var(--iris-surface);
+}
+html.iris-theme-dark body.iris-material-ui .thread-body table thead > tr > td,
+html.iris-theme-dark body.iris-material-ui .thread-body table thead > tr > th,
+html.iris-theme-dark body.iris-material-ui .thread-body table tr > th {
+    /* thread.css fuerza #f0f0f0 con !important. */
+    background-color: #29333d !important;
+    border-color: var(--iris-border);
+    color: var(--iris-text);
+}
+
+html.iris-theme-dark body.iris-material-ui .customQ-dropdown,
+html.iris-theme-dark body.iris-material-ui .customQ-dropdown ul,
+html.iris-theme-dark body.iris-material-ui .customQ-dropdown li,
+html.iris-theme-dark body.iris-material-ui .customQ-dropdown li.personalQ,
+html.iris-theme-dark body.iris-material-ui .customQ-dropdown li h4,
+html.iris-theme-dark body.iris-material-ui .customQ-dropdown li.top-level,
+html.iris-theme-dark body.iris-material-ui .jb-overflowmenu-menu-secondary li.item:hover {
+    background-color: #222b34;
+    border-color: var(--iris-border);
+    color: var(--iris-text);
+}
+html.iris-theme-dark body.iris-material-ui .customQ-dropdown a { color: var(--iris-text-secondary); }
+
+/* Select2: selección simple, múltiple, buscador, resultados y etiquetas. */
+html.iris-theme-dark body.iris-material-ui .select2-container--default .select2-selection--single,
+html.iris-theme-dark body.iris-material-ui .select2-container--default .select2-selection--multiple,
+html.iris-theme-dark body.iris-material-ui .select2-search--dropdown .select2-search__field,
+html.iris-theme-dark body.iris-material-ui .select2-search--inline .select2-search__field,
+html.iris-theme-dark body.iris-material-ui .select2-container--default .select2-selection--multiple .select2-selection__choice {
+    background: #222b34;
+    border-color: var(--iris-border);
+    color: var(--iris-text);
+}
+html.iris-theme-dark body.iris-material-ui .select2-container--default .select2-selection--single .select2-selection__rendered,
+html.iris-theme-dark body.iris-material-ui .select2-container--default .select2-selection--multiple .select2-selection__rendered,
+html.iris-theme-dark body.iris-material-ui .select2-results__option { color: var(--iris-text); }
+html.iris-theme-dark body.iris-material-ui .select2-container--default .select2-results__option[aria-selected="true"] {
+    background: #34414d;
+}
+html.iris-theme-dark body.iris-material-ui .select2-container--default .select2-results__option--highlighted[aria-selected] {
+    background: rgba(57,255,136,.16);
+    color: var(--iris-primary);
+}
+
+/* jQuery UI: diálogos, calendarios, autocompletado y controles. */
+html.iris-theme-dark body.iris-material-ui .ui-widget-content,
+html.iris-theme-dark body.iris-material-ui .ui-datepicker,
+html.iris-theme-dark body.iris-material-ui .ui-menu,
+html.iris-theme-dark body.iris-material-ui .ui-autocomplete {
+    background: #222b34;
+    border-color: var(--iris-border);
+    color: var(--iris-text);
+}
+html.iris-theme-dark body.iris-material-ui .ui-widget-content a { color: var(--iris-text); }
+html.iris-theme-dark body.iris-material-ui .ui-widget-header {
+    background: #2b3946;
+    border-color: var(--iris-border);
+    color: var(--iris-text);
+}
+html.iris-theme-dark body.iris-material-ui .ui-state-default,
+html.iris-theme-dark body.iris-material-ui .ui-widget-content .ui-state-default,
+html.iris-theme-dark body.iris-material-ui .ui-widget-header .ui-state-default {
+    background: #2a343e;
+    border-color: var(--iris-border);
+    color: var(--iris-primary);
+}
+html.iris-theme-dark body.iris-material-ui .ui-state-hover,
+html.iris-theme-dark body.iris-material-ui .ui-widget-content .ui-state-hover,
+html.iris-theme-dark body.iris-material-ui .ui-state-focus,
+html.iris-theme-dark body.iris-material-ui .ui-widget-content .ui-state-focus,
+html.iris-theme-dark body.iris-material-ui .ui-state-active,
+html.iris-theme-dark body.iris-material-ui .ui-widget-content .ui-state-active {
+    background: rgba(180,92,255,.12);
+    border-color: var(--iris-accent-border);
+    color: #fff;
+}
+
+/* Editor de texto Redactor y carga de archivos. */
+html.iris-theme-dark body.iris-material-ui .redactor-box,
+html.iris-theme-dark body.iris-material-ui .redactor-toolbar,
+html.iris-theme-dark body.iris-material-ui .redactor-editor,
+html.iris-theme-dark body.iris-material-ui .redactor-layer,
+html.iris-theme-dark body.iris-material-ui .redactor-dropdown,
+html.iris-theme-dark body.iris-material-ui .filedrop,
+html.iris-theme-dark body.iris-material-ui .files {
+    background-color: #222b34;
+    border-color: var(--iris-border);
+    color: var(--iris-text);
+}
+html.iris-theme-dark body.iris-material-ui .redactor-toolbar a,
+html.iris-theme-dark body.iris-material-ui .redactor-air a,
+html.iris-theme-dark body.iris-material-ui .redactor-dropdown a {
+    background: #26313b;
+    color: var(--iris-text);
+}
+html.iris-theme-dark body.iris-material-ui .redactor-box.redactor-styles-on .redactor-toolbar.redactor-toolbar {
+    background-color: #202830;
+    border-bottom: 1px solid var(--iris-border);
+}
+html.iris-theme-dark body.iris-material-ui .redactor-editor,
+html.iris-theme-dark body.iris-material-ui .redactor-in,
+html.iris-theme-dark body.iris-material-ui [contenteditable="true"].redactor-editor {
+    background: #222b34;
+    color: var(--iris-text);
+}
+html.iris-theme-dark body.iris-material-ui .redactor-editor p,
+html.iris-theme-dark body.iris-material-ui .redactor-in p {
+    color: inherit;
+}
+html.iris-theme-dark body.iris-material-ui textarea::placeholder,
+html.iris-theme-dark body.iris-material-ui input::placeholder,
+html.iris-theme-dark body.iris-material-ui .redactor-editor[data-placeholder]::before,
+html.iris-theme-dark body.iris-material-ui .redactor-in[data-placeholder]::before {
+    color: #8f9aa5;
+    opacity: 1;
+}
+html.iris-theme-dark body.iris-material-ui .redactor-toolbar a:hover,
+html.iris-theme-dark body.iris-material-ui .redactor-dropdown a:hover {
+    background: var(--iris-accent-soft);
+    color: var(--iris-accent-hover);
+}
+
+/* Acentos neón controlados: solo para el tema oscuro. */
+html.iris-theme-dark body.iris-material-ui a {
+    color: var(--iris-primary);
+}
+html.iris-theme-dark body.iris-material-ui a:hover {
+    color: var(--iris-primary-dark);
+}
+
+html.iris-theme-dark body.iris-material-ui a:focus-visible,
+html.iris-theme-dark body.iris-material-ui button:focus-visible,
+html.iris-theme-dark body.iris-material-ui input:focus-visible,
+html.iris-theme-dark body.iris-material-ui select:focus-visible,
+html.iris-theme-dark body.iris-material-ui textarea:focus-visible {
+    outline-color: var(--iris-accent);
+    box-shadow: var(--iris-accent-glow);
+}
+
+html.iris-theme-dark body.iris-material-ui #nav > li > a:hover {
+    background: var(--iris-primary-soft);
+    color: var(--iris-primary-dark);
+}
+html.iris-theme-dark body.iris-material-ui #nav > li.active > a {
+    background: linear-gradient(180deg, transparent 55%, rgba(57,255,136,.08));
+    border-bottom-color: var(--iris-primary);
+    color: var(--iris-primary);
+    text-shadow: 0 0 8px rgba(57,255,136,.14);
+}
+
+html.iris-theme-dark body.iris-material-ui #sub_nav > li > a {
+    background: rgba(180,92,255,.04);
+    border-color: rgba(180,92,255,.28);
+    color: #d8b4f7;
+}
+html.iris-theme-dark body.iris-material-ui #sub_nav > li > a:hover {
+    background: var(--iris-accent-soft);
+    border-color: var(--iris-accent-border);
+    color: var(--iris-accent-hover);
+    box-shadow: var(--iris-accent-glow);
+}
+html.iris-theme-dark body.iris-material-ui #sub_nav > li > a.active {
+    background: var(--iris-primary-soft);
+    border-color: var(--iris-primary-border);
+    color: var(--iris-primary);
+    box-shadow: var(--iris-primary-glow);
+}
+
+html.iris-theme-dark body.iris-material-ui #sub_nav .team_queue,
+html.iris-theme-dark body.iris-material-ui #customQ_nav .team_queue {
+    background: var(--iris-primary-soft);
+    border-color: var(--iris-primary-border);
+    border-left-color: var(--iris-primary);
+    box-shadow: var(--iris-primary-glow);
+}
+html.iris-theme-dark body.iris-material-ui #sub_nav .admin_queue,
+html.iris-theme-dark body.iris-material-ui #customQ_nav .admin_queue {
+    background: var(--iris-accent-soft);
+    border-color: var(--iris-accent-border);
+    border-left-color: var(--iris-accent);
+    box-shadow: var(--iris-accent-glow);
+}
+html.iris-theme-dark body.iris-material-ui #sub_nav .team_queue > a,
+html.iris-theme-dark body.iris-material-ui #customQ_nav .team_queue > a { color: var(--iris-primary); }
+html.iris-theme-dark body.iris-material-ui #sub_nav .admin_queue > a,
+html.iris-theme-dark body.iris-material-ui #customQ_nav .admin_queue > a { color: var(--iris-accent-hover); }
+
+html.iris-theme-dark body.iris-material-ui .green.button,
+html.iris-theme-dark body.iris-material-ui button.green,
+html.iris-theme-dark body.iris-material-ui input.save[type="submit"],
+html.iris-theme-dark body.iris-material-ui input[type="submit"].primary {
+    background: rgba(57,255,136,.12);
+    border-color: var(--iris-primary-border);
+    color: var(--iris-primary);
+    box-shadow: var(--iris-primary-glow);
+}
+html.iris-theme-dark body.iris-material-ui .green.button:hover,
+html.iris-theme-dark body.iris-material-ui button.green:hover,
+html.iris-theme-dark body.iris-material-ui input.save[type="submit"]:hover,
+html.iris-theme-dark body.iris-material-ui input[type="submit"].primary:hover {
+    background: rgba(57,255,136,.19);
+    border-color: var(--iris-primary-dark);
+    color: var(--iris-primary-dark);
+    box-shadow: 0 0 12px rgba(57,255,136,.26);
+}
+
+html.iris-theme-dark body.iris-material-ui .action-button:not(.green),
+html.iris-theme-dark body.iris-material-ui .button:not(.green),
+html.iris-theme-dark body.iris-material-ui input[type="reset"],
+html.iris-theme-dark body.iris-material-ui input[type="button"] {
+    border-color: rgba(180,92,255,.42);
+    color: var(--iris-accent-hover);
+}
+html.iris-theme-dark body.iris-material-ui .action-button:not(.green):hover,
+html.iris-theme-dark body.iris-material-ui .button:not(.green):hover,
+html.iris-theme-dark body.iris-material-ui input[type="reset"]:hover,
+html.iris-theme-dark body.iris-material-ui input[type="button"]:hover {
+    background: var(--iris-accent-soft);
+    border-color: var(--iris-accent-border);
+    box-shadow: var(--iris-accent-glow);
+}
+
+html.iris-theme-dark body.iris-material-ui table.list tbody a.preview,
+html.iris-theme-dark body.iris-material-ui table.list tfoot a,
+html.iris-theme-dark body.iris-material-ui .export-csv {
+    color: var(--iris-primary);
+}
+html.iris-theme-dark body.iris-material-ui table.list thead th a.asc,
+html.iris-theme-dark body.iris-material-ui table.list thead th a.desc {
+    background-color: var(--iris-primary-soft);
+    color: var(--iris-primary);
+    box-shadow: inset 0 -2px 0 var(--iris-primary);
+}
+html.iris-theme-dark body.iris-material-ui table.list tbody tr:hover td {
+    background: rgba(57,255,136,.055);
+}
+
+html.iris-theme-dark body.iris-material-ui input[type="checkbox"] {
+    accent-color: var(--iris-primary);
+}
+html.iris-theme-dark body.iris-material-ui .label,
+html.iris-theme-dark body.iris-material-ui .badge,
+html.iris-theme-dark body.iris-material-ui .iris-side-count {
+    background: var(--iris-accent-soft);
+    border-color: var(--iris-accent-border);
+    color: var(--iris-accent-hover);
+}
+
+html.iris-theme-dark body.iris-material-ui .dropdown-menu,
+html.iris-theme-dark body.iris-material-ui .action-dropdown,
+html.iris-theme-dark body.iris-material-ui .customQ-dropdown {
+    border-color: rgba(180,92,255,.45);
+    box-shadow: var(--iris-shadow-2), var(--iris-accent-glow);
+}
+html.iris-theme-dark body.iris-material-ui .dropdown-menu a:hover,
+html.iris-theme-dark body.iris-material-ui .action-dropdown a:hover,
+html.iris-theme-dark body.iris-material-ui .customQ-dropdown a:hover {
+    background: var(--iris-accent-soft);
+    color: var(--iris-accent-hover);
+}
+
+html.iris-theme-dark body.iris-material-ui .sticky.bar h2 i,
+html.iris-theme-dark body.iris-material-ui .icon-refresh,
+html.iris-theme-dark body.iris-material-ui #header #info .iris-theme-toggle {
+    color: var(--iris-primary);
+}
+
+html.iris-theme-dark body.iris-material-ui #task_thread_container,
+html.iris-theme-dark body.iris-material-ui #task_response_options,
+html.iris-theme-dark body.iris-material-ui #popup,
+html.iris-theme-dark body.iris-material-ui .ui-dialog {
+    border-color: rgba(180,92,255,.34);
+}
+
+/* Header institucional: supera div#header a { color:#E65524 } del legacy. */
+html.iris-theme-dark body.iris-material-ui div#header p#info a {
+    color: var(--iris-accent-hover);
+}
+html.iris-theme-dark body.iris-material-ui div#header p#info a:hover {
+    background: var(--iris-accent-soft);
+    color: #dfb5ff;
+    text-shadow: 0 0 8px rgba(180,92,255,.18);
+}
+html.iris-theme-dark body.iris-material-ui div#header p#info strong {
+    color: var(--iris-text);
+}
+html.iris-theme-dark body.iris-material-ui div#header p#info .iris-theme-toggle,
+html.iris-theme-dark body.iris-material-ui div#header p#info .iris-theme-toggle:hover {
+    background: var(--iris-primary-soft);
+    border-color: var(--iris-primary-border);
+    color: var(--iris-primary);
+    box-shadow: var(--iris-primary-glow);
+    text-shadow: none;
+}
+
+/* Logo original: ajuste óptico no destructivo para el fondo oscuro. */
+html.iris-theme-dark body.iris-material-ui #header #logo img {
+    filter:
+        brightness(1.18)
+        saturate(1.18)
+        hue-rotate(-4deg)
+        drop-shadow(0 0 7px rgba(180,92,255,.24))
+        drop-shadow(0 0 3px rgba(57,255,136,.10));
+    transition: filter 160ms ease;
+}
+html.iris-theme-dark body.iris-material-ui #header #logo:hover img {
+    filter:
+        brightness(1.25)
+        saturate(1.25)
+        hue-rotate(-4deg)
+        drop-shadow(0 0 9px rgba(180,92,255,.30))
+        drop-shadow(0 0 5px rgba(57,255,136,.14));
+}
+
+/* Hilo: respuestas en verde y notas internas en violeta, sin tonos cálidos. */
+html.iris-theme-dark body.iris-material-ui .thread-entry.response .header,
+html.iris-theme-dark body.iris-material-ui .thread-preview-entry.response .header {
+    background: rgba(57,255,136,.10);
+    border-color: rgba(57,255,136,.34);
+    color: #c9ffde;
+    box-shadow: inset 3px 0 0 rgba(57,255,136,.70);
+}
+html.iris-theme-dark body.iris-material-ui .thread-entry.note .header,
+html.iris-theme-dark body.iris-material-ui .thread-preview-entry.note .header {
+    background: rgba(180,92,255,.10);
+    border-color: rgba(180,92,255,.34);
+    color: #e4c5ff;
+    box-shadow: inset 3px 0 0 rgba(180,92,255,.70);
+}
+html.iris-theme-dark body.iris-material-ui .thread-entry.avatar.response .header::before {
+    border-right-color: rgba(57,255,136,.45);
+}
+html.iris-theme-dark body.iris-material-ui .thread-entry.avatar.response .header::after {
+    border-right-color: #19372a;
+}
+html.iris-theme-dark body.iris-material-ui .thread-entry.avatar.note .header::before {
+    border-right-color: rgba(180,92,255,.45);
+}
+html.iris-theme-dark body.iris-material-ui .thread-entry.avatar.note .header::after {
+    border-right-color: #30213d;
+}
+html.iris-theme-dark body.iris-material-ui .thread-entry.message .header {
+    background: rgba(57,255,136,.07);
+    border-color: rgba(57,255,136,.25);
+    color: var(--iris-text);
+}
+html.iris-theme-dark body.iris-material-ui .thread-entry.avatar.message .header::before {
+    border-left-color: rgba(57,255,136,.42);
+}
+html.iris-theme-dark body.iris-material-ui .thread-entry.avatar.message .header::after {
+    border-left-color: #182f25;
+}
+html.iris-theme-dark body.iris-material-ui .thread-entry.response .header a,
+html.iris-theme-dark body.iris-material-ui .thread-entry.response .header time,
+html.iris-theme-dark body.iris-material-ui .thread-entry.response .header .title,
+html.iris-theme-dark body.iris-material-ui .thread-entry.note .header a,
+html.iris-theme-dark body.iris-material-ui .thread-entry.note .header time,
+html.iris-theme-dark body.iris-material-ui .thread-entry.note .header .title {
+    color: inherit;
+}
+
+html.iris-theme-dark body.iris-material-ui .tip_content,
+html.iris-theme-dark body.iris-material-ui .dialog,
+html.iris-theme-dark body.iris-material-ui .dialog fieldset input:not([type="checkbox"]) {
+    background: #222b34;
+    border-color: var(--iris-border);
+    color: var(--iris-text);
+}
+
+html.iris-theme-dark body.iris-material-ui input:disabled,
+html.iris-theme-dark body.iris-material-ui select:disabled,
+html.iris-theme-dark body.iris-material-ui textarea:disabled,
+html.iris-theme-dark body.iris-material-ui tr.disabled td,
+html.iris-theme-dark body.iris-material-ui tr.disabled th {
+    background: #29313a;
+    color: var(--iris-disabled);
 }
 
 @media (max-width: 1366px) {
