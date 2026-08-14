@@ -112,7 +112,7 @@ if ($_POST  && !$ost->checkCSRFToken()) {
 
 //Add token to the header - used on ajax calls [DO NOT CHANGE THE NAME]
 $ost->addExtraHeader('<meta name="csrf_token" content="'.$ost->getCSRFToken().'" />');
-$ost->addExtraHeader('<link rel="stylesheet" href="'.ROOT_PATH.'custom/material/v1/iris-material-custom.css?v=23" media="all">');
+$ost->addExtraHeader('<link rel="stylesheet" href="'.ROOT_PATH.'custom/material/v1/iris-material-custom.css?v=26" media="all">');
 $ost->addExtraHeader('<script type="text/javascript" src="'.ROOT_PATH.'custom/material/v1/iris-theme-toggle.js?v=1"></script>');
 // Tema moderno desactivado. Descomentar estas líneas para volver a activarlo.
 // $ost->addExtraHeader('<link rel="stylesheet" href="'.ROOT_PATH.'custom/modern/v1/staff-modern.css?v=45" media="all">');
