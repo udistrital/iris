@@ -60,7 +60,7 @@ if (osTicket::is_ie())
     }
     ?>
 </head>
-<body>
+<body class="iris-material-ui">
 <div id="container">
     <?php
     if($ost->getError())
