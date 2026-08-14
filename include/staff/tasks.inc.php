@@ -72,6 +72,7 @@ $queue_name = $_SESSION[$queue_key] ?: '';
 $staffId = $thisstaff->getId();
 $deptId = $thisstaff->getDept()->getID();
 $adminDeptIds = $thisstaff->getAdminDepartments();
+$created_by_me_state = null;
 
 switch ($queue_name) {
     case 'closed':
@@ -130,6 +131,12 @@ switch ($queue_name) {
         break;
     case 'open_me':
         $results_type = __('Creados por mí (abiertos y cerrados)');
+        if (isset($_REQUEST['task_state'])
+                && is_string($_REQUEST['task_state'])
+                && in_array($_REQUEST['task_state'], array('open', 'closed'), true)) {
+            $created_by_me_state = $_REQUEST['task_state'];
+            $status = $created_by_me_state;
+        }
         $tasks->filter(
             array(
                 'thread__events__agent' => $staffId,
@@ -605,6 +612,16 @@ if ($thisstaff->hasPerm(Task::PERM_DELETE, false)) {
                 <input type="date" class="input-medium search-query" name="end"
                     value="<?php echo $_REQUEST['end']; ?>" form="query"/>
             </label>
+            <?php if ($queue_name === 'open_me') { ?>
+            <label>
+                <?php echo __('Estado'); ?>:
+                <select class="input-medium search-query" name="task_state" form="query">
+                    <option value=""><?php echo __('Todas'); ?></option>
+                    <option value="open" <?php echo $created_by_me_state === 'open' ? 'selected="selected"' : ''; ?>><?php echo __('Abiertas'); ?></option>
+                    <option value="closed" <?php echo $created_by_me_state === 'closed' ? 'selected="selected"' : ''; ?>><?php echo __('Cerradas'); ?></option>
+                </select>
+            </label>
+            <?php } ?>
             <button class="green button action-button muted" type="submit">
                 <?php echo __( 'Buscar');?>
             </button>
@@ -703,8 +720,8 @@ if ($thisstaff->hasPerm(Task::PERM_DELETE, false)) {
 
                     $threadcount = $T['thread_count'];
                     $number = $T['number'];
-                    if ($T['isopen'])
-                        $number = sprintf('<b>%s</b>', $number);
+                    $task_status_class = $T['isopen'] ? 'is-open' : 'is-closed';
+                    $task_status_label = $T['isopen'] ? __('Abierta') : __('Cerrada');
 
                     $title = Format::truncate($title_field->display($title_field->to_php($T['cdata__title'])), 40);
                 ?>
@@ -720,7 +737,10 @@ if ($thisstaff->hasPerm(Task::PERM_DELETE, false)) {
                             </td>
                         <?php } ?>
                         <td nowrap>
-                            <a class="preview" href="tasks.php?id=<?php echo $T['id']; ?>" data-preview="#tasks/<?php echo $T['id']; ?>/preview"><?php echo $number; ?></a>
+                            <div class="iris-task-number">
+                                <a class="preview" href="tasks.php?id=<?php echo $T['id']; ?>" data-preview="#tasks/<?php echo $T['id']; ?>/preview"><?php echo Format::htmlchars($number); ?></a>
+                                <span class="iris-task-status <?php echo $task_status_class; ?>"><?php echo Format::htmlchars($task_status_label); ?></span>
+                            </div>
                         </td>
                         <td nowrap>
                             <a class="preview" href="tickets.php?id=<?php echo $T['ticket__ticket_id']; ?>" data-preview="#tickets/<?php echo $T['ticket__ticket_id']; ?>/preview"><?php echo $T['ticket__number']; ?></a>
