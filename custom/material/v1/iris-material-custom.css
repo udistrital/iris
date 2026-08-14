@@ -28,6 +28,7 @@ body.iris-material-ui {
     margin: 0;
     background: var(--iris-bg);
     color: var(--iris-text);
+    font-size: 15px;
 }
 body.iris-material-ui * { box-sizing: border-box; }
 body.iris-material-ui a { color: var(--iris-primary); }
@@ -72,7 +73,7 @@ body.iris-material-ui #header #info {
     margin: 0;
     padding: var(--iris-space-2) 0;
     color: var(--iris-text-secondary);
-    font-size: 13px;
+    font-size: 14px;
     white-space: nowrap;
 }
 body.iris-material-ui #header #info strong { color: var(--iris-text); font-weight: 600; }
@@ -98,7 +99,7 @@ body.iris-material-ui #header #info .iris-theme-toggle {
     border-radius: 16px;
     box-shadow: none;
     color: var(--iris-primary);
-    font-size: 12px;
+    font-size: 13px;
     font-weight: 600;
     line-height: 20px;
     vertical-align: middle;
@@ -164,7 +165,7 @@ body.iris-material-ui #nav > li > a {
     border: 0;
     border-bottom: 3px solid transparent;
     color: var(--iris-text-secondary);
-    font-size: 14px;
+    font-size: 15px;
     font-weight: 500;
     line-height: normal;
     text-decoration: none;
@@ -202,7 +203,7 @@ body.iris-material-ui #sub_nav > li > a {
     border: 1px solid var(--iris-border);
     border-radius: 17px;
     color: var(--iris-text-secondary);
-    font-size: 13px;
+    font-size: 14px;
     line-height: 20px;
     text-decoration: none;
     transition: background-color 120ms ease, border-color 120ms ease, color 120ms ease;
@@ -287,7 +288,7 @@ body.iris-material-ui .sticky.bar.opaque .content {
     padding: var(--iris-space-2) var(--iris-space-4);
     border-bottom: 1px solid var(--iris-border-soft);
 }
-body.iris-material-ui .sticky.bar h2 { margin: 0; color: var(--iris-text); font-size: 19px; font-weight: 500; }
+body.iris-material-ui .sticky.bar h2 { margin: 0; color: var(--iris-text); font-size: 20px; font-weight: 500; }
 body.iris-material-ui .sticky.bar h2 a { color: inherit; text-decoration: none; }
 body.iris-material-ui .sticky.bar h2 i { margin-right: var(--iris-space-2); color: var(--iris-primary); }
 
@@ -305,7 +306,7 @@ body.iris-material-ui textarea {
     border: 1px solid #c8cfd6;
     border-radius: var(--iris-radius-sm);
     color: var(--iris-text);
-    font-size: 14px;
+    font-size: 15px;
     transition: border-color 120ms ease, box-shadow 120ms ease;
 }
 body.iris-material-ui textarea { min-height: 88px; }
@@ -348,7 +349,7 @@ body.iris-material-ui #extra_filters label {
     align-items: center;
     gap: var(--iris-space-2);
     color: var(--iris-text-secondary);
-    font-size: 13px;
+    font-size: 14px;
     font-weight: 700;
 }
 body.iris-material-ui .attached.input { display: inline-flex; align-items: stretch; }
@@ -366,7 +367,7 @@ body.iris-material-ui .action-button {
     border: 1px solid #b7c2cc;
     border-radius: var(--iris-radius-sm);
     color: var(--iris-primary);
-    font-size: 13px;
+    font-size: 14px;
     font-weight: 600;
     line-height: 20px;
     text-decoration: none;
@@ -428,7 +429,7 @@ body.iris-material-ui table.list thead th {
     border: 0;
     border-bottom: 1px solid var(--iris-border);
     color: #252d35;
-    font-size: 14px;
+    font-size: 15px;
     font-weight: 700;
     line-height: 1.3;
     text-align: left;
@@ -437,7 +438,7 @@ body.iris-material-ui table.list thead th {
 body.iris-material-ui table.list thead th + th { border-left: 1px solid var(--iris-border-soft); }
 body.iris-material-ui table.list thead th a {
     color: #202830;
-    font-size: 14px;
+    font-size: 15px;
     font-weight: 600;
     line-height: 1.35;
     text-decoration: none;
@@ -455,7 +456,7 @@ body.iris-material-ui table.list thead input.column-search {
     min-height: 34px;
     height: 34px;
     padding: 6px var(--iris-space-2);
-    font-size: 12px;
+    font-size: 13px;
     font-weight: 600;
 }
 body.iris-material-ui table.list thead .attached.button {
@@ -471,7 +472,7 @@ body.iris-material-ui table.list tbody td {
     border: 0;
     border-bottom: 1px solid var(--iris-border-soft);
     color: #252c33;
-    font-size: 13px;
+    font-size: 14px;
     line-height: 1.4;
     vertical-align: middle;
     transition: background-color 120ms ease;
@@ -490,6 +491,34 @@ body.iris-material-ui table.list tbody a.preview:hover {
     color: var(--iris-primary-dark);
     text-decoration: underline;
     text-underline-offset: 2px;
+}
+body.iris-material-ui .iris-task-number {
+    display: inline-flex;
+    align-items: flex-start;
+    flex-direction: column;
+    gap: 5px;
+}
+body.iris-material-ui .iris-task-status {
+    display: inline-flex;
+    min-height: 20px;
+    align-items: center;
+    padding: 2px 8px;
+    border: 1px solid transparent;
+    border-radius: 999px;
+    font-size: 12px;
+    font-weight: 700;
+    line-height: 14px;
+    letter-spacing: .01em;
+}
+body.iris-material-ui .iris-task-status.is-open {
+    background: rgba(42,103,172,.10);
+    border-color: rgba(42,103,172,.35);
+    color: var(--iris-primary-dark);
+}
+body.iris-material-ui .iris-task-status.is-closed {
+    background: #eef1f4;
+    border-color: #cbd2d9;
+    color: #4d5862;
 }
 body.iris-material-ui table.list tfoot td {
     padding: var(--iris-space-3) var(--iris-space-4);
@@ -1174,6 +1203,18 @@ html.iris-theme-dark body.iris-material-ui table.list thead th a.desc {
 html.iris-theme-dark body.iris-material-ui table.list tbody tr:hover td {
     background: rgba(57,255,136,.055);
 }
+html.iris-theme-dark body.iris-material-ui .iris-task-status.is-open {
+    background: var(--iris-primary-soft);
+    border-color: var(--iris-primary-border);
+    color: var(--iris-primary-dark);
+    box-shadow: 0 0 8px rgba(57,255,136,.12);
+}
+html.iris-theme-dark body.iris-material-ui .iris-task-status.is-closed {
+    background: var(--iris-accent-soft);
+    border-color: var(--iris-accent-border);
+    color: var(--iris-accent-hover);
+    box-shadow: 0 0 8px rgba(180,92,255,.12);
+}
 
 html.iris-theme-dark body.iris-material-ui input[type="checkbox"] {
     accent-color: var(--iris-primary);
@@ -1307,6 +1348,85 @@ html.iris-theme-dark body.iris-material-ui .dialog fieldset input:not([type="che
     color: var(--iris-text);
 }
 
+/* Acciones de tareas/tickets y formularios de asignacion/transferencia. */
+html.iris-theme-dark body.iris-material-ui .action-button {
+    border-color: rgba(180,92,255,.52);
+    box-shadow: inset 0 0 0 1px rgba(180,92,255,.06);
+}
+html.iris-theme-dark body.iris-material-ui .action-button > i:not(.icon-caret-down),
+html.iris-theme-dark body.iris-material-ui .action-button > span > i:not(.icon-caret-down) {
+    color: var(--iris-primary);
+    text-shadow: 0 0 8px rgba(57,255,136,.20);
+}
+html.iris-theme-dark body.iris-material-ui .action-button i.icon-caret-down {
+    border-left-color: rgba(180,92,255,.42);
+    color: var(--iris-accent-hover);
+}
+html.iris-theme-dark body.iris-material-ui .action-dropdown ul,
+html.iris-theme-dark body.iris-material-ui .noclick-dropdown ul,
+html.iris-theme-dark body.iris-material-ui .customQ-dropdown ul {
+    background: #222b34;
+    border-color: rgba(180,92,255,.52);
+    box-shadow: var(--iris-shadow-2), var(--iris-accent-glow);
+}
+html.iris-theme-dark body.iris-material-ui .action-dropdown ul li > a,
+html.iris-theme-dark body.iris-material-ui .noclick-dropdown ul li > a,
+html.iris-theme-dark body.iris-material-ui .customQ-dropdown ul li > a {
+    color: var(--iris-text);
+}
+html.iris-theme-dark body.iris-material-ui .action-dropdown ul li > a i,
+html.iris-theme-dark body.iris-material-ui .noclick-dropdown ul li > a i,
+html.iris-theme-dark body.iris-material-ui .customQ-dropdown ul li > a i {
+    color: var(--iris-primary);
+}
+html.iris-theme-dark body.iris-material-ui .action-dropdown ul li > a:hover,
+html.iris-theme-dark body.iris-material-ui .noclick-dropdown ul li > a:hover,
+html.iris-theme-dark body.iris-material-ui .customQ-dropdown ul li > a:hover {
+    background: var(--iris-primary-soft);
+    color: var(--iris-primary-dark) !important;
+}
+html.iris-theme-dark body.iris-material-ui .action-dropdown::before,
+html.iris-theme-dark body.iris-material-ui .noclick-dropdown::before {
+    border-bottom-color: rgba(180,92,255,.58);
+}
+html.iris-theme-dark body.iris-material-ui .action-dropdown::after,
+html.iris-theme-dark body.iris-material-ui .noclick-dropdown::after {
+    border-bottom-color: #222b34;
+}
+html.iris-theme-dark body.iris-material-ui .action-dropdown hr,
+html.iris-theme-dark body.iris-material-ui .customQ-dropdown hr {
+    border-bottom-color: var(--iris-border-soft);
+}
+
+html.iris-theme-dark body.iris-material-ui .dialog h3.drag-handle {
+    color: var(--iris-primary);
+    text-shadow: 0 0 9px rgba(57,255,136,.16);
+}
+html.iris-theme-dark body.iris-material-ui .dialog #msg_info,
+html.iris-theme-dark body.iris-material-ui .dialog .info-banner {
+    background: var(--iris-accent-soft);
+    border-color: var(--iris-accent-border);
+    color: #e3c8ff;
+    box-shadow: inset 3px 0 0 var(--iris-accent), var(--iris-accent-glow);
+}
+html.iris-theme-dark body.iris-material-ui .dialog #msg_info i,
+html.iris-theme-dark body.iris-material-ui .dialog .info-banner i {
+    color: var(--iris-accent-hover);
+}
+
+/* Placeholders legibles sin competir con el contenido introducido. */
+html.iris-theme-dark body.iris-material-ui input::placeholder,
+html.iris-theme-dark body.iris-material-ui textarea::placeholder,
+html.iris-theme-dark body.iris-material-ui .redactor-placeholder::before,
+html.iris-theme-dark body.iris-material-ui .redactor-editor[data-placeholder]::before,
+html.iris-theme-dark body.iris-material-ui .redactor-in[data-placeholder]::before,
+html.iris-theme-dark body.iris-material-ui .redactor-in figcaption[placeholder]:empty::before,
+html.iris-theme-dark body.iris-material-ui .select2-selection__placeholder,
+html.iris-theme-dark body.iris-material-ui .select2-search__field::placeholder {
+    color: #b4bec8;
+    opacity: 1;
+}
+
 html.iris-theme-dark body.iris-material-ui input:disabled,
 html.iris-theme-dark body.iris-material-ui select:disabled,
 html.iris-theme-dark body.iris-material-ui textarea:disabled,
@@ -1326,7 +1446,7 @@ html.iris-theme-dark body.iris-material-ui tr.disabled th {
     body.iris-material-ui #content { padding: var(--iris-space-4); }
     body.iris-material-ui #nav > li > a { padding-right: var(--iris-space-3); padding-left: var(--iris-space-3); }
     body.iris-material-ui #sub_nav { gap: 6px; padding: 10px var(--iris-space-3); }
-    body.iris-material-ui #sub_nav > li > a { padding-right: 10px; padding-left: 30px; font-size: 12px; }
+    body.iris-material-ui #sub_nav > li > a { padding-right: 10px; padding-left: 30px; font-size: 13px; }
     body.iris-material-ui table.list thead th,
     body.iris-material-ui table.list tbody td { padding-right: 10px; padding-left: 10px; }
 }
@@ -1385,15 +1505,15 @@ html.iris-theme-dark body.iris-material-ui tr.disabled th {
     body.iris-material-ui #content { padding: var(--iris-space-3); }
     body.iris-material-ui .sticky.bar.opaque .content { align-items: flex-start; flex-direction: column; }
     body.iris-material-ui #header { padding: var(--iris-space-3); }
-    body.iris-material-ui #header #info { width: 100%; padding: 0; font-size: 12px; line-height: 1.8; }
+    body.iris-material-ui #header #info { width: 100%; padding: 0; font-size: 13px; line-height: 1.8; }
     body.iris-material-ui #header #info a { padding: 2px 5px; }
     body.iris-material-ui #nav { min-height: 48px; padding: 0 var(--iris-space-2); }
-    body.iris-material-ui #nav > li > a { min-height: 48px; padding: 0 10px; font-size: 13px; }
+    body.iris-material-ui #nav > li > a { min-height: 48px; padding: 0 10px; font-size: 14px; }
     body.iris-material-ui #sub_nav { padding: var(--iris-space-2); }
     body.iris-material-ui form#query #basic_search { padding: var(--iris-space-3); }
     body.iris-material-ui form#query #basic_search label,
     body.iris-material-ui form#query #basic_search button { flex: 1 1 100%; width: 100%; }
-    body.iris-material-ui .sticky.bar h2 { font-size: 17px; }
+    body.iris-material-ui .sticky.bar h2 { font-size: 18px; }
     body.iris-material-ui .sticky.bar .pull-right,
     body.iris-material-ui .sticky.bar .flush-right,
     body.iris-material-ui .sticky.bar .action-button { width: 100%; }
