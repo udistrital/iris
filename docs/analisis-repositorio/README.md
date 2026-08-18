@@ -1,8 +1,5 @@
 # Análisis técnico del repositorio IRIS
 
-Repositorio analizado: `udistrital/iris`  
-Rama tomada como referencia: `master`  
-Fecha del análisis: 2026-08-18
 
 ## Alcance y criterio de evidencia
 
