@@ -60,6 +60,51 @@ posterior.
 4. Todas las vistas lo denominan expediente; el origen no crea una vista ni un
    proceso paralelo.
 
+## Restricción por dependencias
+
+Un agente solamente puede ver o abrir un expediente cuando al menos una de las
+dependencias a las que tiene acceso es creadora o participante del expediente.
+La regla se aplica en `Staff::getExpedientesDepartmentVisibility()` y se
+reutiliza desde listas, búsquedas y `Ticket::checkStaffPerm()`.
+
+La aplicación reconoce como participación departamental cualquiera de estas
+relaciones existentes:
+
+- dependencia actual del expediente (`ticket.dept_id`);
+- dependencia del agente asignado directamente;
+- dependencia de un agente que publicó una entrada o nota en el hilo;
+- dependencia de un agente registrado en un evento del ciclo de vida;
+- dependencia destinataria o agente asignado registrado en un evento;
+- referencia explícita a una dependencia;
+- referencia a un agente de la dependencia;
+- referencia departamental o a un agente registrada en un hilo hijo.
+
+El evento `created` permite reconocer la dependencia creadora cuando el
+expediente fue abierto por un agente. Cuando el creador es un usuario del
+portal, correo o API y no tiene dependencia de personal, la dependencia a la
+que se enruta inicialmente el expediente constituye su primera dependencia
+participante.
+
+La validación no depende de que el agente conozca la URL: el detalle vuelve a
+evaluar la misma regla contra el expediente solicitado. La configuración
+"acceso solo a asignados" se conserva como una restricción adicional; nunca
+amplía el acceso departamental.
+
+### Alcance de permisos
+
+La pertenencia a una dependencia creadora o participante concede visibilidad,
+pero no sustituye los permisos del rol. Editar, responder, transferir, asignar
+o eliminar continúa sujeto al rol efectivo que osTicket determine para la
+dependencia actual y a las comprobaciones específicas de cada acción.
+
+### Consideración histórica
+
+La participación se deriva de relaciones y eventos existentes, no de una tabla
+nueva. Si los datos históricos carecen del evento de creación o de referencias
+anteriores, la dependencia actual seguirá teniendo acceso, pero una dependencia
+creadora antigua que ya no sea la actual solo podrá reconocerse si quedó
+registrada mediante un agente, entrada, evento o referencia.
+
 ## Reglas para cambios futuros
 
 Una futura incorporación de recursos externos debe evitar condiciones de
@@ -109,4 +154,12 @@ Antes de desplegar se deben comprobar al menos estos recorridos:
 9. exportar una cola y comprobar que no haya duplicados;
 10. verificar que registros de todos los valores de `source` sean visibles
     cuando cumplan los criterios y permisos de la cola.
-
+11. transferir un expediente y verificar acceso de la dependencia creadora y
+    de la dependencia receptora;
+12. agregar una nota desde una tercera dependencia autorizada y comprobar que
+    esta quede reconocida como participante;
+13. intentar abrir por URL directa el expediente desde una dependencia ajena y
+    comprobar que se rechace el acceso;
+14. repetir listado, búsqueda, vista previa, exportación y detalle con agentes
+    de dependencias creadoras, participantes y ajenas;
+15. validar por separado un agente configurado con acceso solo a asignados.

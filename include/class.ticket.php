@@ -399,11 +399,19 @@ implements RestrictedAccess, Threadable, Searchable {
         if ((!$staff instanceof Staff) && !($staff=Staff::lookup($staff)))
             return false;
 
-        // check department access first
-        if (!$staff->canAccessDept($this->getDept())
-                // check assignment
+        // Enforce the same creator/participant-department boundary used by
+        // queues and searches. This check is intentionally query-backed so a
+        // guessed detail URL cannot bypass list visibility.
+        $visible = static::objects()
+            ->filter(array('ticket_id' => $this->getId()))
+            ->filter($staff->getExpedientesDepartmentVisibility())
+            ->exists();
+        if (!$visible)
+            return false;
+
+        // Preserve osTicket's assigned-only policy as an additional boundary.
+        if ($staff->isAccessLimited()
                 && !$this->isAssigned($staff)
-                // check referral
                 && !$this->getThread()->isReferred($staff))
             return false;
 

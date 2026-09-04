@@ -765,6 +765,11 @@ implements AuthenticatedUser, EmailContact, TemplateVariable, Searchable {
     }
 
     function getTicketsVisibility($exclude_archived=false) {
+        // Department-level boundary for expedientes. This predicate is also
+        // used by Ticket::checkStaffPerm(); keeping it here prevents list and
+        // direct-detail authorization from drifting apart.
+        $department_visibility = $this->getExpedientesDepartmentVisibility();
+
         // -- Open and assigned to me
         $assigned = Q::any(array(
             'staff_id' => $this->getId(),
@@ -782,26 +787,69 @@ implements AuthenticatedUser, EmailContact, TemplateVariable, Searchable {
             $assigned->add($childRefTeam);
         }
         $visibility = Q::any(new Q(array('status__state'=>'open', $assigned)));
-        // -- If access is limited to assigned only, return assigned
+
+        // Agents configured for assigned-only access must satisfy both rules:
+        // personal assignment/referral and membership in a creator or
+        // participant department.
         if ($this->isAccessLimited())
-            return $visibility;
-        // -- Routed to a department of mine
-        if (($depts=$this->getDepts()) && count($depts)) {
-            $in_dept = Q::any(array(
-                'dept_id__in' => $depts,
-                'thread__referrals__dept__id__in' => $depts,
+            return Q::all(array($department_visibility, $visibility));
+
+        if ($exclude_archived) {
+            return Q::all(array(
+                'status__state__in' => ['open', 'closed'],
+                $department_visibility,
             ));
-            if ($exclude_archived) {
-                $in_dept = Q::all(array(
-                    'status__state__in' => ['open', 'closed'],
-                    $in_dept,
-                ));
-            }
-            $visibility->add($in_dept);
-            $childRefDept = Q::all(new Q(array('child_thread__object_type' => 'C',
-                'child_thread__referrals__dept__id__in' => $depts)));
-            $visibility->add($childRefDept);
         }
+
+        return $department_visibility;
+    }
+
+    /**
+     * Build the single authorization predicate for the unified expediente
+     * view. A department participates when it currently owns the expediente,
+     * created it through an agent, has an agent assigned or referred to it,
+     * has an agent who wrote in the thread or registered a lifecycle event,
+     * or received an explicit department referral.
+     *
+     * The existing osTicket relationships are used deliberately; no schema
+     * or denormalized access table is required. getDepts() includes the
+     * agent's primary department and additional department access grants.
+     */
+    function getExpedientesDepartmentVisibility() {
+        $depts = array_filter((array) $this->getDepts());
+
+        // An agent without an accessible department must not obtain a query
+        // which accidentally matches every expediente.
+        if (!$depts)
+            return new Q(array('ticket_id' => 0));
+
+        $visibility = Q::any(array(
+            // Current owner/routing department.
+            'dept_id__in' => $depts,
+            // Department of the directly assigned agent.
+            'staff__dept_id__in' => $depts,
+            // Agents who have participated through messages or notes.
+            'thread__entries__staff__dept_id__in' => $depts,
+            // Agents recorded in lifecycle events, including creation.
+            'thread__events__agent__dept_id__in' => $depts,
+            // Department targets and assignees captured by lifecycle events.
+            'thread__events__dept_id__in' => $depts,
+            'thread__events__staff__dept_id__in' => $depts,
+            // Explicit referrals to a department or one of its agents.
+            'thread__referrals__dept__id__in' => $depts,
+            'thread__referrals__agent__dept_id__in' => $depts,
+        ));
+
+        // Preserve access granted through referrals on child threads.
+        $visibility->add(Q::all(new Q(array(
+            'child_thread__object_type' => 'C',
+            'child_thread__referrals__dept__id__in' => $depts,
+        ))));
+        $visibility->add(Q::all(new Q(array(
+            'child_thread__object_type' => 'C',
+            'child_thread__referrals__agent__dept_id__in' => $depts,
+        ))));
+
         return $visibility;
     }
 
