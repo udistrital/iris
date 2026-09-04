@@ -127,7 +127,7 @@ img.avatar {
 <htmlpagefooter name="def" style="display:none">
     <div class="hr">&nbsp;</div>
     <table width="100%"><tr><td class="flush-left">
-        Tarea Externa #<?php echo $ticket->getNumber(); ?> printed by
+        Expediente #<?php echo $ticket->getNumber(); ?> impreso por
         <?php echo $thisstaff->getUserName(); ?> on
         <?php echo Format::daydatetime(Misc::gmtime()); ?>
     </td>
@@ -139,7 +139,7 @@ img.avatar {
 
 <div>&nbsp;</div>
 <!-- Ticket metadata -->
-<h1>Tarea Externa #<?php echo $ticket->getNumber(); ?></h1>
+<h1>Expediente #<?php echo $ticket->getNumber(); ?></h1>
 <table class="meta-data" cellpadding="0" cellspacing="0">
 <tbody>
 <tr>

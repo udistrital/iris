@@ -53,6 +53,7 @@ No se observa una separación estricta Controller → Service → Repository. Va
 
 ## Índice
 
+- [Vista unificada de expedientes](../expedientes-vista-unificada.md)
 - [Arquitectura](arquitectura.md)
 - [Estructura del proyecto](estructura-proyecto.md)
 - [Modelos y datos](modelos-datos.md)

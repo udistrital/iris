@@ -67,7 +67,7 @@ if ($settings['status'])
         $status = 'open';
     case 'open':
     case 'closed':
-		$results_type = ($status == 'closed') ? __('Closed Tickets') : __('Open Tickets');
+        $results_type = ($status == 'closed') ? __('Expedientes cerrados') : __('Expedientes abiertos');
         $basic_filter->filter(array('status__state' => $status));
         break;
 }
@@ -121,9 +121,9 @@ $pageNav->paginate($tickets);
 $showing =$total ? $pageNav->showing() : "";
 if(!$results_type)
 {
-	$results_type=ucfirst($status).' '.__('Tickets');
+        $results_type=ucfirst($status).' '.__('Expedientes');
 }
-$showing.=($status)?(' '.$results_type):' '.__('All Tickets');
+$showing.=($status)?(' '.$results_type):' '.__('Todos los expedientes');
 if($search)
     $showing=__('Search Results').": $showing";
 
@@ -173,7 +173,7 @@ foreach (Topic::getHelpTopics(true) as $id=>$name) {
 <h1 style="margin:10px 0">
     <a href="<?php echo Http::refresh_url(); ?>"
         ><i class="refresh icon-refresh"></i>
-    <?php echo __('Tickets'); ?>
+    <?php echo __('Expedientes'); ?>
     </a>
 
 <div class="pull-right states">
@@ -205,7 +205,7 @@ if ($closedTickets) {?>
     <thead>
         <tr>
             <th nowrap>
-                <a href="tickets.php?sort=ID&order=<?php echo $negorder; ?><?php echo $qstr; ?>" title="<?php echo sprintf('%s %s', __('Sort By'), __('Ticket ID')); ?>"><?php echo __('Ticket #');?>&nbsp;<i class="icon-sort"></i></a>
+                <a href="tickets.php?sort=ID&order=<?php echo $negorder; ?><?php echo $qstr; ?>" title="<?php echo sprintf('%s %s', __('Sort By'), __('Expediente')); ?>"><?php echo __('Expediente #');?>&nbsp;<i class="icon-sort"></i></a>
             </th>
             <th width="120">
                 <a href="tickets.php?sort=date&order=<?php echo $negorder; ?><?php echo $qstr; ?>" title="<?php echo sprintf('%s %s', __('Sort By'), __('Date')); ?>"><?php echo __('Create Date');?>&nbsp;<i class="icon-sort"></i></a>
