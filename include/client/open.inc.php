@@ -31,8 +31,8 @@ if ($info['topicId'] && ($topic=Topic::lookup($info['topicId']))) {
 }
 
 ?>
-<h1><?php echo __('Abrir una nueva solicitud');?></h1>
-<p><?php echo __('Por favor, complete el siguiente formulario para crear una nueva solicitud.');?></p>
+<h1><?php echo __('Abrir un nuevo expediente');?></h1>
+<p><?php echo __('Por favor, complete el siguiente formulario para crear un nuevo expediente.');?></p>
 <a href="https://udistritaleduco-my.sharepoint.com/:i:/g/personal/computo_udistrital_edu_co/EcJbx6wH5G5FnX_oY1G_O6IBnMsBeIoR6QI74oX77qWP_A?e=n2MjVv" target="_blank" rel="noopener noreferrer">
 <?php echo __('Ver buenas prácticas de uso de IRIS'); ?>
   </a>
@@ -58,7 +58,7 @@ if ($info['topicId'] && ($topic=Topic::lookup($info['topicId']))) {
     <tbody>
     <tr><td colspan="2"><hr />
         <div class="form-header" style="margin-bottom:0.5em">
-        <b><?php echo __('Dependencia a la cual desea remitir la solicitud'); ?></b>
+        <b><?php echo __('Dependencia a la cual desea remitir el expediente'); ?></b>
         </div>
     </td></tr>
     <tr>
@@ -118,7 +118,7 @@ if ($info['topicId'] && ($topic=Topic::lookup($info['topicId']))) {
   </table>
 <hr/>
   <p class="buttons" style="text-align:center;">
-        <input type="submit" value="<?php echo __('Crear solicitud');?>">
+        <input type="submit" value="<?php echo __('Crear expediente');?>">
         <input type="reset" name="reset" value="<?php echo __('Reset');?>">
         <input type="button" name="cancel" value="<?php echo __('Cancel'); ?>" onclick="javascript:
             $('.richtext').each(function() {

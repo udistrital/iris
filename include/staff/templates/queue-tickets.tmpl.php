@@ -1,6 +1,7 @@
 <?php
 /*************************************************************************
-  queue-tickets.tmpl.php — versión limpia con filtros de estado y origen
+  Vista única de expedientes. El campo source conserva el canal técnico,
+  pero no divide ni excluye registros de esta cola.
 *************************************************************************/
 
 // ======================================================
@@ -85,48 +86,34 @@ if (!$sorted) {
 }
 
 // ======================================================
-// 8️⃣ APLICAR FILTROS MANUALES (status y source)
-// ======================================================
-if (!empty($_GET['status'])) {
-    $status = strtolower($_GET['status']);
-    switch ($status) {
-        case 'open':
-        case 'tramite':
-            $tickets->filter(Q::any(['status__state' => 'open']));
-            break;
-        case 'resolved':
-        case 'closed':
-            $tickets->filter(Q::any(['status__state' => 'closed']));
-            break;
-        case 'archived':
-            $tickets->filter(Q::any(['flags__hasbit' => Ticket::FLAG_ARCHIVED]));
-            break;
-        case 'deleted':
-            $tickets->filter(Q::any(['flags__hasbit' => Ticket::FLAG_DELETED]));
-            break;
-    }
-}
-
-if (!empty($_GET['source'])) {
-    $src = strtolower($_GET['source']);
-    $negate = str_starts_with($src, '!');
-    $srcValue = ltrim($src, '!');
-    if ($negate) {
-        $tickets->filter(Q::not(['source' => ucfirst($srcValue)]));
-    } else {
-        $tickets->filter(Q::any(['source' => ucfirst($srcValue)]));
-    }
-}
-
-// ======================================================
-// 9️⃣ PAGINACIÓN
+// 8️⃣ PAGINACIÓN Y BÚSQUEDAS
 // ======================================================
 $page = (isset($_GET['p']) && is_numeric($_GET['p'])) ? $_GET['p'] : 1;
 $pageNav = new Pagenate(PHP_INT_MAX, $page, PAGE_LIMIT);
 $tickets = $pageNav->paginateSimple($tickets);
 
+// Las búsquedas de texto pueden incorporar tablas auxiliares de relevancia.
+// Esta reconstrucción pertenece al flujo nativo de osTicket y evita aplicar
+// LIMIT y ordenamiento sobre la consulta externa equivocada.
+if (isset($tickets->extra['tables'])) {
+    $criteria = clone $tickets;
+    $criteria->limit(500);
+    $criteria->annotations = $criteria->related = $criteria->aggregated =
+        $criteria->annotations = $criteria->ordering = [];
+    $tickets->constraints = $tickets->extra = [];
+    $criteria->extra(array('select' => array('relevance' => 'Z1.relevance')));
+    $tickets = $tickets->filter(['ticket_id__in' =>
+            $criteria->values_flat('ticket_id')]);
+    $tickets->order_by(new SqlCode('relevance'), QuerySet::DESC);
+    $tickets->clearOption(QuerySet::OPT_INDEX_HINT);
+}
+
+// Relaciones como participantes y entradas del hilo pueden multiplicar filas.
+// El expediente debe aparecer una sola vez en la lista.
+$tickets->distinct('ticket_id');
+
 // ======================================================
-// 🔟 QUERY PRINCIPAL
+// 9️⃣ QUERY PRINCIPAL
 // ======================================================
 $Q = $queue->getBasicQuery();
 
@@ -145,7 +132,7 @@ if (($Q->extra && isset($Q->extra['tables'])) || !$Q->constraints || $empty) {
 
 $count = $count ?? $queue->getCount($thisstaff);
 $pageNav->setTotal($count, true);
-$pageNav->setURL('tickets.php', $_GET);
+$pageNav->setURL('tickets.php', $args);
 ?>
 
 <!-- SEARCH FORM START -->
@@ -181,40 +168,6 @@ return false;">
     </form>
 </div>
 <!-- SEARCH FORM END -->
-
-<!-- FILTERS START -->
-<div id="extra_filters" style="margin-top:10px; margin-bottom:15px;">
-  <form action="tickets.php" method="get" class="inline" onsubmit="javascript:
-    $.pjax({
-      url:$(this).attr('action') + '?' + $(this).serialize(),
-      container:'#pjax-container',
-      timeout:2000
-    });
-    return false;">
-    
-    <input type="hidden" name="_pjax" value="#pjax-container" />
-    <input type="hidden" name="queue" value="<?php echo $queue->getId(); ?>" />
-
-    <label for="status_filter"><strong>Estado:</strong></label>
-    <select name="status" id="status_filter" onchange="$(this).closest('form').submit();" style="margin-right:20px;">
-      <option value="">Todos</option>
-      <option value="open"      <?php echo ($_GET['status'] ?? '') == 'open' ? 'selected' : ''; ?>>Abierto</option>
-      <option value="resolved"  <?php echo ($_GET['status'] ?? '') == 'resolved' ? 'selected' : ''; ?>>Resuelto</option>
-      <option value="closed"    <?php echo ($_GET['status'] ?? '') == 'closed' ? 'selected' : ''; ?>>Cerrado</option>
-      <option value="archived"  <?php echo ($_GET['status'] ?? '') == 'archived' ? 'selected' : ''; ?>>Archivado</option>
-      <option value="deleted"   <?php echo ($_GET['status'] ?? '') == 'deleted' ? 'selected' : ''; ?>>Eliminado</option>
-      <option value="tramite"   <?php echo ($_GET['status'] ?? '') == 'tramite' ? 'selected' : ''; ?>>En trámite</option>
-    </select>
-
-    <label for="source_filter"><strong>Origen:</strong></label>
-    <select name="source" id="source_filter" onchange="$(this).closest('form').submit();">
-      <option value="">Todos</option>
-      <option value="web"  <?php echo ($_GET['source'] ?? '') == 'web' ? 'selected' : ''; ?>>Web</option>
-      <option value="!web" <?php echo ($_GET['source'] ?? '') == '!web' ? 'selected' : ''; ?>>No Web</option>
-    </select>
-  </form>
-</div>
-<!-- FILTERS END -->
 
 <div class="clear"></div>
 <div style="margin-bottom:20px; padding-top:5px;">
