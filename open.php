@@ -43,7 +43,7 @@ if ($_POST) {
     Draft::deleteForNamespace('ticket.client.'.substr(session_id(), -12));
     //Ticket::create...checks for errors..
     if(($ticket=Ticket::create($vars, $errors, SOURCE))){
-        $msg=__('Solicitud de soporte creada');
+        $msg=__('Expediente creado correctamente');
         // Drop session-backed form data
         unset($_SESSION[':form-data']);
         //Logged in...simply view the newly created ticket.
@@ -55,7 +55,7 @@ if ($_POST) {
             $ost->getCSRF()->rotate();
     }else{
         $errors['err'] = $errors['err'] ?: sprintf('%s %s',
-            __('No se puede crear la solicitud'),
+            __('No se puede crear el expediente'),
             __('Correct any errors below and try again.'));
     }
 }

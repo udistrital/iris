@@ -136,7 +136,7 @@ class StaffNav {
                 );
             }
             $this->tabs['tasks'] = array('desc'=>__('Tasks'), 'href'=>'tasks.php', 'title'=>__('Task Queue'));
-            $this->tabs['tickets'] = array('desc'=>__('Tickets'),'href'=>'tickets.php','title'=>__('Tarea externa Queue'));
+            $this->tabs['tickets'] = array('desc'=>__('Expedientes'),'href'=>'tickets.php','title'=>__('Cola de expedientes'));
 
             $this->tabs['kbase'] = array('desc'=>__('Knowledgebase'),'href'=>'kb.php','title'=>__('Knowledgebase'));
             if (!is_null($this->getRegisteredApps()))
@@ -338,19 +338,19 @@ class UserNav {
             // possible for web clients.
             if ($cfg->getClientRegistrationMode() != 'disabled'
                     || !$cfg->isClientLoginRequired())
-                $navs['new']=array('desc'=>__('Abrir nueva tarea externa'),'href'=>'open.php','title'=>'');
+                $navs['new']=array('desc'=>__('Abrir nuevo expediente'),'href'=>'open.php','title'=>'');
             if($user && $user->isValid()) {
                 if(!$user->isGuest()) {
-                    $navs['tickets']=array('desc'=>sprintf(__('Tarea externa (%d)'),$user->getNumTickets($user->canSeeOrgTickets())),
+                    $navs['tickets']=array('desc'=>sprintf(__('Expedientes (%d)'),$user->getNumTickets($user->canSeeOrgTickets())),
                                            'href'=>'tickets.php',
-                                            'title'=>__('Mostrar todas las tareas externas'));
+                                            'title'=>__('Mostrar todos los expedientes'));
                 } else {
                     $navs['tickets']=array('desc'=>__('View Ticket Thread'),
                                            'href'=>sprintf('tickets.php?id=%d',$user->getTicketId()),
-                                           'title'=>__('Ver tareas externas'));
+                                           'title'=>__('Ver expediente'));
                 }
             } else {
-                $navs['status']=array('desc'=>__('Ver estado tareas externass'),'href'=>'view.php','title'=>'');
+                $navs['status']=array('desc'=>__('Consultar estado del expediente'),'href'=>'view.php','title'=>'');
             }
             $this->navs=$navs;
         }

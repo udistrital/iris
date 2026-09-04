@@ -20,7 +20,7 @@ if ($thisclient && $thisclient->isGuest()
 
 <div id="msg_info">
     <i class="icon-compass icon-2x pull-left"></i>
-    <strong><?php echo __('Looking for your other tickets?'); ?></strong><br />
+    <strong><?php echo __('¿Busca sus otros expedientes?'); ?></strong><br />
     <a href="<?php echo ROOT_PATH; ?>login.php?e=<?php
         echo urlencode($thisclient->getEmail());
     ?>" style="text-decoration:underline"><?php echo __('Sign In'); ?></a>
@@ -59,11 +59,11 @@ if ($thisclient && $thisclient->isGuest()
             <table class="infoTable" cellspacing="1" cellpadding="3" width="100%" border="0">
                 <thead>
                     <tr><td class="headline" colspan="2">
-                        <?php echo __('Basic Ticket Information'); ?>
+                        <?php echo __('Información básica del expediente'); ?>
                     </td></tr>
                 </thead>
                 <tr>
-                    <th width="100"><?php echo __('Ticket Status');?>:</th>
+                    <th width="100"><?php echo __('Estado del expediente');?>:</th>
                     <td><?php echo ($S = $ticket->getStatus()) ? $S->getLocalName() : ''; ?></td>
                 </tr>
                 <tr>
