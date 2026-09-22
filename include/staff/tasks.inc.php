@@ -73,60 +73,38 @@ $staffId = $thisstaff->getId();
 $deptId = $thisstaff->getDept()->getID();
 $adminDeptIds = $thisstaff->getAdminDepartments();
 $created_by_me_state = null;
+$status = null;
 
 switch ($queue_name) {
     case 'closed':
-        $status = 'closed';
         $results_type = __('Casos cerrados asignados a mí');
         $showassigned = true; //closed by.
-        $tasks->filter(array('staff_id' => $staffId));
         $queue_sort_options = array('closed', 'updated', 'created', 'number', 'hot');
         break;
     case 'closed_dept':
-        $status = 'closed';
         $results_type = __('Casos cerrados asignados a Mi Dependencia');
         $showassigned = true; //closed by.
-        $tasks->filter(array('dept_id__in' => array($adminDeptIds)));
         $queue_sort_options = array('closed', 'updated', 'created', 'number', 'hot');
         break;
     case 'overdue':
-        $status = 'open';
         $results_type = __('Overdue Tasks');
-        $tasks->filter(array('isoverdue' => 1));
         $queue_sort_options = array('created', 'updated', 'number', 'hot');
         break;
     default:
     case 'assigned':
-        $status = 'open';
         $results_type = __('Casos asignados a mí');
-        $tasks->filter(array('staff_id' => $staffId));
         $queue_sort_options = array('created', 'updated', 'number', 'hot');
         break;
     case 'assigned_dept':
-        $status = 'open';
         $results_type = __('Casos abiertos asignados a Mi Dependencia');
-        $tasks->filter(array('dept_id__in' => array($adminDeptIds)));
         $queue_sort_options = array('created', 'updated', 'number', 'hot');
         break;
     case 'unassigned_dept':
-        $status = 'open';
         $results_type = __('Casos sin asignar en Mi Dependencia');
-        $tasks->filter(array(
-            'staff_id' => 0,
-            'team_id' => 0,
-        ));
-        if (count($adminDeptIds)) {
-            $tasks->filter(array('dept_id__in' => array($adminDeptIds)));
-        } else if ($thisstaff->getLeadedTeams()) {
-            $tasks->filter(array('dept_id' => $deptId));
-        } else {
-            $tasks->filter(array('id' => 0));
-        }
         $queue_sort_options = array('created', 'updated', 'number', 'hot');
         break;
     case 'dept':
         $results_type = __('Todos los casos en Mi Dependencia');
-        $tasks->filter(array('dept_id__in' => array($adminDeptIds)));
         $queue_sort_options = array('created', 'updated', 'number', 'hot');
         break;
     case 'open_me':
@@ -135,163 +113,60 @@ switch ($queue_name) {
                 && is_string($_REQUEST['task_state'])
                 && in_array($_REQUEST['task_state'], array('open', 'closed'), true)) {
             $created_by_me_state = $_REQUEST['task_state'];
-            $status = $created_by_me_state;
         }
-        $tasks->filter(
-            array(
-                'thread__events__agent' => $staffId,
-                'thread__events__event__name' => 'created',
-            ),
-        );
         $queue_sort_options = array('created', 'updated', 'number', 'hot');
         break;
     case 'created_pairs':
         $results_type = __('Creados por un miembro de mis equipos');
-        if ($teams = $thisstaff->getTeams())
-            $pairs = TeamMember::objects()
-                ->distinct('staff_id')
-                ->filter(
-                    array(
-                        'team_id__in' => $teams,
-                        'staff_id__notequal' => $staffId,
-                    ),
-                )
-                ->values('staff_id');
-
-        if (!$teams || !$pairs)
-            $tasks->filter(array('id' => 0));
-        else
-            $tasks->filter(
-                array(
-                    'thread__events__agent__in' => $pairs,
-                    'thread__events__event__name' => 'created',
-                ),
-            );
         $queue_sort_options = array('created', 'updated', 'number', 'hot');
         break;
     case 'involved':
         $results_type = __('Casos en los que he participado y no estoy asignado');
-        $tasks->distinct('id');
-        $tasks->filter(
-            array(
-                'thread__entries__type__in' => array('N', 'R'),
-                'thread__entries__staff__staff_id' => $staffId,
-                'staff_id__notequal' => $staffId,
-            ),
-        );
         $queue_sort_options = array('created', 'updated', 'number', 'hot');
         break;
     case 'transferred':
         $results_type = __('Transferidos por mi dependencia');
-        if ($thisstaff->getManagedDepartments()) {
-            $tasks->distinct('id');
-            $tasks->filter(
-                array(
-                    'thread__events__dept' => $deptId,
-                    'thread__events__event__name__in' => array('transferred', 'created'),
-                    'dept__notequal' => $deptId,
-                ),
-            );
-        } else {
-            $tasks->filter(array('id' => 0));
-        }
         $queue_sort_options = array('created', 'updated', 'number', 'hot');
         break;
 
-        case 'transferred_me':
-            $results_type = __('Transferidos por mí');
-            $tasks->distinct('id');
-            $tasks->filter(
-                array(
-                    'thread__events__event__name' => 'transferred',
-                    'thread__events__agent' => $staffId,
-                ),
-            );
+    case 'transferred_me':
+        $results_type = __('Transferidos por mí');
         $queue_sort_options = array('created', 'updated', 'number', 'hot');
         break;
     case 'thread_me':
         $results_type = __('Asignados por mí a otro agente');
-        $tasks->distinct('id');
-        $tasks->filter(
-            array(
-                'thread__events__agent' => $staffId,
-                'thread__events__event__name' => 'assigned',
-                'thread__events__staff__staff_id__notequal' => $staffId,
-            ),
-        );
         $queue_sort_options = array('created', 'updated', 'number', 'hot');
         break;
     case 'assigned_mteams':
-        $status = 'open';
         $results_type = __('Casos asignados a mis equipos');
-        $tasks->filter(array('team_id__in' => $thisstaff->teams->values_flat('team_id')));
         $queue_sort_options = array('created', 'updated', 'number', 'hot');
         break;
     case 'unassigned':
-        $status = 'open';
         $results_type = __('Casos en mis equipos sin asignar a un agente');
-        $tasks->filter(array('staff_id' => 0));
-        if (count($adminDeptIds)) {
-            $tasks->filter(array(
-                'dept_id__in' => array($adminDeptIds),
-                'team_id__gt' => 0
-            ));
-        } else if ($thisstaff->getLeadedTeams()) {
-            $tasks->filter(array('team_id__in' => $thisstaff->teams->values_flat('team_id')));
-        } else {
-            $tasks->filter(array('id' => 0));
-        }
         $queue_sort_options = array('created', 'updated', 'number', 'hot');
         break;
     case 'closed_mteams':
-        $status = 'closed';
         $results_type = __('Casos cerrados asignados a mis equipos');
         $showassigned = true; //closed by.
-        $tasks->filter(array('team_id__in' => $thisstaff->teams->values_flat('team_id')));
         $queue_sort_options = array('closed', 'updated', 'created', 'number', 'hot');
         break;
     case 'created_dep':
         $results_type = __('Casos creados por alguien de mi dependencia');
-        $tasks->filter(
-            array(
-                'thread__events__agent__dept_id__in' => array($adminDeptIds),
-                'thread__events__event__name' => 'created',
-            ),
-        );
         $queue_sort_options = array('created', 'updated', 'number', 'hot');
         break;
     case 'requested_dep':
         $results_type = __('Casos solicitados por mi dependencia');
-        if ($thisstaff->getManagedDepartments()) {
-            $tasks->filter(
-                array(
-                    'thread__events__agent__dept_id' => $deptId,
-                    'thread__events__event__name' => 'created',
-                    'dept_id__notequal' => $deptId,
-                ),
-            );
-        } else {
-            $tasks->filter(array('id' => 0));
-        }
         $queue_sort_options = array('created', 'updated', 'number', 'hot');
         break;
     case 'cc':
         $results_type = __('Casos con copia a mí');
-        $userId = $thisstaff->getUserIdStaff();
-        if ($userId) {
-            $tasks->filter(
-                array(
-                    'thread__collaborators__user' => $userId,
-                    'thread__events__event__name' => 'created',
-                    'thread__events__agent__notequal' => $staffId,
-                ),
-            );
-        } else {
-            $tasks->filter(array('id' => 0));
-        }
         $queue_sort_options = array('created', 'updated', 'number', 'hot');
         break;
 }
+
+$status = iris_apply_task_queue_filters($tasks, $queue_name, $thisstaff);
+if ($queue_name === 'open_me' && $created_by_me_state)
+    $status = $created_by_me_state;
 
 // Apply filters
 $filters = array();
@@ -376,29 +251,8 @@ if ($status) {
 if ($filters)
     $tasks->filter($filters);
 
-// Impose visibility constraints
-// ------------------------------------------------------------
-// -- Open and assigned to me
-$visibility = Q::any(
-    new Q(array('flags__hasbit' => TaskModel::ISOPEN, 'staff_id' => $staffId))
-);
-// -- Task for tickets assigned to me
-$visibility->add(
-    new Q(array(
-        'ticket__staff_id' => $staffId,
-        'ticket__status__state' => 'open'
-    ))
-);
-// -- Routed to a department of mine
-if (!$thisstaff->showAssignedOnly() && ($depts = $thisstaff->getDepts()))
-    $visibility->add(new Q(array('dept_id__in' => $depts)));
-// -- Open and assigned to a team of mine
-if (($teams = $thisstaff->getTeams()) && count(array_filter($teams)))
-    $visibility->add(new Q(array(
-        'team_id__in' => array_filter($teams),
-        'flags__hasbit' => TaskModel::ISOPEN
-    )));
-$tasks->filter(new Q($visibility));
+// Apply the same authorization scope used by navigation badge counts.
+iris_apply_task_visibility($tasks, $thisstaff);
 
 // Add in annotations
 $tasks->annotate(array(

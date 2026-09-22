@@ -410,7 +410,57 @@ a time {
     transition: all 0.2s ease;
     line-height: 1.5;
     position: relative;
-    overflow: hidden;
+    overflow: visible;
+  }
+
+  #sub_nav > li {
+    position: relative;
+  }
+
+  #sub_nav .task-nav-badge {
+    position: absolute;
+    top: -7px;
+    right: -7px;
+    z-index: 2;
+    min-width: 18px;
+    height: 18px;
+    padding: 0 4px;
+    border: 2px solid #fff;
+    border-radius: 10px;
+    box-sizing: border-box;
+    color: #fff;
+    font-size: 10px;
+    font-weight: 700;
+    line-height: 14px;
+    text-align: center;
+    white-space: nowrap;
+    pointer-events: none;
+    box-shadow: 0 1px 3px rgba(0, 0, 0, 0.3);
+  }
+
+  #sub_nav .task-nav-badge-warning {
+    background-color: #a84b08;
+  }
+
+  #sub_nav .task-nav-badge-critical {
+    background-color: #b91c1c;
+  }
+
+  #sub_nav > li > a:focus-visible {
+    outline: 2px solid #1d4ed8;
+    outline-offset: 2px;
+  }
+
+  @media (max-width: 640px) {
+    #sub_nav {
+      padding-right: 12px;
+      padding-left: 12px;
+    }
+
+    #sub_nav .task-nav-badge {
+      top: -5px;
+      right: -5px;
+    }
   }
   
   #customQ_nav .jb-overflowmenu-menu-primary li.item:hover {
