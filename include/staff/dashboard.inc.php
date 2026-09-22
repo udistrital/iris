@@ -55,6 +55,7 @@ $plots = $report->getPlotData();
 <h2><?php echo __('Statistics'); ?>&nbsp;<i class="help-tip icon-question-sign" href="#statistics"></i></h2>
 <p><?php echo __('Estadísticas de tareas organizadas por dependencias, equipos y agentes.');?></p>
 <p><?php echo __('Creadas, Asignadas y Cerradas corresponden al periodo seleccionado. Abiertas es una fotografía del inventario actual de tareas abiertas.');?></p>
+<p><?php echo __('Los agentes bloqueados y los equipos deshabilitados permanecen visibles y se identifican en su nombre para no ocultar su actividad o carga pendiente.');?></p>
 <p><b><?php echo __('Range: '); ?></b>
   <?php
   $range = array();
