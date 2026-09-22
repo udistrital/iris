@@ -556,7 +556,8 @@ if ($thisstaff->hasPerm(Task::PERM_DELETE, false)) {
                 $title_field = TaskForm::getInstance()->getField('title');
                 $ids = ($errors && $_POST['tids'] && is_array($_POST['tids'])) ? $_POST['tids'] : null;
                 foreach ($tasks as $T) {
-                    $T['isopen'] = ($T['flags'] & TaskModel::ISOPEN != 0); //XXX:
+                    $T['isopen'] = (($T['flags'] & TaskModel::ISOPEN) != 0);
+                    $T['isoverdue'] = (($T['flags'] & TaskModel::ISOVERDUE) != 0);
                     $total += 1;
                     $tag = $T['staff_id'] ? 'assigned' : 'openticket';
                     $flag = null;

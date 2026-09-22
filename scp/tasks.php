@@ -310,7 +310,7 @@ function iris_apply_task_queue_filters($tasks, $queue_name, $thisstaff, $force_o
 
         case 'overdue':
             $status = 'open';
-            $tasks->filter(['isoverdue' => 1]);
+            $tasks->filter(['flags__hasbit' => TaskModel::ISOVERDUE]);
             break;
 
         default:
