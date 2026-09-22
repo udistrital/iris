@@ -185,8 +185,7 @@ class OverviewReport {
 
         $openTasks = TaskModel::objects()
             ->filter(array(
-                'flags__hasbit' => TaskModel::ISOPEN,
-                'updated__range' => array($start, $stop, true)
+                'flags__hasbit' => TaskModel::ISOPEN
             ))
             ->values($group === 'dept' ? 'dept_id' : ($group === 'team' ? 'team_id' : 'staff_id'))
             ->annotate(array('count' => SqlAggregate::COUNT('id')));
@@ -194,7 +193,7 @@ class OverviewReport {
         $openTasksCount = [];
         foreach ($openTasks as $task) {
             $key = $group === 'dept' ? $task['dept_id'] : ($group === 'team' ? $task['team_id'] : $task['staff_id']);
-            $openTasksCount[$key] += $task['count'];
+            $openTasksCount[$key] = ($openTasksCount[$key] ?? 0) + $task['count'];
         }
 
         $base_stats = ThreadEvent::objects()
