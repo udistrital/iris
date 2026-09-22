@@ -162,19 +162,45 @@ class OverviewReport {
         );
     }
 
+    /**
+     * Departments whose statistics the agent may inspect.
+     *
+     * System administrators retain their normal department scope. Department
+     * managers can inspect the departments they manage, and any role carrying
+     * stats.agents grants access for the department where that role applies.
+     */
+    static function getAuthorizedDepartmentIds($staff) {
+        $available = array_map('intval', $staff->getDepts());
+        $managed = array_map('intval', $staff->getManagedDepartments());
+        $managedMap = array_fill_keys($managed, true);
+        $isAdmin = method_exists($staff, 'isAdmin') && $staff->isAdmin();
+        $authorized = array();
+
+        foreach (array_unique(array_merge($available, $managed)) as $deptId) {
+            if (!$deptId)
+                continue;
+            $role = $staff->getRole($deptId);
+            if ($isAdmin || isset($managedMap[$deptId])
+                    || ($role && $role->hasPerm(ReportModel::PERM_AGENTS))) {
+                $authorized[$deptId] = true;
+            }
+        }
+
+        return array_keys($authorized);
+    }
+
     function enumTabularGroups() {
         global $thisstaff;
         $tabs = array();
+        $authorizedDeptIds = self::getAuthorizedDepartmentIds($thisstaff);
 
-        if ($thisstaff->getManagedDepartments() || $thisstaff->hasPerm(ReportModel::PERM_AGENTS))
+        if ($authorizedDeptIds)
             $tabs["dept"] = __("Dependencias");
-        if ($thisstaff->getManagedDepartments() || count($thisstaff->teams->values_flat('team_id')))
+        if ($authorizedDeptIds || count($thisstaff->teams->values_flat('team_id')))
             $tabs["team"] = __("Teams");
 
-        $tabs["staff"] = __("Agents");
-
-        // Nueva pestaña
-        if ($thisstaff->getRole()->getId() == 1) {
+        if ($authorizedDeptIds) {
+            $tabs["staff"] = __("Agents");
             $tabs["response_time"] = __("Tiempo de respuesta");
         }
 
@@ -398,6 +424,12 @@ class OverviewReport {
     function getTabularData($group='dept') {
         global $thisstaff;
 
+        // Apply the same authorization to direct exports and JSON requests as
+        // to the tabs rendered in the dashboard.
+        $allowedGroups = $this->enumTabularGroups();
+        if (!array_key_exists($group, $allowedGroups))
+            return array('columns' => array(), 'data' => array());
+
         $event = [
             'created' => 1,
             'assigned' => 4,
@@ -408,12 +440,36 @@ class OverviewReport {
 
 
         list($start, $stop) = $this->getDateRange();
+        $authorizedDeptIds = self::getAuthorizedDepartmentIds($thisstaff);
 
         $dash_headers = array_merge(
             $group === 'team' ? array() : array(__('Created')),
             array(__('Assigned'), __('Closed'), __('Abiertos')),
             $group === 'dept' ? array(__('Transferidos')) : array()
         );
+
+        if (!$authorizedDeptIds && $group === 'dept') {
+            return array(
+                'columns' => array_merge(array(__('Dependencia')), $dash_headers),
+                'data' => array(),
+            );
+        }
+        if (!$authorizedDeptIds && $group === 'staff') {
+            return array(
+                'columns' => array_merge(array(__('Agent')), $dash_headers),
+                'data' => array(),
+            );
+        }
+        if (!$authorizedDeptIds && $group === 'response_time') {
+            return array(
+                'columns' => array(
+                    __('Agente'),
+                    __('Prom. creado a asignado (h)'),
+                    __('Prom. asignado a cerrado (h)'),
+                ),
+                'data' => array(),
+            );
+        }
 
         $createdByAgent = array();
         if ($group === 'staff') {
@@ -427,6 +483,7 @@ class OverviewReport {
                     'thread_type' => 'A',
                     'annulled' => 0,
                     'uid_type' => 'S',
+                    'dept_id__in' => $authorizedDeptIds,
                 ))
                 ->values('id', 'uid', 'uid_type')
                 ->distinct('id');
@@ -434,10 +491,17 @@ class OverviewReport {
             $createdByAgent = self::countCreatedEventsByAgent($createdEvents);
         }
 
+        $openTaskFilters = array(
+            'flags__hasbit' => TaskModel::ISOPEN,
+        );
+        if (in_array($group, array('staff', 'response_time')))
+            $openTaskFilters['dept_id__in'] = $authorizedDeptIds;
+        elseif ($group === 'team')
+            $openTaskFilters['dept_id__in'] = $authorizedDeptIds
+                ?: array($thisstaff->getDeptId());
+
         $openTasks = TaskModel::objects()
-            ->filter(array(
-                'flags__hasbit' => TaskModel::ISOPEN
-            ))
+            ->filter($openTaskFilters)
             ->values($group === 'dept' ? 'dept_id' : ($group === 'team' ? 'team_id' : 'staff_id'))
             ->annotate(array('count' => SqlAggregate::COUNT('id')));
 
@@ -503,10 +567,9 @@ class OverviewReport {
             ))
             ->filter(array('timestamp__range' => array($start, $stop, true)));
 
-        // Agents and teams are included from their authorized catalogs below,
-        // even when they have no activity in the selected period. Disabled
-        // entities remain visible so their historical and open workload is not
-        // hidden; their status is appended to the row label.
+        // Active agents and authorized teams are included from their catalogs
+        // below even when they have no activity in the selected period. Locked
+        // agents are intentionally excluded; disabled teams remain visible.
         $authorizedStaff = array();
         $authorizedTeams = array();
 
@@ -518,27 +581,13 @@ class OverviewReport {
                     __('Prom. asignado a cerrado (h)'),
                 );
 
-                if ($thisstaff->getRole()->getId() !== 1) {
-                    return array('columns' => $headers, 'data' => array());
-                }
-
-                $adminDeptIds = [];
-                foreach ($thisstaff->getDepts() as $deptId) {
-                    $role = $thisstaff->getRole($deptId);
-                    if ($role && $role->getId() == 1)
-                        $adminDeptIds[] = $deptId;
-                }
-
-                if (!$adminDeptIds) {
-                    return array('columns' => $headers, 'data' => array());
-                }
-
                 $validStaffIds = [];
-                foreach (Staff::objects()->filter(['dept_id__in' => $adminDeptIds]) as $staff) {
-                    $role = $staff->getRole($staff->getDeptId());
-                    if ($role && in_array($role->getId(), [1, 2]))
-                        $validStaffIds[] = $staff->getId();
-                }
+                foreach (Staff::objects()
+                        ->filter(array(
+                            'dept_id__in' => $authorizedDeptIds,
+                            'isactive' => 1,
+                        )) as $staff)
+                    $validStaffIds[] = $staff->getId();
 
                 if (!$validStaffIds) {
                     return array(
@@ -556,6 +605,7 @@ class OverviewReport {
                         'thread_type' => 'A',
                         'annulled' => 0,
                         'staff_id__in' => $validStaffIds,
+                        'dept_id__in' => $authorizedDeptIds,
                     ))
                     ->values('thread_id');
 
@@ -567,6 +617,7 @@ class OverviewReport {
                         'thread_type' => 'A',
                         'annulled' => 0,
                         'staff_id__in' => $validStaffIds,
+                        'dept_id__in' => $authorizedDeptIds,
                     ))
                     ->values('id', 'thread_id', 'staff_id', 'timestamp')
                     ->distinct('id');
@@ -644,8 +695,6 @@ class OverviewReport {
                         'first' => $agent->getFirstName(),
                         'last' => $agent->getLastName()
                     ]) : 'N/A';
-                    if ($agent && !$agent->isActive())
-                        $name .= ' - '.__('Locked');
 
                     $avg1 = self::averageResponseHours(
                         $createdToAssigned[$staffId] ?? array()
@@ -681,28 +730,12 @@ class OverviewReport {
                 };
                 $pk = 'dept__id';
 
-                if ($thisstaff->getRole()->getId() !== 1) {
-                    return [ 'columns' => [__('Dependencia')], 'data' => [] ];
-                }
-
-                $adminDeptIds = [];
-                foreach ($thisstaff->getDepts() as $deptId) {
-                    $role = $thisstaff->getRole($deptId);
-                    if ($role && $role->getId() == 1) {
-                        $adminDeptIds[] = $deptId;
-                    }
-                }
-
-                if (!$adminDeptIds) {
-                    return [ 'columns' => [__('Dependencia')], 'data' => [] ];
-                }
-
                 $stats = $stats
-                    ->filter(array('dept_id__in' => $adminDeptIds))
+                    ->filter(array('dept_id__in' => $authorizedDeptIds))
                     ->values('dept__id', 'dept__name', 'dept__flags')
                     ->distinct('dept__id');
                 $times = $times
-                    ->filter(array('dept_id__in' => $adminDeptIds))
+                    ->filter(array('dept_id__in' => $authorizedDeptIds))
                     ->values('dept__id')
                     ->distinct('dept__id');
                 break;
@@ -710,7 +743,20 @@ class OverviewReport {
             $headers = array(__('Team'));
             $header = function($row) { return $row['team__name']; };
             $pk = 'team_id';
-            $teams = ($thisstaff->getManagedDepartments() ? array_keys(Team::getTeams(array('dept_id' => $thisstaff->getDeptId()))) : $thisstaff->teams->values_flat('team_id'));
+            $teams = array();
+            foreach ($thisstaff->teams->values_flat('team_id') as $team)
+                $teams[] = (int) $team[0];
+            if ($authorizedDeptIds) {
+                foreach (Team::objects()
+                        ->filter(array(
+                            'members__staff__dept_id__in' => $authorizedDeptIds,
+                            'members__staff__isactive' => 1,
+                        ))
+                        ->distinct('team_id') as $team) {
+                    $teams[] = $team->getId();
+                }
+                $teams = array_values(array_unique(array_map('intval', $teams)));
+            }
             if (empty($teams))
                 return array("columns" => array_merge($headers, $dash_headers),
                       "data" => array());
@@ -723,11 +769,21 @@ class OverviewReport {
 
             $stats = $stats
                 ->values('team', 'team__name', 'team__flags')
-                ->filter(array('dept_id' => $thisstaff->getDeptId(), 'team_id__gt' => 0, 'team_id__in' => $teams))
+                ->filter(array(
+                    'dept_id__in' => $authorizedDeptIds
+                        ?: array($thisstaff->getDeptId()),
+                    'team_id__gt' => 0,
+                    'team_id__in' => $teams,
+                ))
                 ->distinct('team_id');
             $times = $times
                 ->values('team_id')
-                ->filter(array('team_id__gt' => 0))
+                ->filter(array(
+                    'dept_id__in' => $authorizedDeptIds
+                        ?: array($thisstaff->getDeptId()),
+                    'team_id__gt' => 0,
+                    'team_id__in' => $teams,
+                ))
                 ->distinct('team_id');
             break;
        
@@ -741,29 +797,14 @@ class OverviewReport {
             };
             $pk = 'staff_id';
 
-            if ($thisstaff->getRole()->getId() !== 1) {
-                return [ 'columns' => [__('Agente')], 'data' => [] ];
-            }
-
-            $adminDeptIds = [];
-            foreach ($thisstaff->getDepts() as $deptId) {
-                $role = $thisstaff->getRole($deptId);
-                if ($role && $role->getId() == 1) {
-                    $adminDeptIds[] = $deptId;
-                }
-            }
-
-            if (!$adminDeptIds) {
-                return [ 'columns' => [__('Agente')], 'data' => [] ];
-            }
-
             $validStaffIds = array();
-            foreach (Staff::objects()->filter(['dept_id__in' => $adminDeptIds]) as $staff) {
-                $role = $staff->getRole($staff->getDeptId());
-                if ($role && in_array($role->getId(), [1, 2])) {
-                    $validStaffIds[] = $staff->getId();
-                    $authorizedStaff[$staff->getId()] = $staff;
-                }
+            foreach (Staff::objects()
+                    ->filter(array(
+                        'dept_id__in' => $authorizedDeptIds,
+                        'isactive' => 1,
+                    )) as $staff) {
+                $validStaffIds[] = $staff->getId();
+                $authorizedStaff[$staff->getId()] = $staff;
             }
 
             if (!$validStaffIds) {
@@ -776,12 +817,14 @@ class OverviewReport {
                 ->values('staff_id', 'staff__firstname', 'staff__lastname')
                 ->distinct('staff_id')
                 ->order_by('-staff_id')
-                ->filter($Q);
+                ->filter($Q)
+                ->filter(array('dept_id__in' => $authorizedDeptIds));
 
             $times = $times
                 ->values('staff_id')
                 ->distinct('staff_id')
-                ->filter($Q);
+                ->filter($Q)
+                ->filter(array('dept_id__in' => $authorizedDeptIds));
             break;
 
         default:
