@@ -567,10 +567,9 @@ class OverviewReport {
             ))
             ->filter(array('timestamp__range' => array($start, $stop, true)));
 
-        // Agents and teams are included from their authorized catalogs below,
-        // even when they have no activity in the selected period. Disabled
-        // entities remain visible so their historical and open workload is not
-        // hidden; their status is appended to the row label.
+        // Active agents and authorized teams are included from their catalogs
+        // below even when they have no activity in the selected period. Locked
+        // agents are intentionally excluded; disabled teams remain visible.
         $authorizedStaff = array();
         $authorizedTeams = array();
 
@@ -584,7 +583,10 @@ class OverviewReport {
 
                 $validStaffIds = [];
                 foreach (Staff::objects()
-                        ->filter(['dept_id__in' => $authorizedDeptIds]) as $staff)
+                        ->filter(array(
+                            'dept_id__in' => $authorizedDeptIds,
+                            'isactive' => 1,
+                        )) as $staff)
                     $validStaffIds[] = $staff->getId();
 
                 if (!$validStaffIds) {
@@ -693,8 +695,6 @@ class OverviewReport {
                         'first' => $agent->getFirstName(),
                         'last' => $agent->getLastName()
                     ]) : 'N/A';
-                    if ($agent && !$agent->isActive())
-                        $name .= ' - '.__('Locked');
 
                     $avg1 = self::averageResponseHours(
                         $createdToAssigned[$staffId] ?? array()
@@ -750,6 +750,7 @@ class OverviewReport {
                 foreach (Team::objects()
                         ->filter(array(
                             'members__staff__dept_id__in' => $authorizedDeptIds,
+                            'members__staff__isactive' => 1,
                         ))
                         ->distinct('team_id') as $team) {
                     $teams[] = $team->getId();
@@ -798,7 +799,10 @@ class OverviewReport {
 
             $validStaffIds = array();
             foreach (Staff::objects()
-                    ->filter(['dept_id__in' => $authorizedDeptIds]) as $staff) {
+                    ->filter(array(
+                        'dept_id__in' => $authorizedDeptIds,
+                        'isactive' => 1,
+                    )) as $staff) {
                 $validStaffIds[] = $staff->getId();
                 $authorizedStaff[$staff->getId()] = $staff;
             }

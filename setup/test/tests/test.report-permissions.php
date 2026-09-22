@@ -108,6 +108,15 @@ class ReportPermissionsTest extends Test {
         $this->assert(strpos($source,
             'in_array($role->getId(), [1, 2])') === false);
     }
+
+    function testLockedAgentsAreExcludedFromAgentCatalogs() {
+        $source = file_get_contents(
+            get_osticket_root_path().'/include/class.report.php'
+        );
+
+        $this->assert(substr_count($source, "'isactive' => 1") >= 2,
+            'Agent and response-time catalogs must only include active staff');
+    }
 }
 
 return 'ReportPermissionsTest';
