@@ -23,6 +23,7 @@ RolePermission::register(/* @trans */ 'Miscellaneous', ReportModel::getPermissio
 class OverviewReport {
     var $start;
     var $end;
+    var $date_range;
     static $end_choices = [
         'now' => 'Up to today',
         '+7 days' => 'One Week',
@@ -58,28 +59,59 @@ class OverviewReport {
         return Format::date(Misc::dbtime($this->start), false, $format);
     }
 
+    function getPeriod() {
+        return $this->end;
+    }
 
-    function getDateRange() {
-        global $cfg;
+    static function calculateEndTimestamp($start, $period, $now) {
+        if ($period === 'now')
+            return $now;
 
-        $start = $this->start ?: 'last month';
-        $stop = $this->end ?: 'now';
+        return strtotime($period, $start);
+    }
 
-        // Convert user time to db time
-        $start = Misc::dbtime($start);
-        // Stop time can be relative.
-        if ($stop[0] == '+') {
-            // $start time + time(X days)
-            $now = time();
-            $stop = $start + (strtotime($stop, $now)-$now);
-        } else {
-            $stop = Misc::dbtime($stop);
+    function getDateRangeTimestamps() {
+        if (isset($this->date_range))
+            return $this->date_range;
+
+        $start = Misc::dbtime($this->start ?: 'last month');
+        $now = Misc::dbtime('now');
+        $stop = self::calculateEndTimestamp($start, $this->end, $now);
+
+        return $this->date_range = array($start, $stop);
+    }
+
+    static function formatDateRangeForDisplay($range, $timezone,
+            $format='F j, Y', $dbTimezone='UTC') {
+        $formatted = array();
+        $tz = new DateTimeZone($timezone);
+        $dbtz = new DateTimeZone($dbTimezone);
+
+        foreach ($range as $timestamp) {
+            $databaseDate = new DateTime('@'.$timestamp);
+            $gmtTimestamp = $timestamp - $dbtz->getOffset($databaseDate);
+            $date = new DateTime('@'.$gmtTimestamp);
+            $date->setTimezone($tz);
+            $formatted[] = $date->format($format);
         }
 
-        $start = 'FROM_UNIXTIME('.$start.')';
-        $stop = 'FROM_UNIXTIME(' . ($stop + 86400) . ')';
-        
-        return array($start, $stop);
+        return $formatted;
+    }
+
+    static function formatDateRangeForQuery($range) {
+        return array(
+            'FROM_UNIXTIME('.$range[0].')',
+            'FROM_UNIXTIME('.$range[1].')',
+        );
+    }
+
+    function getDateRange() {
+        $range = $this->getDateRangeTimestamps();
+
+        // The ORM compiles __range as SQL BETWEEN, so both boundaries are
+        // inclusive. For "now", the upper boundary is the current instant;
+        // relative periods end exactly at the calculated timestamp.
+        return self::formatDateRangeForQuery($range);
     }
 
     
@@ -187,6 +219,179 @@ class OverviewReport {
         }
 
         return $counts;
+    }
+
+    /**
+     * Build per-agent response-time intervals from task lifecycle events.
+     *
+     * Creation-to-assignment belongs to the agent receiving the first staff
+     * assignment. Assignment-to-close belongs to the agent assigned when the
+     * task is closed. The event completing each interval must be inside the
+     * requested range; its starting event may predate the range.
+     */
+    static function calculateResponseTimeIntervals($createdEvents,
+            $assignedEvents, $closedEvents, $reopenedEvents, $rangeStart,
+            $rangeStop, $authorizedStaffIds) {
+        $authorized = array_fill_keys(array_map('intval', $authorizedStaffIds), true);
+        $createdByThread = array();
+        $assignedByThread = array();
+        $closedByThread = array();
+        $reopenedByThread = array();
+
+        $timestamp = function($event) {
+            $value = $event['timestamp'] ?? null;
+            if (is_int($value) || is_float($value) || ctype_digit((string) $value))
+                return (int) $value;
+            $value = $value ? strtotime($value) : false;
+            return $value === false ? null : $value;
+        };
+        $isStaffAssignment = function($event) {
+            $data = $event['data'] ?? null;
+            if (is_string($data) && $data !== '')
+                $data = json_decode($data, true);
+
+            // A team assignment retains the task's staff_id snapshot. Do not
+            // mistake that snapshot for a new assignment to the agent.
+            return !(is_array($data)
+                && isset($data['team'])
+                && !isset($data['staff'])
+                && !isset($data['claim']));
+        };
+        $seen = array();
+        $appendUnique = function(&$target, $event, $time) use (&$seen) {
+            $id = (int) ($event['id'] ?? 0);
+            $type = $event['_response_type'] ?? 'event';
+            if ($id && isset($seen[$type][$id]))
+                return;
+            if ($id)
+                $seen[$type][$id] = true;
+            $event['_response_timestamp'] = $time;
+            $target[] = $event;
+        };
+
+        foreach ($createdEvents as $event) {
+            $threadId = (int) ($event['thread_id'] ?? 0);
+            $time = $timestamp($event);
+            if (!$threadId || $time === null)
+                continue;
+            if (!isset($createdByThread[$threadId])
+                    || $time < $createdByThread[$threadId])
+                $createdByThread[$threadId] = $time;
+        }
+
+        foreach ($assignedEvents as $event) {
+            $threadId = (int) ($event['thread_id'] ?? 0);
+            $staffId = (int) ($event['staff_id'] ?? 0);
+            $time = $timestamp($event);
+            if (!$threadId || !$staffId || $time === null
+                    || !$isStaffAssignment($event))
+                continue;
+            $event['_response_type'] = 'assigned';
+            $appendUnique($assignedByThread[$threadId], $event, $time);
+        }
+
+        foreach ($closedEvents as $event) {
+            $threadId = (int) ($event['thread_id'] ?? 0);
+            $time = $timestamp($event);
+            if (!$threadId || $time === null)
+                continue;
+            $event['_response_type'] = 'closed';
+            $appendUnique($closedByThread[$threadId], $event, $time);
+        }
+
+        foreach ($reopenedEvents as $event) {
+            $threadId = (int) ($event['thread_id'] ?? 0);
+            $time = $timestamp($event);
+            if (!$threadId || $time === null)
+                continue;
+            $event['_response_type'] = 'reopened';
+            $appendUnique($reopenedByThread[$threadId], $event, $time);
+        }
+
+        $sortEvents = function(&$events) {
+            usort($events, function($a, $b) {
+                $byTime = $a['_response_timestamp'] <=> $b['_response_timestamp'];
+                return $byTime ?: ((int) ($a['id'] ?? 0) <=> (int) ($b['id'] ?? 0));
+            });
+        };
+        foreach ($assignedByThread as &$events)
+            $sortEvents($events);
+        unset($events);
+        foreach ($closedByThread as &$events)
+            $sortEvents($events);
+        unset($events);
+        foreach ($reopenedByThread as &$events)
+            $sortEvents($events);
+        unset($events);
+
+        $result = array(
+            'created_to_assigned' => array(),
+            'assigned_to_closed' => array(),
+        );
+
+        foreach ($assignedByThread as $threadId => $assignments) {
+            $first = $assignments[0];
+            $staffId = (int) $first['staff_id'];
+            $assignedAt = $first['_response_timestamp'];
+            $createdAt = $createdByThread[$threadId] ?? null;
+            if ($createdAt !== null
+                    && isset($authorized[$staffId])
+                    && $assignedAt >= $rangeStart
+                    && $assignedAt <= $rangeStop
+                    && $assignedAt >= $createdAt) {
+                $result['created_to_assigned'][$staffId][] = $assignedAt - $createdAt;
+            }
+        }
+
+        foreach ($closedByThread as $threadId => $closures) {
+            $assignments = $assignedByThread[$threadId] ?? array();
+            if (!$assignments)
+                continue;
+
+            foreach ($closures as $closed) {
+                $closedAt = $closed['_response_timestamp'];
+                $staffId = (int) ($closed['staff_id'] ?? 0);
+                if (!isset($authorized[$staffId])
+                        || $closedAt < $rangeStart || $closedAt > $rangeStop)
+                    continue;
+
+                $lastReopenedAt = null;
+                foreach ($reopenedByThread[$threadId] ?? array() as $reopened) {
+                    if ($reopened['_response_timestamp'] <= $closedAt)
+                        $lastReopenedAt = $reopened['_response_timestamp'];
+                    else
+                        break;
+                }
+
+                $lastAssignment = null;
+                foreach ($assignments as $assignment) {
+                    $assignedAt = $assignment['_response_timestamp'];
+                    if ($assignedAt > $closedAt)
+                        break;
+                    if ($lastReopenedAt !== null && $assignedAt < $lastReopenedAt)
+                        continue;
+                    $lastAssignment = $assignment;
+                }
+
+                // Do not combine a closure with an assignment to another
+                // agent or with an assignment from a previous open cycle.
+                if (!$lastAssignment
+                        || (int) $lastAssignment['staff_id'] !== $staffId)
+                    continue;
+
+                $duration = $closedAt - $lastAssignment['_response_timestamp'];
+                if ($duration >= 0)
+                    $result['assigned_to_closed'][$staffId][] = $duration;
+            }
+        }
+
+        return $result;
+    }
+
+    static function averageResponseHours($intervals) {
+        return $intervals
+            ? round(array_sum($intervals) / count($intervals) / 3600, 2)
+            : null;
     }
 
 
@@ -307,14 +512,14 @@ class OverviewReport {
 
         switch ($group) {
             case 'response_time':
-                $headers = [__('Agente')];
-                $pk = 'staff_id';
-
-                // "<pre>=== DEBUG RESPONSE TIME ===\n";
+                $headers = array(
+                    __('Agente'),
+                    __('Prom. creado a asignado (h)'),
+                    __('Prom. asignado a cerrado (h)'),
+                );
 
                 if ($thisstaff->getRole()->getId() !== 1) {
-                    //echo "Usuario sin permiso suficiente\n</pre>";
-                    return ['columns' => $headers, 'data' => []];
+                    return array('columns' => $headers, 'data' => array());
                 }
 
                 $adminDeptIds = [];
@@ -324,11 +529,8 @@ class OverviewReport {
                         $adminDeptIds[] = $deptId;
                 }
 
-                //echo "Admin Dept IDs: " . implode(', ', $adminDeptIds) . "\n";
-
                 if (!$adminDeptIds) {
-                    //echo "No hay departamentos administrados\n</pre>";
-                    return ['columns' => $headers, 'data' => []];
+                    return array('columns' => $headers, 'data' => array());
                 }
 
                 $validStaffIds = [];
@@ -338,71 +540,102 @@ class OverviewReport {
                         $validStaffIds[] = $staff->getId();
                 }
 
-               //echo "Valid Staff IDs: " . implode(', ', $validStaffIds) . "\n";
+                if (!$validStaffIds) {
+                    return array(
+                        'columns' => $headers,
+                        'data' => array(),
+                    );
+                }
 
-                $createdEvents = ThreadEvent::objects()
-                    ->filter([
-                        'event_id' => $event['created'],
-                        'timestamp__range' => [$start, $stop, true],
-                        'thread_type' => 'A',
-                        'annulled' => 0
-                    ])
-                    ->filter(Q::any([
-                        'staff_id__in' => $validStaffIds,
-                        'uid__in' => $validStaffIds,
-                        'uid_type' => 'S'
-                    ]))
-                    ->values('thread_id', 'staff_id', 'uid', 'uid_type', 'timestamp');
-
-
-                $assignedEvents = ThreadEvent::objects()
-                    ->filter([
+                // Select tasks whose interval is completed in the requested
+                // period. Their starting event may be older than the period.
+                $assignmentCompletions = ThreadEvent::objects()
+                    ->filter(array(
                         'event_id' => $event['assigned'],
-                        'timestamp__range' => [$start, $stop, true],
+                        'timestamp__range' => array($start, $stop, true),
                         'thread_type' => 'A',
                         'annulled' => 0,
-                        'staff_id__in' => $validStaffIds
-                    ])
-                    ->values('thread_id', 'staff_id', 'timestamp');
+                        'staff_id__in' => $validStaffIds,
+                    ))
+                    ->values('thread_id');
 
-                $closedEvents = ThreadEvent::objects()
-                    ->filter([
+                $closedEvents = array();
+                $closedQuery = ThreadEvent::objects()
+                    ->filter(array(
                         'event_id' => $event['closed'],
-                        'timestamp__range' => [$start, $stop, true],
+                        'timestamp__range' => array($start, $stop, true),
                         'thread_type' => 'A',
                         'annulled' => 0,
-                        'staff_id__in' => $validStaffIds
-                    ])
-                    ->values('thread_id', 'staff_id', 'timestamp');
+                        'staff_id__in' => $validStaffIds,
+                    ))
+                    ->values('id', 'thread_id', 'staff_id', 'timestamp')
+                    ->distinct('id');
 
-                $responseData = [];
-                foreach ($createdEvents as $ev) {
-                    $staffId = $ev['staff_id'] ?: ($ev['uid_type'] === 'S' ? $ev['uid'] : null);
-                    if (!$staffId) continue;
-                    $responseData[$ev['thread_id']]['created'] = strtotime($ev['timestamp']);
-                    $staffMap[$ev['thread_id']] = $staffId;
+                $candidateThreadIds = array();
+                foreach ($assignmentCompletions as $assignment)
+                    $candidateThreadIds[(int) $assignment['thread_id']] = true;
+                foreach ($closedQuery as $closed) {
+                    $closedEvents[] = $closed;
+                    $candidateThreadIds[(int) $closed['thread_id']] = true;
+                }
+                unset($candidateThreadIds[0]);
+                $candidateThreadIds = array_keys($candidateThreadIds);
+
+                $createdEvents = array();
+                $assignedEvents = array();
+                $reopenedEvents = array();
+                if ($candidateThreadIds) {
+                    $historyRange = array('FROM_UNIXTIME(0)', $stop, true);
+                    foreach (ThreadEvent::objects()
+                            ->filter(array(
+                                'event_id' => $event['created'],
+                                'timestamp__range' => $historyRange,
+                                'thread_type' => 'A',
+                                'annulled' => 0,
+                                'thread_id__in' => $candidateThreadIds,
+                            ))
+                            ->values('id', 'thread_id', 'timestamp')
+                            ->distinct('id') as $created) {
+                        $createdEvents[] = $created;
+                    }
+                    foreach (ThreadEvent::objects()
+                            ->filter(array(
+                                'event_id' => $event['assigned'],
+                                'timestamp__range' => $historyRange,
+                                'thread_type' => 'A',
+                                'annulled' => 0,
+                                'thread_id__in' => $candidateThreadIds,
+                            ))
+                            ->values('id', 'thread_id', 'staff_id', 'data', 'timestamp')
+                            ->distinct('id') as $assigned) {
+                        $assignedEvents[] = $assigned;
+                    }
+                    foreach (ThreadEvent::objects()
+                            ->filter(array(
+                                'event_id' => Event::getIdByName('reopened'),
+                                'timestamp__range' => $historyRange,
+                                'thread_type' => 'A',
+                                'annulled' => 0,
+                                'thread_id__in' => $candidateThreadIds,
+                            ))
+                            ->values('id', 'thread_id', 'timestamp')
+                            ->distinct('id') as $reopened) {
+                        $reopenedEvents[] = $reopened;
+                    }
                 }
 
-                foreach ($assignedEvents as $ev)
-                    $responseData[$ev['thread_id']]['assigned'] = strtotime($ev['timestamp']);
-                foreach ($closedEvents as $ev)
-                    $responseData[$ev['thread_id']]['closed'] = strtotime($ev['timestamp']);
-
-                $createdToAssigned = [];
-                $assignedToClosed = [];
-
-                foreach ($responseData as $id => $times) {
-                    $staffId = $staffMap[$id] ?? null;
-                    if (!$staffId) continue;
-                    if (isset($times['created'], $times['assigned'])) {
-                        $createdToAssigned[$staffId][] = $times['assigned'] - $times['created'];
-                        //echo "Tarea $id: creado→asignado = " . ($times['assigned'] - $times['created']) . "s\n";
-                    }
-                    if (isset($times['assigned'], $times['closed'])) {
-                        $assignedToClosed[$staffId][] = $times['closed'] - $times['assigned'];
-                        //echo "Tarea $id: asignado→cerrado = " . ($times['closed'] - $times['assigned']) . "s\n";
-                    }
-                }
+                list($rangeStart, $rangeStop) = $this->getDateRangeTimestamps();
+                $intervals = self::calculateResponseTimeIntervals(
+                    $createdEvents,
+                    $assignedEvents,
+                    $closedEvents,
+                    $reopenedEvents,
+                    $rangeStart,
+                    $rangeStop,
+                    $validStaffIds
+                );
+                $createdToAssigned = $intervals['created_to_assigned'];
+                $assignedToClosed = $intervals['assigned_to_closed'];
 
                 $rows = [];
                 foreach ($validStaffIds as $staffId) {
@@ -411,45 +644,35 @@ class OverviewReport {
                         'first' => $agent->getFirstName(),
                         'last' => $agent->getLastName()
                     ]) : 'N/A';
+                    if ($agent && !$agent->isActive())
+                        $name .= ' - '.__('Locked');
 
-                   $avg1 = isset($createdToAssigned[$staffId])
-                        ? round(array_sum($createdToAssigned[$staffId]) / count($createdToAssigned[$staffId]) / 3600, 2)
-                        : '-';
-                    $avg2 = isset($assignedToClosed[$staffId])
-                        ? round(array_sum($assignedToClosed[$staffId]) / count($assignedToClosed[$staffId]) / 3600, 2)
-                        : '-';
+                    $avg1 = self::averageResponseHours(
+                        $createdToAssigned[$staffId] ?? array()
+                    );
+                    $avg2 = self::averageResponseHours(
+                        $assignedToClosed[$staffId] ?? array()
+                    );
 
-                    //echo "Agente {$name}: prom. creado→asignado = $avg1 h, asignado→cerrado = $avg2 h\n";
-
-                    $rows[] = [$name, is_numeric($avg1) ? round($avg1, 2) : '-', is_numeric($avg2) ? round($avg2, 2) : '-'];
+                    $rows[] = array(
+                        $name,
+                        $avg1 === null ? '-' : $avg1,
+                        $avg2 === null ? '-' : $avg2,
+                    );
                 }
 
-                //echo "</pre>";
-                //echo "\n=== RAW EVENT DATA ===\n";
-                    //foreach ($responseData as $id => $times) {
-                        //echo "thread_id: $id | ";
-                        //echo isset($times['created']) ? "created: {$times['created']} | " : "created: - | ";
-                        //echo isset($times['assigned']) ? "assigned: {$times['assigned']} | " : "assigned: - | ";
-                        //echo isset($times['closed']) ? "closed: {$times['closed']} \n" : "closed: -\n";
-                   // }
-
                 usort($rows, function($a, $b) {
-                    // Orden descendente por la segunda columna (prom. creado → asignado)
-                    // Los nulls van al final
                     $aVal = $a[1];
                     $bVal = $b[1];
 
-                    if ($aVal === null && $bVal === null) return 0;
-                    if ($aVal === null) return 1;
-                    if ($bVal === null) return -1;
+                    if (!is_numeric($aVal) && !is_numeric($bVal)) return 0;
+                    if (!is_numeric($aVal)) return 1;
+                    if (!is_numeric($bVal)) return -1;
                     return $bVal <=> $aVal;
                 });
 
 
-                return [
-                    'columns' => ['Agente', 'Prom. creado a asignado (h)', 'Prom. asignado a cerrado (h)'],
-                    'data' => $rows
-                ];
+                return array('columns' => $headers, 'data' => $rows);
 
             case 'dept':
                 $headers = array(__('Dependencia'));
