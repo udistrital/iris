@@ -1,11 +1,8 @@
-var allTabsData = {};
-
 (function($) {
+    var allTabsData = {};
+
     $(document).ready(function() {
-        $('.tab_content').each(function() {
-            var tabId = $(this).attr('id');
-            allTabsData[tabId] = extractTableData($(this));
-        });
+        allTabsData = window.irisDashboardPlotData || {};
         
         $('ul.clean.tabs li a').click(function(e) {
             e.preventDefault();
@@ -20,49 +17,11 @@ var allTabsData = {};
             updateChart(tabId);
             return false;
         });
-        
-        updateChart($('ul.clean.tabs li.active a').attr('href').substring(1));
+
+        var activeTab = $('ul.clean.tabs li.active a').attr('href');
+        if (activeTab)
+            updateChart(activeTab.substring(1));
     });
-    
-    function extractTableData(tabContent) {
-        var tabId = tabContent.attr('id');
-        var isTeam = tabId === 'team';
-        var isDept = tabId === 'dept';
-        
-        var data = {
-            labels: [],
-            plots: {},
-            events: []
-        };
-        
-        var rows = $('table.dashboard-stats tbody tr', tabContent);
-        var totalIndex = rows.length - 1;
-        
-        var headerRow = rows.first();
-        var headers = headerRow.find('th').map(function() {
-            return $(this).text().trim().toLowerCase();
-        }).get();
-        
-        for (var i = 1; i < headers.length; i++) {
-            var eventName = headers[i].toLowerCase().replace(/\s+/g, '_');
-            data.events.push(eventName);
-            data.plots[eventName] = [];
-        }
-        
-        rows.slice(1, totalIndex).each(function() {
-            var cells = $(this).find('th, td');
-            
-            data.labels.push($(cells[0]).text().trim());
-            
-            for (var i = 0; i < data.events.length; i++) {
-                var cellValue = parseInt($(cells[i + 1]).text()) || 0;
-                data.plots[data.events[i]].push(cellValue);
-            }
-        });
-        
-        data.times = Array.from({ length: data.labels.length }, (_, i) => i);
-        return data;
-    }
     
     function updateChart(tabId) {
         if (allTabsData[tabId]) {
@@ -78,26 +37,36 @@ var allTabsData = {};
             width = $('#line-chart-here').width(),
             height = $('#line-chart-here').height();
 
-        var plots = [], max = 0;
-        var times = json.times || [];
-        var labels = json.labels || [];
+        var plots = [], renderEvents = [], max = 0;
+        var times = (json.times || []).slice();
+        var labels = (json.labels || []).slice();
+        var events = json.events || [];
+        var plotData = json.plots || {};
         
         if (times.length === 0) {
             $('#line-chart-here').html('<div style="text-align:center;padding-top:50px;">No data available</div>');
             return;
         }
 
-        json.events.forEach(function(e) {
-            if (json.plots[e] === undefined) return;
+        events.forEach(function(e) {
+            if (plotData[e] === undefined) return;
+
+            var series = plotData[e].slice();
 
             $('<span>').append(e)
                 .attr({'class':'label','style':'margin-left:0.5em'})
                 .appendTo($('#line-chart-legend'));
             $('<br>').appendTo('#line-chart-legend');
 
-            plots.push(json.plots[e]);
-            max = Math.max(max, Math.max.apply(Math, json.plots[e]));
+            renderEvents.push(e);
+            plots.push(series);
+            max = Math.max(max, Math.max.apply(Math, series));
         });
+
+        if (plots.length === 0) {
+            $('#line-chart-here').html('<div style="text-align:center;padding-top:50px;">No data available</div>');
+            return;
+        }
         
         if (times.length === 1) {
             times.push(1);
@@ -116,7 +85,7 @@ var allTabsData = {};
             shade: false,
             axis: "0 0 1 1",
             axisxstep: times.length - 1,
-            axisystep: Math.min(12, max),
+            axisystep: Math.min(12, Math.max(1, max)),
             symbol: "circle",
             smooth: false
         });
@@ -210,13 +179,13 @@ var allTabsData = {};
                         var dependencyName = labels[colIndex];
                     
                         var caseInfo = [];
-                        for (var i = 0; i < json.events.length; i++) {
-                            var event = json.events[i];
+                        for (var i = 0; i < renderEvents.length; i++) {
+                            var event = renderEvents[i];
                             if (m.symbols[i] && m.symbols[i][colIndex] && 
-                                json.plots[event] && json.plots[event][colIndex] !== undefined) {
+                                plots[i] && plots[i][colIndex] !== undefined) {
                                 caseInfo.push({
                                     type: event.charAt(0).toUpperCase() + event.slice(1),
-                                    value: json.plots[event][colIndex],
+                                    value: plots[i][colIndex],
                                     color: m.symbols[i][colIndex].attr('fill')
                                 });
                             }
@@ -273,7 +242,7 @@ var allTabsData = {};
             })(i);
         }
 
-        $('span.label').each(function(i) {
+        $('#line-chart-legend span.label').each(function(i) {
             $(this).click(function() {
                 $(this).toggleClass('disabled');
                 if ($(this).hasClass('disabled')) {

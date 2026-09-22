@@ -84,47 +84,50 @@ class OverviewReport {
 
     
 
-    function getPlotData() {
-        $tableData = $this->getTabularData();
-        
-        // Initialize containers
-        $labels = [];
-        $plots = [];
-        $events = [];
-        
-        // Extract header/column names (excluding the first one which is labels)
-        if (!empty($tableData["headers"]) && count($tableData["headers"]) > 1) {
-            $events = array_slice($tableData["headers"], 1);
-            
-            // Initialize empty arrays for each event type
-            foreach ($events as $event) {
-                $eventKey = strtolower(str_replace(' ', '_', $event));
-                $plots[$eventKey] = [];
-            }
+    function getPlotData($group='dept', $tableData=null) {
+        if ($tableData === null)
+            $tableData = $this->getTabularData($group);
+
+        return self::formatPlotData($tableData);
+    }
+
+    static function formatPlotData($tableData) {
+        $columns = $tableData['columns'] ?? array();
+        $dataRows = $tableData['data'] ?? array();
+        $labels = array();
+        $plots = array();
+
+        foreach (array_slice($columns, 1) as $column) {
+            $eventKey = strtolower(preg_replace('/\s+/', '_', trim((string) $column)));
+            $plots[$eventKey] = array();
         }
-        
-        // Get all rows except the last one (total row)
-        $dataRows = array_slice($tableData["data"], 0, count($tableData["data"]) - 1);
-        
+
+        // getTabularData() adds TOTAL to count reports. Specialized reports
+        // without a total row must retain their final data row.
+        if ($dataRows) {
+            $lastRow = end($dataRows);
+            if (isset($lastRow[0])
+                    && strtoupper(trim((string) $lastRow[0])) === 'TOTAL')
+                array_pop($dataRows);
+        }
+
+        $events = array_keys($plots);
         foreach ($dataRows as $index => $row) {
-            // First column is the label
-            $labels[] = $row[0];
-            
-            // Process each metric value dynamically
-            for ($i = 1; $i < count($row); $i++) {
-                $eventKey = strtolower(str_replace(' ', '_', $events[$i - 1]));
-                $plots[$eventKey][$index] = (int)$row[$i];
+            $labels[] = isset($row[0]) ? (string) $row[0] : '';
+            foreach ($events as $eventIndex => $eventKey) {
+                $value = $row[$eventIndex + 1] ?? 0;
+                $plots[$eventKey][$index] = is_numeric($value)
+                    ? $value + 0
+                    : 0;
             }
         }
-        
-        $times = range(0, count($labels) - 1);
-        
-        return [
-            "times" => $times, 
-            "plots" => $plots, 
-            "events" => array_keys($plots), 
-            "labels" => $labels
-        ];
+
+        return array(
+            'times' => $labels ? range(0, count($labels) - 1) : array(),
+            'plots' => $plots,
+            'events' => $events,
+            'labels' => $labels,
+        );
     }
 
     function enumTabularGroups() {
@@ -311,7 +314,7 @@ class OverviewReport {
 
                 if ($thisstaff->getRole()->getId() !== 1) {
                     //echo "Usuario sin permiso suficiente\n</pre>";
-                    return ['headers' => $headers, 'data' => []];
+                    return ['columns' => $headers, 'data' => []];
                 }
 
                 $adminDeptIds = [];
@@ -325,7 +328,7 @@ class OverviewReport {
 
                 if (!$adminDeptIds) {
                     //echo "No hay departamentos administrados\n</pre>";
-                    return ['headers' => $headers, 'data' => []];
+                    return ['columns' => $headers, 'data' => []];
                 }
 
                 $validStaffIds = [];
@@ -456,7 +459,7 @@ class OverviewReport {
                 $pk = 'dept__id';
 
                 if ($thisstaff->getRole()->getId() !== 1) {
-                    return [ 'headers' => [__('Dependencia')], 'data' => [] ];
+                    return [ 'columns' => [__('Dependencia')], 'data' => [] ];
                 }
 
                 $adminDeptIds = [];
@@ -468,7 +471,7 @@ class OverviewReport {
                 }
 
                 if (!$adminDeptIds) {
-                    return [ 'headers' => [__('Dependencia')], 'data' => [] ];
+                    return [ 'columns' => [__('Dependencia')], 'data' => [] ];
                 }
 
                 $stats = $stats
@@ -516,7 +519,7 @@ class OverviewReport {
             $pk = 'staff_id';
 
             if ($thisstaff->getRole()->getId() !== 1) {
-                return [ 'headers' => [__('Agente')], 'data' => [] ];
+                return [ 'columns' => [__('Agente')], 'data' => [] ];
             }
 
             $adminDeptIds = [];
@@ -528,7 +531,7 @@ class OverviewReport {
             }
 
             if (!$adminDeptIds) {
-                return [ 'headers' => [__('Agente')], 'data' => [] ];
+                return [ 'columns' => [__('Agente')], 'data' => [] ];
             }
 
             $validStaffIds = array();
@@ -541,7 +544,7 @@ class OverviewReport {
             }
 
             if (!$validStaffIds) {
-                return [ 'headers' => [__('Agente')], 'data' => [] ];
+                return [ 'columns' => [__('Agente')], 'data' => [] ];
             }
 
             $Q = Q::any(array('staff_id__in' => $validStaffIds));
