@@ -23,6 +23,39 @@ class ReportCreatedByAgentTest extends Test {
             'The assignee must not receive credit for creating the task');
     }
 
+    function testUnassignedTaskStillCreditsItsCreator() {
+        $events = array(
+            array(
+                'id' => 104,
+                'uid' => 10,
+                'uid_type' => 'S',
+                'staff_id' => 0,
+            ),
+        );
+
+        $created = OverviewReport::countCreatedEventsByAgent($events);
+        $rows = array(
+            10 => array(
+                'staff_id' => 10,
+                'Created' => $created[10] ?? 0,
+                'Assigned' => 0,
+                'Closed' => 0,
+                'Open' => 0,
+            ),
+        );
+        $result = OverviewReport::mergeAuthorizedActivity(
+            $rows,
+            array(),
+            'staff'
+        );
+
+        $this->assert(isset($result[10]),
+            'The authorized creator must remain in the agent report');
+        $this->assertEqual($result[10]['Created'], 1);
+        $this->assertEqual($result[10]['Assigned'], 0);
+        $this->assertEqual($result[10]['Closed'], 0);
+    }
+
     function testOnlyStaffActorsAreCounted() {
         $events = array(
             array('id' => 101, 'uid' => 10, 'uid_type' => 'S'),
