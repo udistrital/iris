@@ -121,6 +121,52 @@ class TaskModel extends VerySimpleModel {
     const ISOPEN    = 0x0001;
     const ISOVERDUE = 0x0002;
 
+    /**
+     * Convert user-facing due-date filters into database-time boundaries.
+     * The upper boundary is exclusive and points to the start of the day
+     * following the selected end date.
+     */
+    static function getDueDateSearchRange($start, $end,
+            $userTimezone='UTC', $dbTimezone='UTC') {
+        $userTz = new DateTimeZone($userTimezone ?: 'UTC');
+        $dbTz = new DateTimeZone($dbTimezone ?: 'UTC');
+
+        $parse = function($value) use ($userTz) {
+            $value = trim((string) $value);
+            if ($value === '')
+                return null;
+
+            $date = DateTime::createFromFormat('!Y-m-d', $value, $userTz);
+            $errors = DateTime::getLastErrors();
+            if (!$date || ($errors && ($errors['warning_count']
+                        || $errors['error_count']))
+                    || $date->format('Y-m-d') !== $value)
+                return null;
+
+            return $date;
+        };
+        $toDatabaseTime = function($date) use ($dbTz) {
+            if (!$date)
+                return null;
+            $timestamp = $date->getTimestamp();
+            $instant = new DateTime('@'.$timestamp);
+            return gmdate(
+                'Y-m-d H:i:s',
+                $timestamp + $dbTz->getOffset($instant)
+            );
+        };
+
+        $startDate = $parse($start);
+        $endDate = $parse($end);
+        if ($endDate)
+            $endDate->add(new DateInterval('P1D'));
+
+        return array(
+            'start' => $toDatabaseTime($startDate),
+            'end' => $toDatabaseTime($endDate),
+        );
+    }
+
 
     protected function hasFlag($flag) {
         return ($this->get('flags') & $flag) !== 0;

@@ -13,7 +13,7 @@ class ReportOpenInventoryTest extends Test {
         $source = $this->getReportSource();
         $matches = array();
         if (!preg_match(
-            '/\$openTasks\s*=\s*TaskModel::objects\(\)(.*?)\$openTasksCount\s*=/s',
+            '/\$openTaskFilters\s*=\s*array\((.*?)\$openTasksCount\s*=/s',
             $source,
             $matches
         )) {

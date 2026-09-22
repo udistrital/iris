@@ -324,6 +324,17 @@ if ($_REQUEST['start'] || $_REQUEST['end']) {
     $filters[] = new Q(array(($column . '__range') => array("'" . $initDate . "'", "'" . $endFormat . "'", true)));
 }
 
+$dueDateRange = TaskModel::getDueDateSearchRange(
+    $_REQUEST['due_start'] ?? '',
+    $_REQUEST['due_end'] ?? '',
+    $cfg->getTimezone($thisstaff),
+    $cfg->getDbTimezone()
+);
+if ($dueDateRange['start'])
+    $filters[] = new Q(array('duedate__gte' => $dueDateRange['start']));
+if ($dueDateRange['end'])
+    $filters[] = new Q(array('duedate__lt' => $dueDateRange['end']));
+
 if ($_REQUEST['title']) {
     $filters[] = new Q(array('cdata__title__contains' => $_REQUEST['title']));
 }
@@ -603,14 +614,24 @@ if ($thisstaff->hasPerm(Task::PERM_DELETE, false)) {
         <input type="hidden" name="status" value="<?php echo Format::htmlchars($_REQUEST['status'], true); ?>" form="query">
         <div id="basic_search" style="min-height:25px; margin: auto">
             <label>
-                <?php echo __('Desde'); ?>:
+                <?php echo __('Creada desde'); ?>:
                 <input type="date" class="input-medium search-query" name="start"
-                    value="<?php echo $_REQUEST['start']; ?>" form="query"/>
+                    value="<?php echo Format::htmlchars($_REQUEST['start'], true); ?>" form="query"/>
             </label>
             <label>
-                <?php echo __('Hasta'); ?>:
+                <?php echo __('Creada hasta'); ?>:
                 <input type="date" class="input-medium search-query" name="end"
-                    value="<?php echo $_REQUEST['end']; ?>" form="query"/>
+                    value="<?php echo Format::htmlchars($_REQUEST['end'], true); ?>" form="query"/>
+            </label>
+            <label>
+                <?php echo __('Vence desde'); ?>:
+                <input type="date" class="input-medium search-query" name="due_start"
+                    value="<?php echo Format::htmlchars($_REQUEST['due_start'] ?? '', true); ?>" form="query"/>
+            </label>
+            <label>
+                <?php echo __('Vence hasta'); ?>:
+                <input type="date" class="input-medium search-query" name="due_end"
+                    value="<?php echo Format::htmlchars($_REQUEST['due_end'] ?? '', true); ?>" form="query"/>
             </label>
             <?php if ($queue_name === 'open_me') { ?>
             <label>
