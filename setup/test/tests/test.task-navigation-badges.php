@@ -40,6 +40,19 @@ class TaskNavigationBadgesTest extends Test {
             'array_key_exists($cacheKey, $counts)') !== false);
     }
 
+    function testOverdueQueueUsesTheTaskFlagBit() {
+        $source = $this->tasksSource();
+        $listing = file_get_contents(
+            get_osticket_root_path().'/include/staff/tasks.inc.php'
+        );
+
+        $this->assert(strpos($source,
+            "'flags__hasbit' => TaskModel::ISOVERDUE") !== false);
+        $this->assert(strpos($source, "'isoverdue' => 1") === false);
+        $this->assert(strpos($listing,
+            "\$T['flags'] & TaskModel::ISOVERDUE") !== false);
+    }
+
     function testDepartmentFiltersDoNotNestIdLists() {
         $source = $this->tasksSource();
 
