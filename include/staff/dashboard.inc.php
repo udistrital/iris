@@ -1,7 +1,5 @@
 <?php
 $report = new OverviewReport($_POST['start'], $_POST['period']);
-$plots = $report->getPlotData();
-
 ?>
 <script type="text/javascript" src="js/raphael-min.js"></script>
 <script type="text/javascript" src="js/g.raphael.js"></script>
@@ -85,9 +83,12 @@ foreach ($groups as $g=>$desc) { ?>
 
 <?php
 $first = true;
+$allPlotData = array();
 foreach ($groups as $g=>$desc) {
-    $data = $report->getTabularData($g); ?>
-    <div class="tab_content <?php echo (!$first) ? 'hidden' : ''; ?>" id="<?php echo Format::slugify($g); ?>">
+    $data = $report->getTabularData($g);
+    $tabId = Format::slugify($g);
+    $allPlotData[$tabId] = $report->getPlotData($g, $data); ?>
+    <div class="tab_content <?php echo (!$first) ? 'hidden' : ''; ?>" id="<?php echo $tabId; ?>">
     <table class="dashboard-stats table"><tbody><tr>
 <?php
     foreach ($data['columns'] as $j=>$c) {
@@ -153,7 +154,5 @@ foreach ($groups as $g=>$desc) {
 ?>
 </form>
 <script>
-  var plotData = <?php echo JsonDataEncoder::encode($report->getPlotData()); ?>;
-  console.log(plotData);
-  $.drawPlots(plotData);
+  window.irisDashboardPlotData = <?php echo JsonDataEncoder::encode($allPlotData); ?>;
 </script>
