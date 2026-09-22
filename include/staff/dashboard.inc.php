@@ -17,7 +17,7 @@ $report = new OverviewReport($_POST['start'], $_POST['period']);
             <label>
                 <?php echo __( 'Report timeframe'); ?>:
                 <input type="text" class="dp input-medium search-query"
-                    name="start" placeholder="<?php echo __('Last month');?>"
+                    name="start" placeholder="<?php echo Format::htmlchars(__('Last month'));?>"
                     value="<?php
                         echo Format::htmlchars($report->getStartDate());
                     ?>" />
@@ -25,8 +25,12 @@ $report = new OverviewReport($_POST['start'], $_POST['period']);
             <label>
                 <?php echo __('period');?>:
                 <select name="period">
-                    <?php foreach ($report::$end_choices as $val=>$desc)
-                            echo "<option value='$val'>" . __($desc) . "</option>"; ?>
+                    <?php foreach ($report::$end_choices as $val=>$desc) { ?>
+                        <option value="<?php echo Format::htmlchars($val); ?>"<?php
+                            if ($report->getPeriod() === $val)
+                                echo ' selected="selected"';
+                        ?>><?php echo Format::htmlchars(__($desc)); ?></option>
+                    <?php } ?>
                 </select>
             </label>
             <button class="green button action-button muted" type="submit">
@@ -54,20 +58,18 @@ $report = new OverviewReport($_POST['start'], $_POST['period']);
 <p><?php echo __('Estadísticas de tareas organizadas por dependencias, equipos y agentes.');?></p>
 <p><?php echo __('Creadas, Asignadas y Cerradas corresponden al periodo seleccionado. Abiertas es una fotografía del inventario actual de tareas abiertas.');?></p>
 <p><?php echo __('Los agentes bloqueados y los equipos deshabilitados permanecen visibles y se identifican en su nombre para no ocultar su actividad o carga pendiente.');?></p>
-<p><b><?php echo __('Range: '); ?></b>
+<p><b><?php echo __('Range (inclusive):'); ?></b>
   <?php
-  $range = array();
-  foreach ($report->getDateRange() as $date)
-  {
-    $date = str_ireplace('FROM_UNIXTIME(', '',$date);
-    $date = str_ireplace(')', '',$date);
-    $date = new DateTime('@'.$date);
-    $date->setTimeZone(new DateTimeZone($cfg->getTimezone()));
-    $timezone = $date->format('e');
-    $range[] = $date->format('F j, Y');
-  }
-  echo __($range[0] . ' - ' . $range[1]);
+  $range = OverviewReport::formatDateRangeForDisplay(
+      $report->getDateRangeTimestamps(),
+      $cfg->getTimezone(),
+      'F j, Y',
+      $cfg->getDbTimezone()
+  );
+  echo Format::htmlchars(implode(' - ', $range));
 ?>
+<br><small><?php echo __('The range includes both boundaries. Up to today ends at the time the report is generated.'); ?></small>
+</p>
 
 <ul class="clean tabs">
 <?php
