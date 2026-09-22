@@ -127,7 +127,7 @@ class OverviewReport {
         ];
     }
 
-   function enumTabularGroups() {
+    function enumTabularGroups() {
         global $thisstaff;
         $tabs = array();
 
@@ -144,6 +144,26 @@ class OverviewReport {
         }
 
         return $tabs;
+    }
+
+    static function mergeAuthorizedActivity($rows, $stats, $group) {
+        foreach ($stats as $row) {
+            if ($group === 'staff')
+                $id = (int) $row['staff_id'];
+            elseif ($group === 'team')
+                $id = (int) ($row['team_id'] ?? $row['team']);
+            else
+                continue;
+
+            // Event rows never expand the authorized catalog.
+            if (!$id || !isset($rows[$id]))
+                continue;
+
+            $rows[$id]['Assigned'] += $row['Assigned'] ?? 0;
+            $rows[$id]['Closed'] += $row['Closed'] ?? 0;
+        }
+
+        return $rows;
     }
 
 
@@ -251,6 +271,13 @@ class OverviewReport {
                 ),
             ))
             ->filter(array('timestamp__range' => array($start, $stop, true)));
+
+        // Agents and teams are included from their authorized catalogs below,
+        // even when they have no activity in the selected period. Disabled
+        // entities remain visible so their historical and open workload is not
+        // hidden; their status is appended to the row label.
+        $authorizedStaff = array();
+        $authorizedTeams = array();
 
         switch ($group) {
             case 'response_time':
@@ -438,6 +465,13 @@ class OverviewReport {
             if (empty($teams))
                 return array("columns" => array_merge($headers, $dash_headers),
                       "data" => array());
+
+            foreach (Team::objects()
+                    ->filter(array('team_id__in' => $teams))
+                    ->order_by('name') as $team) {
+                $authorizedTeams[$team->getId()] = $team;
+            }
+
             $stats = $stats
                 ->values('team', 'team__name', 'team__flags')
                 ->filter(array('dept_id' => $thisstaff->getDeptId(), 'team_id__gt' => 0, 'team_id__in' => $teams))
@@ -479,6 +513,7 @@ class OverviewReport {
                 $role = $staff->getRole($staff->getDeptId());
                 if ($role && in_array($role->getId(), [1, 2])) {
                     $validStaffIds[] = $staff->getId();
+                    $authorizedStaff[$staff->getId()] = $staff;
                 }
             }
 
@@ -510,33 +545,37 @@ class OverviewReport {
         }
         $rows = array();
         $staff = array();
-        if ($group === 'staff')
-            foreach ($stats as $row) {
-                $staff_id = $row['staff_id'] ?: $row['agent'];
-                $created = $createdByAgent[$staff_id] ?? 0;
-                if ($row['staff_id'] > 0 && !isset($staff[$row['staff_id']])) {
-                    $staff[$row['staff_id']] = $row;
-                    $staff[$row['staff_id']]['Created'] = $created;
-                    $staff[$row['staff_id']]['Assigned'] = isset($row['Assigned']) ? $row['Assigned'] : 0;
-                    $staff[$row['staff_id']]['Closed'] = isset($row['Closed']) ? $row['Closed'] : 0;
-                    $staff[$row['staff_id']]['Open'] = isset($openTasksCount[$row['staff_id']]) ? $openTasksCount[$row['staff_id']] : 0;
-
-                } elseif ($row['staff_id'] > 0 && isset($staff[$row['staff_id']])) {
-                    $staff[$row['staff_id']]['Created'] += $row['Created'];
-                    $staff[$row['staff_id']]['Assigned'] += $row['Assigned'];
-                    $staff[$row['staff_id']]['Closed'] += $row['Closed'];
-                }  elseif ($row['agent'] > 0 && !isset($staff[$row['agent']])) {
-                    $row['staff__firstname'] = $row['agent__firstname'];
-                    $row['staff__lastname'] = $row['agent__lastname'];
-                    $staff[$row['agent']] = $row;
-                    $staff[$row['agent']]['Created'] = isset($row['Created']) ? $row['Created'] : 0;
-                    $staff[$row['agent']]['Assigned'] = isset($row['Assigned']) ? $row['Assigned'] : 0;
-                    $staff[$row['agent']]['Closed'] = isset($row['Closed']) ? $row['Closed'] : 0;
-                    $staff[$row['agent']]['Open'] = isset($openTasksCount[$row['agent']]) ? $openTasksCount[$row['agent']] : 0;
-                } elseif ($row['agent'] > 0 && $row['Created'] > 0) {
-                    $staff[$row['agent']]['Created'] = $row['Created'];
-                }
+        if ($group === 'staff') {
+            foreach ($authorizedStaff as $staffId => $agent) {
+                $staff[$staffId] = array(
+                    'staff_id' => $staffId,
+                    'staff__firstname' => $agent->getFirstName(),
+                    'staff__lastname' => $agent->getLastName(),
+                    'staff__isactive' => $agent->isActive() ? 1 : 0,
+                    'Created' => $createdByAgent[$staffId] ?? 0,
+                    'Assigned' => 0,
+                    'Closed' => 0,
+                    'Open' => $openTasksCount[$staffId] ?? 0,
+                );
             }
+
+            $staff = self::mergeAuthorizedActivity($staff, $stats, $group);
+        }
+        elseif ($group === 'team') {
+            foreach ($authorizedTeams as $teamId => $team) {
+                $staff[$teamId] = array(
+                    'team_id' => $teamId,
+                    'team' => $teamId,
+                    'team__name' => $team->getName(),
+                    'team__flags' => $team->flags,
+                    'Assigned' => 0,
+                    'Closed' => 0,
+                    'Open' => $openTasksCount[$teamId] ?? 0,
+                );
+            }
+
+            $staff = self::mergeAuthorizedActivity($staff, $stats, $group);
+        }
         else {
             foreach ($stats as $rowIndex => $row) {
                 $key = $group === 'dept' ? $row['dept__id'] : ($group === 'team' ? $row['team'] : null);
@@ -547,6 +586,7 @@ class OverviewReport {
         
         $total = array('Created' => 0, 'Assigned' => 0, 'Open' => 0, 'Transferred' => 0, 'Closed' => 0);
         foreach ($staff as $R) {
+          $status = '';
           $total['Created'] += isset($R['Created']) ? $R['Created'] : 0;
           $total['Assigned'] += isset($R['Assigned']) ? $R['Assigned'] : 0;
           $total['Open'] += isset($R['Open']) ? $R['Open'] : 0;
@@ -567,6 +607,13 @@ class OverviewReport {
               $status = '';
             else
               $status = ' - '.__('Disabled');
+          }
+          if (isset($R['team__flags'])
+                  && !($R['team__flags'] & Team::FLAG_ENABLED)) {
+              $status = ' - '.__('Disabled');
+          }
+          if (isset($R['staff__isactive']) && !$R['staff__isactive']) {
+              $status = ' - '.__('Locked');
           }
     
             $T = isset($timings[$R[$pk]]) ? $timings[$R[$pk]] : null;
