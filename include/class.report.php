@@ -185,7 +185,7 @@ class OverviewReport {
 
         $openTasks = TaskModel::objects()
             ->filter(array(
-                'flags' => 1,
+                'flags__hasbit' => TaskModel::ISOPEN,
                 'updated__range' => array($start, $stop, true)
             ))
             ->values($group === 'dept' ? 'dept_id' : ($group === 'team' ? 'team_id' : 'staff_id'))
