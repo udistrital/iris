@@ -44,6 +44,8 @@ class TaskNavigationBadgesTest extends Test {
         $source = $this->tasksSource();
 
         $this->assert(strpos($source,
+            "getAdminDepartments()->values_flat('id')") !== false);
+        $this->assert(strpos($source,
             "'dept_id__in' => [\$adminDeptIds]") === false);
         $this->assert(strpos($source,
             "'dept_id__in' => array(\$adminDeptIds)") === false);

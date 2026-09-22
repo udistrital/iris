@@ -70,8 +70,6 @@ $queue_columns = array(
 $queue_key = sprintf('::Q:%s', ObjectModel::OBJECT_TYPE_TASK);
 $queue_name = $_SESSION[$queue_key] ?: '';
 $staffId = $thisstaff->getId();
-$deptId = $thisstaff->getDept()->getID();
-$adminDeptIds = $thisstaff->getAdminDepartments();
 $created_by_me_state = 'open';
 $status = null;
 

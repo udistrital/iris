@@ -144,7 +144,10 @@ endif;
 function iris_apply_task_queue_filters($tasks, $queue_name, $thisstaff, $force_open = false) {
     $staffId = $thisstaff->getId();
     $deptId = $thisstaff->getDept()->getID();
-    $adminDeptIds = $thisstaff->getAdminDepartments();
+    // getAdminDepartments() returns values('id'), whose associative field map
+    // cannot be used by the ORM as a joined __in subquery. Select the same
+    // column in flat mode so the compiler can address it as A?.`id`.
+    $adminDeptIds = $thisstaff->getAdminDepartments()->values_flat('id');
     $status = null;
 
     switch ($queue_name) {
