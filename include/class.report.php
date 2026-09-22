@@ -166,6 +166,26 @@ class OverviewReport {
         return $rows;
     }
 
+    static function countCreatedEventsByAgent($events) {
+        $counts = array();
+        $seen = array();
+
+        foreach ($events as $event) {
+            $eventId = (int) ($event['id'] ?? 0);
+            $agentId = (int) ($event['uid'] ?? 0);
+
+            if (!$eventId || !$agentId || ($event['uid_type'] ?? null) !== 'S')
+                continue;
+            if (isset($seen[$eventId]))
+                continue;
+
+            $seen[$eventId] = true;
+            $counts[$agentId] = ($counts[$agentId] ?? 0) + 1;
+        }
+
+        return $counts;
+    }
+
 
     function getTabularData($group='dept') {
         global $thisstaff;
@@ -187,20 +207,20 @@ class OverviewReport {
             $group === 'dept' ? array(__('Transferidos')) : array()
         );
 
-        $createdByAgent = [];
-        $createdEvents = ThreadEvent::objects()
-            ->filter([
-                'event_id' =>$event['created'],
-                'timestamp__range' => [$start, $stop, true],
-                'thread_type' => 'A',
-                'annulled' => 0
-            ])
-            ->values('agent');
+        $createdByAgent = array();
+        if ($group === 'staff') {
+            $createdEvents = ThreadEvent::objects()
+                ->filter(array(
+                    'event_id' => $event['created'],
+                    'timestamp__range' => array($start, $stop, true),
+                    'thread_type' => 'A',
+                    'annulled' => 0,
+                    'uid_type' => 'S',
+                ))
+                ->values('id', 'uid', 'uid_type')
+                ->distinct('id');
 
-        foreach ($createdEvents as $ev) {
-            $id = $ev['agent'];
-            if (!$id) continue;
-            $createdByAgent[$id] = ($createdByAgent[$id] ?? 0) + 1;
+            $createdByAgent = self::countCreatedEventsByAgent($createdEvents);
         }
 
         $openTasks = TaskModel::objects()
@@ -222,7 +242,7 @@ class OverviewReport {
                 'timestamp__range' => array($start, $stop, true),
                 'thread_type' => 'A',
                 'event_id__in' => array_merge(
-                    $group === 'team' ? array() : array($event['created']),
+                    $group === 'dept' ? array($event['created']) : array(),
                     array($event['assigned'], $event['closed']),
                     $group === 'dept' ? array($event['transferred']) : array()
                 )
@@ -238,11 +258,11 @@ class OverviewReport {
         call_user_func_array(array($base_stats, 'values'), $fields);
 
         $stats = $base_stats->aggregate(array_merge(
-            $group === 'team' ? array() : array(
+            $group === 'dept' ? array(
                 'Created' => SqlAggregate::COUNT(
                     SqlCase::N()->when(new Q(array('event_id' => $event['created'])), 1)
                 )
-            ),
+            ) : array(),
             array(
                 'Assigned' => SqlAggregate::COUNT(
                     SqlCase::N()->when(new Q(array('event_id' => $event['assigned'])), 1)
