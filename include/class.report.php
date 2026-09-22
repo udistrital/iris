@@ -209,6 +209,9 @@ class OverviewReport {
 
         $createdByAgent = array();
         if ($group === 'staff') {
+            // Creation belongs to the staff actor (uid), independently of the
+            // current assignee in staff_id. This intentionally includes
+            // creation events for tasks which were never assigned.
             $createdEvents = ThreadEvent::objects()
                 ->filter(array(
                     'event_id' => $event['created'],
@@ -250,7 +253,7 @@ class OverviewReport {
 
 
         $fields = $group === 'staff'
-            ? array('staff_id', 'staff__firstname', 'staff__lastname', 'agent', 'agent__firstname', 'agent__lastname')
+            ? array('staff_id', 'staff__firstname', 'staff__lastname')
             : ($group === 'team'
                 ? array('team', 'team__name', 'team__flags')
                 : array('dept__id', 'dept__name', 'dept__flags'));
@@ -544,8 +547,8 @@ class OverviewReport {
             $Q = Q::any(array('staff_id__in' => $validStaffIds));
 
             $stats = $stats
-                ->values('staff_id', 'staff__firstname', 'staff__lastname', 'agent', 'agent__firstname', 'agent__lastname')
-                ->distinct('staff_id', 'agent')
+                ->values('staff_id', 'staff__firstname', 'staff__lastname')
+                ->distinct('staff_id')
                 ->order_by('-staff_id')
                 ->filter($Q);
 
