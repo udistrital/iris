@@ -433,7 +433,7 @@ $nav->addSubMenu(
         'desc' => __('Gestionados por mí'),
         'badge' => $managedByMeOpen,
         'badge_class' => 'warning',
-        'title' => __('Gestionados por mí (Abiertos y Cerrados)'),
+        'title' => __('Casos abiertos gestionados por mí'),
         'href' => 'tasks.php?status=thread_me',
         'iconclass' => 'closedTickets'
     ),

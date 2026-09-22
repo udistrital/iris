@@ -72,7 +72,7 @@ $queue_name = $_SESSION[$queue_key] ?: '';
 $staffId = $thisstaff->getId();
 $deptId = $thisstaff->getDept()->getID();
 $adminDeptIds = $thisstaff->getAdminDepartments();
-$created_by_me_state = null;
+$created_by_me_state = 'open';
 $status = null;
 
 switch ($queue_name) {
@@ -104,14 +104,14 @@ switch ($queue_name) {
         $queue_sort_options = array('created', 'updated', 'number', 'hot');
         break;
     case 'dept':
-        $results_type = __('Todos los casos en Mi Dependencia');
+        $results_type = __('Todos los casos abiertos en Mi Dependencia');
         $queue_sort_options = array('created', 'updated', 'number', 'hot');
         break;
     case 'open_me':
-        $results_type = __('Creados por mí (abiertos y cerrados)');
+        $results_type = __('Creados por mí');
         if (isset($_REQUEST['task_state'])
                 && is_string($_REQUEST['task_state'])
-                && in_array($_REQUEST['task_state'], array('open', 'closed'), true)) {
+                && in_array($_REQUEST['task_state'], array('all', 'open', 'closed'), true)) {
             $created_by_me_state = $_REQUEST['task_state'];
         }
         $queue_sort_options = array('created', 'updated', 'number', 'hot');
@@ -121,11 +121,11 @@ switch ($queue_name) {
         $queue_sort_options = array('created', 'updated', 'number', 'hot');
         break;
     case 'involved':
-        $results_type = __('Casos en los que he participado y no estoy asignado');
+        $results_type = __('Casos abiertos en los que he participado y no estoy asignado');
         $queue_sort_options = array('created', 'updated', 'number', 'hot');
         break;
     case 'transferred':
-        $results_type = __('Transferidos por mi dependencia');
+        $results_type = __('Casos abiertos transferidos por mi dependencia');
         $queue_sort_options = array('created', 'updated', 'number', 'hot');
         break;
 
@@ -134,7 +134,7 @@ switch ($queue_name) {
         $queue_sort_options = array('created', 'updated', 'number', 'hot');
         break;
     case 'thread_me':
-        $results_type = __('Asignados por mí a otro agente');
+        $results_type = __('Casos abiertos asignados por mí a otro agente');
         $queue_sort_options = array('created', 'updated', 'number', 'hot');
         break;
     case 'assigned_mteams':
@@ -151,11 +151,11 @@ switch ($queue_name) {
         $queue_sort_options = array('closed', 'updated', 'created', 'number', 'hot');
         break;
     case 'created_dep':
-        $results_type = __('Casos creados por alguien de mi dependencia');
+        $results_type = __('Casos abiertos creados por alguien de mi dependencia');
         $queue_sort_options = array('created', 'updated', 'number', 'hot');
         break;
     case 'requested_dep':
-        $results_type = __('Casos solicitados por mi dependencia');
+        $results_type = __('Casos abiertos solicitados por mi dependencia');
         $queue_sort_options = array('created', 'updated', 'number', 'hot');
         break;
     case 'cc':
@@ -165,8 +165,8 @@ switch ($queue_name) {
 }
 
 $status = iris_apply_task_queue_filters($tasks, $queue_name, $thisstaff);
-if ($queue_name === 'open_me' && $created_by_me_state)
-    $status = $created_by_me_state;
+if ($queue_name === 'open_me')
+    $status = $created_by_me_state === 'all' ? null : $created_by_me_state;
 
 // Apply filters
 $filters = array();
@@ -491,7 +491,7 @@ if ($thisstaff->hasPerm(Task::PERM_DELETE, false)) {
             <label>
                 <?php echo __('Estado'); ?>:
                 <select class="input-medium search-query" name="task_state" form="query">
-                    <option value=""><?php echo __('Todas'); ?></option>
+                    <option value="all" <?php echo $created_by_me_state === 'all' ? 'selected="selected"' : ''; ?>><?php echo __('Todas'); ?></option>
                     <option value="open" <?php echo $created_by_me_state === 'open' ? 'selected="selected"' : ''; ?>><?php echo __('Abiertas'); ?></option>
                     <option value="closed" <?php echo $created_by_me_state === 'closed' ? 'selected="selected"' : ''; ?>><?php echo __('Cerradas'); ?></option>
                 </select>
