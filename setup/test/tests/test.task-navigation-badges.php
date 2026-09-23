@@ -70,7 +70,7 @@ class TaskNavigationBadgesTest extends Test {
         $source = $this->tasksSource();
         $queues = array(
             'assigned', 'open_me', 'involved', 'thread_me', 'cc',
-            'assigned_mteams', 'dept', 'assigned_dept', 'created_dep',
+            'assigned_mteams', 'assigned_dept', 'created_dep',
             'requested_dep', 'transferred', 'unassigned_dept',
             'unassigned', 'overdue',
         );
@@ -84,6 +84,26 @@ class TaskNavigationBadgesTest extends Test {
             "iris_task_queue_count('closed', \$thisstaff)") === false);
         $this->assert(strpos($source,
             "iris_task_queue_count('closed_mteams', \$thisstaff)") === false);
+        $this->assert(strpos($source,
+            "iris_task_queue_count('dept', \$thisstaff)") === false);
+    }
+
+    function testAllDepartmentQueueHasAnOptionalStateFilter() {
+        $source = $this->tasksSource();
+        $listing = file_get_contents(
+            get_osticket_root_path().'/include/staff/tasks.inc.php'
+        );
+
+        $deptCase = substr($source,
+            strpos($source, "case 'dept':"),
+            strpos($source, "case 'involved':")
+                - strpos($source, "case 'dept':")
+        );
+        $this->assert(strpos($deptCase, "\$status = 'open'") === false);
+        $this->assert(strpos($listing,
+            "\$task_state = \$queue_name === 'dept' ? 'all' : 'open'") !== false);
+        $this->assert(strpos($listing,
+            "array('open_me', 'dept')") !== false);
     }
 
     function testRendererHidesZeroAndCapsLargeCounts() {
