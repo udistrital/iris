@@ -177,7 +177,6 @@ function iris_apply_task_queue_filters($tasks, $queue_name, $thisstaff, $force_o
             break;
 
         case 'dept':
-            $status = 'open';
             $tasks->filter(['dept_id__in' => $adminDeptIds]);
             break;
 
@@ -516,13 +515,10 @@ if ($thisstaff->getTeams()) {
 }
 
 if (count($thisstaff->getAdminDepartments())) {
-    $deptOpen = iris_task_queue_count('dept', $thisstaff);
     $nav->addSubMenu(
         array(
             'desc'      => __('Todo dependencia'),
-            'badge'     => $deptOpen,
-            'badge_class' => 'warning',
-            'title'     => __('Todos los casos abiertos en Mi Dependencia'),
+            'title'     => __('Todos los casos de Mi Dependencia'),
             'href'      => 'tasks.php?status=dept',
             'iconclass' => 'assignedTickets',
         ),
