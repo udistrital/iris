@@ -70,7 +70,22 @@ $queue_columns = array(
 $queue_key = sprintf('::Q:%s', ObjectModel::OBJECT_TYPE_TASK);
 $queue_name = $_SESSION[$queue_key] ?: '';
 $staffId = $thisstaff->getId();
-$task_state = $queue_name === 'dept' ? 'all' : 'open';
+$state_filter_queues = array(
+    'dept' => 'all',
+    'open_me' => 'open',
+    'involved' => 'open',
+    'thread_me' => 'open',
+    'transferred_me' => 'all',
+    'cc' => 'open',
+);
+$task_state = isset($state_filter_queues[$queue_name])
+    ? $state_filter_queues[$queue_name] : null;
+if ($task_state !== null
+        && isset($_REQUEST['task_state'])
+        && is_string($_REQUEST['task_state'])
+        && in_array($_REQUEST['task_state'], array('all', 'open', 'closed'), true)) {
+    $task_state = $_REQUEST['task_state'];
+}
 $status = null;
 
 switch ($queue_name) {
@@ -103,20 +118,10 @@ switch ($queue_name) {
         break;
     case 'dept':
         $results_type = __('Todos los casos de Mi Dependencia');
-        if (isset($_REQUEST['task_state'])
-                && is_string($_REQUEST['task_state'])
-                && in_array($_REQUEST['task_state'], array('all', 'open', 'closed'), true)) {
-            $task_state = $_REQUEST['task_state'];
-        }
         $queue_sort_options = array('created', 'updated', 'number', 'hot');
         break;
     case 'open_me':
         $results_type = __('Creados por mí');
-        if (isset($_REQUEST['task_state'])
-                && is_string($_REQUEST['task_state'])
-                && in_array($_REQUEST['task_state'], array('all', 'open', 'closed'), true)) {
-            $task_state = $_REQUEST['task_state'];
-        }
         $queue_sort_options = array('created', 'updated', 'number', 'hot');
         break;
     case 'created_pairs':
@@ -124,7 +129,7 @@ switch ($queue_name) {
         $queue_sort_options = array('created', 'updated', 'number', 'hot');
         break;
     case 'involved':
-        $results_type = __('Casos abiertos en los que he participado y no estoy asignado');
+        $results_type = __('Casos en los que he participado y no estoy asignado');
         $queue_sort_options = array('created', 'updated', 'number', 'hot');
         break;
     case 'transferred':
@@ -137,7 +142,7 @@ switch ($queue_name) {
         $queue_sort_options = array('created', 'updated', 'number', 'hot');
         break;
     case 'thread_me':
-        $results_type = __('Casos abiertos asignados por mí a otro agente');
+        $results_type = __('Casos asignados por mí a otro agente');
         $queue_sort_options = array('created', 'updated', 'number', 'hot');
         break;
     case 'assigned_mteams':
@@ -168,7 +173,7 @@ switch ($queue_name) {
 }
 
 $status = iris_apply_task_queue_filters($tasks, $queue_name, $thisstaff);
-if (in_array($queue_name, array('open_me', 'dept'), true))
+if (isset($state_filter_queues[$queue_name]))
     $status = $task_state === 'all' ? null : $task_state;
 
 // Apply filters
@@ -222,9 +227,16 @@ if ($_REQUEST['dept']) {
 }
 
 if ($_REQUEST['origin_dept']) {
-    $filters[] = new Q([
-        'thread__events__agent__dept__name__contains' => $_REQUEST['origin_dept'],
-    ]);
+    // Use a separate task subquery so queues based on another event (for
+    // example, transferred) do not force one event row to be both events.
+    $originTasks = Task::objects()
+        ->filter(array(
+            'thread__events__event__name' => 'created',
+            'thread__events__uid_type' => 'S',
+            'thread__events__agent__dept__name__contains' => $_REQUEST['origin_dept'],
+        ))
+        ->values_flat('id');
+    $filters[] = new Q(array('id__in' => $originTasks));
 }
 
 if ($_REQUEST['assignee']) {
@@ -266,12 +278,9 @@ $tasks->annotate(array(
             ->otherwise(new SqlField('thread__entries__attachments')),
         true
     ),
-    'submitter' => SqlCase::N()
-        ->when(
-            new Q(array('thread__events__event__name' => 'created')),
-            new SqlField('thread__events__agent__dept__name')
-        )
-        ->otherwise(null),
+    // MAX selects the sole creation value from all joined event rows. Later
+    // transfers therefore cannot make the grouped result arbitrarily NULL.
+    'submitter' => iris_task_creator_department_expression(),
     'thread_count' => SqlAggregate::COUNT(
         SqlCase::N()
             ->when(
@@ -376,12 +385,7 @@ switch ($sort_cols) {
     case 'origin_dept':
         $queue_columns['origin_dept']['sort_dir'] = $sort_dir;
         $tasks->order_by(
-            SqlCase::N()
-            ->when(
-                new Q(array('thread__events__event__name' => 'created')),
-                new SqlField('thread__events__agent__dept__name')
-            )
-            ->otherwise(null),
+            iris_task_creator_department_expression(),
             $orm_dir
         );
         break;
@@ -490,7 +494,7 @@ if ($thisstaff->hasPerm(Task::PERM_DELETE, false)) {
                 <input type="date" class="input-medium search-query" name="due_end"
                     value="<?php echo Format::htmlchars($_REQUEST['due_end'] ?? '', true); ?>" form="query"/>
             </label>
-            <?php if (in_array($queue_name, array('open_me', 'dept'), true)) { ?>
+            <?php if (isset($state_filter_queues[$queue_name])) { ?>
             <label>
                 <?php echo __('Estado'); ?>:
                 <select class="input-medium search-query" name="task_state" form="query">
