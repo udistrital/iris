@@ -45,6 +45,17 @@ class TaskModel extends VerySimpleModel {
                 'list' => false,
                 'null' => false,
             ),
+            // Independent thread alias for creator-event queries. Queue
+            // filters can constrain `thread__events` to another event type
+            // (such as transferred) without hiding the creation event.
+            'creator_thread' => array(
+                'constraint' => array(
+                    'id'  => 'TaskThread.object_id',
+                    "'A'" => 'TaskThread.object_type',
+                ),
+                'list' => false,
+                'null' => false,
+            ),
             'cdata' => array(
                 'constraint' => array('id' => 'TaskCData.task_id'),
                 'list' => false,

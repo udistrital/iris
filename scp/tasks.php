@@ -146,10 +146,10 @@ function iris_task_creator_department_expression() {
         SqlCase::N()
             ->when(
                 new Q(array(
-                    'thread__events__event__name' => 'created',
-                    'thread__events__uid_type' => 'S',
+                    'creator_thread__events__event__name' => 'created',
+                    'creator_thread__events__uid_type' => 'S',
                 )),
-                new SqlField('thread__events__agent__dept__name')
+                new SqlField('creator_thread__events__agent__dept__name')
             )
             ->otherwise(null)
     );

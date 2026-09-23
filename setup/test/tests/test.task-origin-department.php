@@ -14,11 +14,21 @@ class TaskOriginDepartmentTest extends Test {
 
         $this->assert(strpos($expression, 'SqlAggregate::MAX(') !== false);
         $this->assert(strpos($expression,
-            "'thread__events__event__name' => 'created'") !== false);
+            "'creator_thread__events__event__name' => 'created'") !== false);
         $this->assert(strpos($expression,
-            "'thread__events__uid_type' => 'S'") !== false);
+            "'creator_thread__events__uid_type' => 'S'") !== false);
         $this->assert(strpos($expression,
-            "'thread__events__agent__dept__name'") !== false);
+            "'creator_thread__events__agent__dept__name'") !== false);
+    }
+
+    function testCreatorEventUsesAnIndependentOrmJoin() {
+        $model = file_get_contents(
+            get_osticket_root_path().'/include/class.task.php'
+        );
+
+        $this->assert(strpos($model, "'creator_thread' => array(") !== false);
+        $this->assert(strpos($model,
+            "\"'A'\" => 'TaskThread.object_type'") !== false);
     }
 
     function testDisplayAndSortingReuseTheSameExpression() {
