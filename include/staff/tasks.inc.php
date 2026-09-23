@@ -70,7 +70,7 @@ $queue_columns = array(
 $queue_key = sprintf('::Q:%s', ObjectModel::OBJECT_TYPE_TASK);
 $queue_name = $_SESSION[$queue_key] ?: '';
 $staffId = $thisstaff->getId();
-$created_by_me_state = 'open';
+$task_state = $queue_name === 'dept' ? 'all' : 'open';
 $status = null;
 
 switch ($queue_name) {
@@ -102,7 +102,12 @@ switch ($queue_name) {
         $queue_sort_options = array('created', 'updated', 'number', 'hot');
         break;
     case 'dept':
-        $results_type = __('Todos los casos abiertos en Mi Dependencia');
+        $results_type = __('Todos los casos de Mi Dependencia');
+        if (isset($_REQUEST['task_state'])
+                && is_string($_REQUEST['task_state'])
+                && in_array($_REQUEST['task_state'], array('all', 'open', 'closed'), true)) {
+            $task_state = $_REQUEST['task_state'];
+        }
         $queue_sort_options = array('created', 'updated', 'number', 'hot');
         break;
     case 'open_me':
@@ -110,7 +115,7 @@ switch ($queue_name) {
         if (isset($_REQUEST['task_state'])
                 && is_string($_REQUEST['task_state'])
                 && in_array($_REQUEST['task_state'], array('all', 'open', 'closed'), true)) {
-            $created_by_me_state = $_REQUEST['task_state'];
+            $task_state = $_REQUEST['task_state'];
         }
         $queue_sort_options = array('created', 'updated', 'number', 'hot');
         break;
@@ -163,8 +168,8 @@ switch ($queue_name) {
 }
 
 $status = iris_apply_task_queue_filters($tasks, $queue_name, $thisstaff);
-if ($queue_name === 'open_me')
-    $status = $created_by_me_state === 'all' ? null : $created_by_me_state;
+if (in_array($queue_name, array('open_me', 'dept'), true))
+    $status = $task_state === 'all' ? null : $task_state;
 
 // Apply filters
 $filters = array();
@@ -485,13 +490,13 @@ if ($thisstaff->hasPerm(Task::PERM_DELETE, false)) {
                 <input type="date" class="input-medium search-query" name="due_end"
                     value="<?php echo Format::htmlchars($_REQUEST['due_end'] ?? '', true); ?>" form="query"/>
             </label>
-            <?php if ($queue_name === 'open_me') { ?>
+            <?php if (in_array($queue_name, array('open_me', 'dept'), true)) { ?>
             <label>
                 <?php echo __('Estado'); ?>:
                 <select class="input-medium search-query" name="task_state" form="query">
-                    <option value="all" <?php echo $created_by_me_state === 'all' ? 'selected="selected"' : ''; ?>><?php echo __('Todas'); ?></option>
-                    <option value="open" <?php echo $created_by_me_state === 'open' ? 'selected="selected"' : ''; ?>><?php echo __('Abiertas'); ?></option>
-                    <option value="closed" <?php echo $created_by_me_state === 'closed' ? 'selected="selected"' : ''; ?>><?php echo __('Cerradas'); ?></option>
+                    <option value="all" <?php echo $task_state === 'all' ? 'selected="selected"' : ''; ?>><?php echo __('Todas'); ?></option>
+                    <option value="open" <?php echo $task_state === 'open' ? 'selected="selected"' : ''; ?>><?php echo __('Abiertas'); ?></option>
+                    <option value="closed" <?php echo $task_state === 'closed' ? 'selected="selected"' : ''; ?>><?php echo __('Cerradas'); ?></option>
                 </select>
             </label>
             <?php } ?>
