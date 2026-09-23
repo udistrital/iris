@@ -141,6 +141,20 @@ if ($_POST && !$errors) :
         $thisstaff->resetStats(); //We'll need to reflect any changes just made!
 endif;
 
+function iris_task_creator_department_expression() {
+    return SqlAggregate::MAX(
+        SqlCase::N()
+            ->when(
+                new Q(array(
+                    'thread__events__event__name' => 'created',
+                    'thread__events__uid_type' => 'S',
+                )),
+                new SqlField('thread__events__agent__dept__name')
+            )
+            ->otherwise(null)
+    );
+}
+
 function iris_apply_task_queue_filters($tasks, $queue_name, $thisstaff, $force_open = false) {
     $staffId = $thisstaff->getId();
     $deptId = $thisstaff->getDept()->getID();
