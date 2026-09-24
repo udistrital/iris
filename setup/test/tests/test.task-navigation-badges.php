@@ -101,9 +101,33 @@ class TaskNavigationBadgesTest extends Test {
         );
         $this->assert(strpos($deptCase, "\$status = 'open'") === false);
         $this->assert(strpos($listing,
-            "\$task_state = \$queue_name === 'dept' ? 'all' : 'open'") !== false);
+            "'dept' => 'all'") !== false);
         $this->assert(strpos($listing,
-            "array('open_me', 'dept')") !== false);
+            "isset(\$state_filter_queues[\$queue_name])") !== false);
+    }
+
+    function testRequestedQueuesExposeTheStateSearch() {
+        $listing = file_get_contents(
+            get_osticket_root_path().'/include/staff/tasks.inc.php'
+        );
+        $defaults = array(
+            'open_me' => 'open',
+            'involved' => 'open',
+            'thread_me' => 'open',
+            'transferred_me' => 'all',
+            'cc' => 'open',
+            'created_dep' => 'open',
+            'transferred' => 'open',
+        );
+
+        foreach ($defaults as $queue => $state)
+            $this->assert(strpos($listing,
+                "'$queue' => '$state'") !== false,
+                "Missing state search for $queue");
+
+        $this->assert(strpos($listing, 'name="task_state"') !== false);
+        $this->assert(strpos($listing, "value=\"open\"") !== false);
+        $this->assert(strpos($listing, "value=\"closed\"") !== false);
     }
 
     function testRendererHidesZeroAndCapsLargeCounts() {
