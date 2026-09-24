@@ -77,6 +77,8 @@ $state_filter_queues = array(
     'thread_me' => 'open',
     'transferred_me' => 'all',
     'cc' => 'open',
+    'created_dep' => 'open',
+    'transferred' => 'open',
 );
 $task_state = isset($state_filter_queues[$queue_name])
     ? $state_filter_queues[$queue_name] : null;
