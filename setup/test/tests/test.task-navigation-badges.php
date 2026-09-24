@@ -116,6 +116,8 @@ class TaskNavigationBadgesTest extends Test {
             'thread_me' => 'open',
             'transferred_me' => 'all',
             'cc' => 'open',
+            'created_dep' => 'open',
+            'transferred' => 'open',
         );
 
         foreach ($defaults as $queue => $state)
