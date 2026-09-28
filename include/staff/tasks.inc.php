@@ -72,7 +72,7 @@ $queue_name = $_SESSION[$queue_key] ?: '';
 $staffId = $thisstaff->getId();
 $state_filter_queues = array(
     'dept' => 'all',
-    'open_me' => 'open',
+    'open_me' => 'all',
     'involved' => 'open',
     'thread_me' => 'open',
     'transferred_me' => 'all',
@@ -161,11 +161,11 @@ switch ($queue_name) {
         $queue_sort_options = array('closed', 'updated', 'created', 'number', 'hot');
         break;
     case 'created_dep':
-        $results_type = __('Casos abiertos creados por alguien de mi dependencia');
+        $results_type = __('Casos creados por alguien de mi dependencia');
         $queue_sort_options = array('created', 'updated', 'number', 'hot');
         break;
     case 'requested_dep':
-        $results_type = __('Casos abiertos solicitados por mi dependencia');
+        $results_type = __('Casos solicitados por mi dependencia');
         $queue_sort_options = array('created', 'updated', 'number', 'hot');
         break;
     case 'cc':
