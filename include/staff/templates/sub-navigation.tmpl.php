@@ -42,10 +42,16 @@ $info = $nav->getSubNavInfo();
             $badgeClass = @$item['badge_class'] === 'critical'
                 ? 'critical' : 'warning';
             $badgeText = $badgeCount > 99 ? '99+' : (string) $badgeCount;
-            $badgeLabel = sprintf(
-                _N('%d open task', '%d open tasks', $badgeCount),
-                $badgeCount
-            );
+            if (@$item['badge_object'] === 'expediente')
+                $badgeLabel = sprintf(
+                    _N('%d open expediente', '%d open expedientes', $badgeCount),
+                    $badgeCount
+                );
+            else
+                $badgeLabel = sprintf(
+                    _N('%d open task', '%d open tasks', $badgeCount),
+                    $badgeCount
+                );
             $badge = sprintf(
                 '<span class="task-nav-badge task-nav-badge-%s" aria-label="%s">%s</span>',
                 $badgeClass,
