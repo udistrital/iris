@@ -24,13 +24,186 @@ require_once(INCLUDE_DIR.'class.dynamic_forms.php');
 require_once(INCLUDE_DIR.'class.export.php');       // For paper sizes
 
 
-// All records are presented as expedientes regardless of their technical
-// source (Web, Email, Phone, API or Other). Native queues remain responsible
-// for visibility, counting, saved searches and pagination.
-$queues = CustomQueue::getHierarchicalQueues($thisstaff);
+function iris_ticket_creator_department_expression() {
+    return SqlAggregate::MAX(
+        SqlCase::N()
+            ->when(
+                new Q(array(
+                    'creator_thread__events__event__name' => 'created',
+                    'creator_thread__events__uid_type' => 'S',
+                )),
+                new SqlField('creator_thread__events__agent__dept__name')
+            )
+            ->otherwise(null)
+    );
+}
+
+function iris_apply_ticket_queue_filters($tickets, $queue_name, $thisstaff) {
+    $staffId = $thisstaff->getId();
+    $deptId = $thisstaff->getDept()->getId();
+    $adminDeptIds = $thisstaff->getAdminDepartments()->values_flat('id');
+    $status = null;
+
+    switch ($queue_name) {
+        case 'assigned':
+            $status = 'open';
+            $tickets->filter(array('staff_id' => $staffId));
+            break;
+        case 'open_me':
+            $tickets->filter(array(
+                'thread__events__agent' => $staffId,
+                'thread__events__event__name' => 'created',
+            ));
+            break;
+        case 'involved':
+            $status = 'open';
+            $tickets->filter(array(
+                'thread__entries__type__in' => array('N', 'R'),
+                'thread__entries__staff__staff_id' => $staffId,
+                'staff_id__notequal' => $staffId,
+            ));
+            break;
+        case 'thread_me':
+            $status = 'open';
+            $tickets->filter(array(
+                'thread__events__agent' => $staffId,
+                'thread__events__event__name' => 'assigned',
+                'thread__events__staff__staff_id__notequal' => $staffId,
+            ));
+            break;
+        case 'closed':
+            $status = 'closed';
+            $tickets->filter(array('staff_id' => $staffId));
+            break;
+        case 'transferred_me':
+            $tickets->filter(array(
+                'thread__events__event__name' => 'transferred',
+                'thread__events__agent' => $staffId,
+            ));
+            break;
+        case 'cc':
+            $status = 'open';
+            if ($userId = $thisstaff->getUserIdStaff())
+                $tickets->filter(array('thread__collaborators__user' => $userId));
+            else
+                $tickets->filter(array('ticket_id' => 0));
+            break;
+        case 'dept':
+            $tickets->filter(array('dept_id__in' => $adminDeptIds));
+            break;
+        case 'assigned_dept':
+            $status = 'open';
+            $tickets->filter(array('dept_id__in' => $adminDeptIds));
+            break;
+        case 'closed_dept':
+            $status = 'closed';
+            $tickets->filter(array('dept_id__in' => $adminDeptIds));
+            break;
+        case 'created_dep':
+            $status = 'open';
+            $tickets->filter(array(
+                'thread__events__agent__dept_id__in' => $adminDeptIds,
+                'thread__events__event__name' => 'created',
+            ));
+            break;
+        case 'requested_dep':
+            $status = 'open';
+            if ($thisstaff->getManagedDepartments()) {
+                $tickets->filter(array(
+                    'thread__events__agent__dept_id' => $deptId,
+                    'thread__events__event__name' => 'created',
+                    'dept_id__notequal' => $deptId,
+                ));
+            } else {
+                $tickets->filter(array('ticket_id' => 0));
+            }
+            break;
+        case 'transferred':
+            $status = 'open';
+            if ($thisstaff->getManagedDepartments()) {
+                $tickets->filter(array(
+                    'thread__events__dept' => $deptId,
+                    'thread__events__event__name__in' => array('transferred', 'created'),
+                    'dept_id__notequal' => $deptId,
+                ));
+            } else {
+                $tickets->filter(array('ticket_id' => 0));
+            }
+            break;
+        case 'assigned_mteams':
+            $status = 'open';
+            $tickets->filter(array('team_id__in' => $thisstaff->teams->values_flat('team_id')));
+            break;
+        case 'closed_mteams':
+            $status = 'closed';
+            $tickets->filter(array('team_id__in' => $thisstaff->teams->values_flat('team_id')));
+            break;
+        case 'created_pairs':
+            $pairs = null;
+            if ($teams = $thisstaff->getTeams()) {
+                $pairs = TeamMember::objects()
+                    ->distinct('staff_id')
+                    ->filter(array(
+                        'team_id__in' => $teams,
+                        'staff_id__notequal' => $staffId,
+                    ))
+                    ->values('staff_id');
+            }
+            if (!$teams || !$pairs)
+                $tickets->filter(array('ticket_id' => 0));
+            else
+                $tickets->filter(array(
+                    'thread__events__agent__in' => $pairs,
+                    'thread__events__event__name' => 'created',
+                ));
+            break;
+        case 'unassigned_dept':
+            $status = 'open';
+            $tickets->filter(array('staff_id' => 0, 'team_id' => 0));
+            if (count($adminDeptIds))
+                $tickets->filter(array('dept_id__in' => $adminDeptIds));
+            else
+                $tickets->filter(array('ticket_id' => 0));
+            break;
+        case 'unassigned':
+            $status = 'open';
+            $tickets->filter(array('staff_id' => 0));
+            if (count($adminDeptIds))
+                $tickets->filter(array('dept_id__in' => $adminDeptIds, 'team_id__gt' => 0));
+            elseif ($thisstaff->getLeadedTeams())
+                $tickets->filter(array('team_id__in' => $thisstaff->teams->values_flat('team_id')));
+            else
+                $tickets->filter(array('ticket_id' => 0));
+            break;
+        case 'overdue':
+            $status = 'open';
+            $tickets->filter(array('isoverdue' => 1));
+            break;
+        default:
+            $tickets->filter(array('ticket_id' => 0));
+    }
+
+    return $status;
+}
+
+function iris_ticket_queue_count($queue_name, $thisstaff) {
+    static $counts = array();
+    $key = $thisstaff->getId().':'.$queue_name;
+    if (array_key_exists($key, $counts))
+        return $counts[$key];
+
+    $tickets = Ticket::objects();
+    iris_apply_ticket_queue_filters($tickets, $queue_name, $thisstaff);
+    // Badges represent the open inventory, including queues which can show
+    // both open and closed expedientes in the main table.
+    $tickets->filter(array('status__state' => 'open'));
+    $tickets->filter($thisstaff->getTicketsVisibility());
+    $tickets->distinct('ticket_id');
+    return $counts[$key] = (int) $tickets->count();
+}
 
 $page='';
-$ticket = $user = null; 
+$ticket = $user = $org = null;
 $redirect = false;
 //LOCKDOWN...See if the id provided is actually valid and if the user has access.
 if(isset($_REQUEST['id']) || isset($_REQUEST['number'])) {
@@ -45,9 +218,6 @@ if(isset($_REQUEST['id']) || isset($_REQUEST['number'])) {
 }
 
 if (!$ticket) {
-    // Display a ticket queue. Decide the contents
-    $queue_id = null;
-
     // Search for user
     if (isset($_REQUEST['uid']))
         $user = User::lookup($_REQUEST['uid']);
@@ -55,93 +225,20 @@ if (!$ticket) {
     if (isset($_REQUEST['email']))
         $user = User::lookupByEmail($_REQUEST['email']);
 
-    if ($user
-            && $_GET['a'] !== 'open'
-    ) {
-        $criteria = [
-            ['user__emails__address', 'equal', $user->getDefaultEmailAddress()],
-            ['user_id', 'equal', $user->id],
-        ];
-        if ($S = $_GET['status'])
-            // The actual state is tracked by the key
-            $criteria[] = ['status__state', 'includes', [$S => $S]];
-        $_SESSION['advsearch']['uid'] = $criteria;
-        $queue_id = "adhoc,uid";
-    }
-    // Search for organization tickets
-    elseif (isset($_GET['orgid'])
-        && ($org = Organization::lookup($_GET['orgid']))
-    ) {
-        $criteria = [
-            ['user__org__name', 'equal', $org->name],
-            ['user__org_id', 'equal', $org->id],
-        ];
-        if ($S = $_GET['status'])
-            $criteria[] = ['status__state', 'includes', [$S => $S]];
-        $_SESSION['advsearch']['orgid'] = $criteria;
-        $queue_id = "adhoc,orgid";
-    }
-    // Basic search (click on 🔍 )
-    elseif (isset($_GET['a']) && $_GET['a'] === 'search'
-        && ($_GET['query'])
-    ) {
-        $wc = mb_str_wc($_GET['query']);
-        if ($wc < 4) {
-            $key = substr(md5($_GET['query']), -10);
-            if ($_GET['search-type'] == 'typeahead'
-                    || Validator::is_emailish($_GET['query'])) {
-                // Use a faster index
-                $criteria = [
-                    'user__emails__address',
-                    Validator::is_valid_email($_GET['query']) ? 'equal' : 'contains',
-                    $_GET['query']
-                ];
-            } elseif (Validator::is_numeric($_GET['query'])) {
-                $criteria = ['number', 'contains', $_GET['query']];
-            } else {
-                $criteria = [':keywords', null, $_GET['query']];
-            }
-            $_SESSION['advsearch'][$key] = [$criteria];
-            $queue_id = "adhoc,{$key}";
-        } else {
-            $errors['err'] = sprintf(
-                    __('Search term cannot have more than %d keywords'), 4);
-        }
-    }
+    if (isset($_GET['orgid']))
+        $org = Organization::lookup($_GET['orgid']);
 
-    $queue_key = sprintf('::Q:%s', ObjectModel::OBJECT_TYPE_TICKET);
-    $queue_id = $queue_id ?: @$_GET['queue'] ?: $_SESSION[$queue_key]
-        ?? $thisstaff->getDefaultTicketQueueId() ?: $cfg->getDefaultTicketQueueId();
-
-    // Recover advanced search, if requested
-    if (isset($_SESSION['advsearch'])
-        && strpos($queue_id, 'adhoc') === 0
-    ) {
-        list(,$key) = explode(',', $queue_id, 2);
-        // For queue=queue, use the most recent search
-        if (!$key) {
-            reset($_SESSION['advsearch']);
-            $key = key($_SESSION['advsearch']);
-        }
-
-        $queue = AdhocSearch::load($key);
-    }
-
-    if ((int) $queue_id && !isset($queue))
-        $queue = SavedQueue::lookup($queue_id);
-
-    if (!$queue && ($qid=$cfg->getDefaultTicketQueueId()))
-        $queue = SavedQueue::lookup($qid);
-
-    if (!$queue && $queues)
-        list($queue,) = $queues[0];
-
-    if ($queue) {
-        // Set the queue_id for navigation to turn a top-level item bold
-        $_REQUEST['queue'] = $queue->getId();
-        // Make the current queue sticky
-         $_SESSION[$queue_key] = $queue->getId();
-    }
+    $queue_key = '::IRIS:Q:T';
+    $queue_name = strtolower((string) ($_GET['status'] ?: $_SESSION[$queue_key] ?: 'assigned'));
+    $valid_queues = array('assigned', 'open_me', 'involved', 'thread_me',
+        'closed', 'transferred_me', 'cc', 'dept', 'assigned_dept',
+        'closed_dept', 'created_dep', 'requested_dep', 'transferred',
+        'assigned_mteams', 'closed_mteams', 'created_pairs', 'unassigned_dept',
+        'unassigned', 'overdue');
+    if (!in_array($queue_name, $valid_queues, true))
+        $queue_name = 'assigned';
+    $_SESSION[$queue_key] = $queue_name;
+    $_GET['status'] = $_REQUEST['status'] = $queue_name;
 }
 
 // Configure form for file uploads
@@ -460,42 +557,85 @@ if ($redirect) {
     Http::redirect($redirect);
 }
 
-// Clear advanced search upon request
-if (isset($_GET['clear_filter']))
-    unset($_SESSION['advsearch']);
-
 //Navigation
 $nav->setTabActive('tickets');
-$nav->addSubNavInfo('jb-overflowmenu', 'customQ_nav');
+$addTicketMenu = function($name, $description, $title, $icon, $badge=null,
+        $badgeClass='warning') use ($nav) {
+    $item = array(
+        'desc' => __($description),
+        'title' => __($title),
+        'href' => 'tickets.php?status='.$name,
+        'iconclass' => $icon,
+    );
+    if ($badge !== null) {
+        $item['badge'] = $badge;
+        $item['badge_class'] = $badgeClass;
+        $item['badge_object'] = 'expediente';
+    }
+    $nav->addSubMenu($item,
+        isset($_REQUEST['status']) && $_REQUEST['status'] === $name);
+};
 
-// Start with all the top-level (container) queues
-foreach ($queues as $_) {
-    list($q, $children) = $_;
-    if ($q->isPrivate())
-        continue;
-    $nav->addSubMenu(function() use ($q, $queue, $children) {
-        // A queue is selected if it is the one being displayed. It is
-        // "child" selected if its ID is in the path of the one selected
-        $_selected = ($queue && $queue->getId() == $q->getId());
-        $child_selected = $queue
-            && ($queue->parent_id == $q->getId()
-                || false !== strpos($queue->getPath(), "/{$q->getId()}/"));
-        include STAFFINC_DIR . 'templates/queue-navigation.tmpl.php';
+$addTicketMenu('assigned', 'Asignados a mí', 'Expedientes asignados a mí',
+    'assignedTickets', iris_ticket_queue_count('assigned', $thisstaff));
+$addTicketMenu('open_me', 'Creados por mí', 'Expedientes creados por mí',
+    'assignedTickets', iris_ticket_queue_count('open_me', $thisstaff));
+$addTicketMenu('involved', 'Participaciones', 'Expedientes en los que he participado',
+    'assignedTickets', iris_ticket_queue_count('involved', $thisstaff));
+$addTicketMenu('thread_me', 'Gestionados por mí', 'Expedientes asignados por mí',
+    'closedTickets', iris_ticket_queue_count('thread_me', $thisstaff));
+$addTicketMenu('closed', 'Mis expedientes cerrados', 'Expedientes cerrados asignados a mí',
+    'closedTickets');
+$addTicketMenu('transferred_me', 'Transferidos por mí', 'Expedientes transferidos por mí',
+    'departments');
+$addTicketMenu('cc', 'Con Copia', 'Expedientes abiertos con copia a mí',
+    'closedTickets', iris_ticket_queue_count('cc', $thisstaff));
 
-        return ($child_selected || $_selected);
-    });
+if ($thisstaff->getTeams()) {
+    $addTicketMenu('assigned_mteams', 'Mis equipos', 'Expedientes asignados a mis equipos',
+        'teams', iris_ticket_queue_count('assigned_mteams', $thisstaff));
+    $addTicketMenu('closed_mteams', 'Cerrados en Mis equipos',
+        'Expedientes cerrados de mis equipos', 'closedTickets');
+    $addTicketMenu('created_pairs', 'Creados por Mis equipos',
+        'Expedientes creados por otro miembro de mis equipos',
+        'assignedTickets');
 }
 
-// Add my advanced searches
-$nav->addSubMenu(function() use ($queue) {
-    global $thisstaff;
-    $selected = false;
-    // A queue is selected if it is the one being displayed. It is
-    // "child" selected if its ID is in the path of the one selected
-    $child_selected = $queue instanceof SavedSearch;
-    include STAFFINC_DIR . 'templates/queue-savedsearches-nav.tmpl.php';
-    return ($child_selected || $selected);
-});
+if (count($thisstaff->getAdminDepartments())) {
+    $addTicketMenu('dept', 'Toda dependencia', 'Todos los expedientes de Mi Dependencia',
+        'departments');
+    $addTicketMenu('assigned_dept', 'Mi dependencia',
+        'Expedientes abiertos de Mi Dependencia', 'departments',
+        iris_ticket_queue_count('assigned_dept', $thisstaff));
+    $addTicketMenu('closed_dept', 'Cerrados dependencia',
+        'Expedientes cerrados de Mi Dependencia', 'closedTickets');
+    $addTicketMenu('created_dep', 'Creados dependencia',
+        'Expedientes creados por Mi Dependencia', 'assignedTickets',
+        iris_ticket_queue_count('created_dep', $thisstaff));
+}
+
+if ($thisstaff->getManagedDepartments()) {
+    $addTicketMenu('requested_dep', 'Solicitados dependencia',
+        'Expedientes solicitados por Mi Dependencia', 'assignedTickets',
+        iris_ticket_queue_count('requested_dep', $thisstaff));
+    $addTicketMenu('transferred', 'Transferidos dependencia',
+        'Expedientes transferidos por Mi Dependencia', 'departments',
+        iris_ticket_queue_count('transferred', $thisstaff));
+}
+
+if (count($thisstaff->getAdminDepartments()) || $thisstaff->getLeadedTeams()) {
+    $addTicketMenu('unassigned_dept', 'Sin Revisar',
+        'Expedientes sin asignar en Mi Dependencia', 'overdueTickets',
+        iris_ticket_queue_count('unassigned_dept', $thisstaff), 'critical');
+    $addTicketMenu('unassigned', 'Sin asignar',
+        'Expedientes sin asignar a un agente', 'overdueTickets',
+        iris_ticket_queue_count('unassigned', $thisstaff));
+}
+
+$overdueCount = iris_ticket_queue_count('overdue', $thisstaff);
+if ($overdueCount)
+    $addTicketMenu('overdue', 'Vencidos', 'Expedientes vencidos',
+        'overdueTickets', $overdueCount, 'critical');
 
 if ($thisstaff->hasPerm(Ticket::PERM_CREATE, false)) {
     $nav->addSubMenu(array('desc'=>__('Nuevo expediente'),
@@ -552,10 +692,26 @@ if($ticket) {
         $inc = 'ticket-open.inc.php';
         if (!$user && $userId = $thisstaff->getUserIdStaff())
             $user = User::lookup($userId);
-    } elseif ($queue) {
-        // XXX: Check staff access?
-        $quick_filter = @$_REQUEST['filter'];
-        $tickets = $queue->getQuery(false, $quick_filter);
+    } elseif ($_REQUEST['a'] === 'export') {
+        $timezone = new DateTimeZone('America/Bogota');
+        $date = new DateTime('now', $timezone);
+        $filename = sprintf('expedientes-%s-%s.csv',
+            $queue_name, $date->format('YmdHis'));
+        if (!($query = $_SESSION[':Q:tickets']))
+            $errors['err'] = __('Query token not found');
+        else {
+            $fields = array(
+                'number' => __('Número'),
+                'created' => __('Fecha de creación'),
+                'lastupdate' => __('Última actividad'),
+                'cdata__subject' => __('Asunto'),
+                'dept::getLocalName' => __('Dependencia asignada'),
+                'staff::getName' => __('Agente asignado'),
+                'team::getName' => __('Equipo asignado'),
+                'status::getName' => __('Estado'),
+            );
+            Export::saveTickets($query, $fields, $filename, 'csv');
+        }
     }
 
     //set refresh rate if the user has it configured
