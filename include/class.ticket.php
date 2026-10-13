@@ -83,6 +83,16 @@ implements RestrictedAccess, Threadable, Searchable {
                 'list' => false,
                 'null' => true,
             ),
+            // Independent alias used to locate the creation event while the
+            // main thread join is constrained by another queue or filter.
+            'creator_thread' => array(
+                'constraint' => array(
+                    'ticket_id' => 'TicketThread.object_id',
+                    "'T'" => 'TicketThread.object_type',
+                ),
+                'list' => false,
+                'null' => true,
+            ),
             'child_thread' => array(
                 'constraint' => array(
                     'ticket_id'  => 'TicketThread.object_id',
